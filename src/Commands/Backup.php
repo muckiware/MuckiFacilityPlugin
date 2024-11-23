@@ -24,6 +24,7 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Core\BackupTypes;
+use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 
 class Backup extends Command
 {
@@ -34,7 +35,8 @@ class Backup extends Command
     public function __construct(
         protected LoggerInterface $logger,
         protected PluginSettings $pluginSettings,
-        protected BackupService $backupService
+        protected BackupService $backupService,
+        protected PluginHelper $pluginHelper
     )
     {
         parent::__construct(self::$defaultName);
@@ -87,14 +89,12 @@ class Backup extends Command
     protected function checkInputForBackupType(InputInterface $input): string
     {
         $backupTypeInput = $input->getArgument('backupType');
-        if($backupTypeInput && $backupTypeInput !== '') {
-
-            $backupTypes = BackupTypes::cases();
-            foreach ($backupTypes as $backupType) {
-                if ($backupType->value === $backupTypeInput) {
-                    return $backupTypeInput;
-                }
-            }
+        if(
+            $backupTypeInput &&
+            $backupTypeInput !== '' &&
+            $this->pluginHelper->checkBackupTypByInput($backupTypeInput)
+        ) {
+            return $backupTypeInput;
         }
 
         throw new \InvalidArgumentException('Invalid backup type');
