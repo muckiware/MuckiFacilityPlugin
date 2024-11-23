@@ -14,9 +14,8 @@ namespace MuckiFacilityPlugin\Services;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
-use MuckiLogPlugin\Core\Defaults as PluginDefaults;
-use MuckiLogPlugin\Core\LogLevel;
-use MuckiLogPlugin\Core\ConfigPath;
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Core\ConfigPath;
 
 class Settings implements SettingsInterface
 {
