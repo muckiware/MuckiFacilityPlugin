@@ -1,18 +1,21 @@
-<?php
-
-declare(strict_types=1);
-
-namespace Services;
+<?php declare(strict_types=1);
+/**
+ * MuckiFacilityPlugin
+ *
+ * @category   SW6 Plugin
+ * @package    MuckiFacility
+ * @copyright  Copyright (c) 2024 by Muckiware
+ * @license    MIT
+ * @author     Muckiware
+ *
+ */
+namespace MuckiFacilityPlugin\tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
-use MuckiLogPlugin\Services\Helper;
-use MuckiLogPlugin\Core\ConfigPath;
-use MuckiLogPlugin\Services\Settings as PluginSettings;
-use MuckiLogPlugin\Core\LogLevel;
-use MuckiLogPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Services\Settings as PluginSettings;
 
 class SettingsTest extends TestCase
 {
