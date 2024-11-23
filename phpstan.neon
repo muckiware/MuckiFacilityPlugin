@@ -1,0 +1,23 @@
+parameters:
+    level: 6
+    treatPhpDocTypesAsCertain: false
+    checkMissingIterableValueType: false
+    inferPrivatePropertyTypeFromConstructor: true
+    reportUnmatchedIgnoredErrors: false
+    tmpDir: var/cache/phpstan
+
+    featureToggles:
+    	disableCheckMissingIterableValueType: false
+
+    paths:
+        - src
+
+    bootstrapFiles:
+        - bin/static-analyze-autoloader.php
+
+    excludePaths:
+        analyseAndScan:
+            - src/log4php
+    ignoreErrors:
+        - identifier: missingType.generics
+
