@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Spatie\DbDumper\Databases\MySql as MySqlDumper;
 use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
+use Spatie\DbDumper\Compressors\GzipCompressor;
 
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
@@ -23,24 +24,23 @@ class AllDbRunner implements BackupInterface
 {
     public function __construct(
         protected LoggerInterface $logger,
-        protected SettingsInterface $settings
+        protected SettingsInterface $pluginSettings
     ) {}
     public function createBackupData(): void
     {
         $mysqlDumper = MySqlDumper::create();
-        $mysqlDumper->setDatabaseUrl($this->settings->getDatabaseUrl());
-
-        $backupFileName = $this->settings->getBackupPath().'/'.$this->settings->getDateTimestamp().'_'.$mysqlDumper->getDbName().'.backup.sql';
+        $mysqlDumper->setDatabaseUrl($this->pluginSettings->getDatabaseUrl());
+        if($this->pluginSettings->isCompressDbBackupEnabled()) {
+            $mysqlDumper->useCompressor(new GzipCompressor());
+        }
 
         try {
-            $mysqlDumper->dumpToFile($backupFileName);
+            $mysqlDumper->dumpToFile($this->createBackupFileName($mysqlDumper->getDbName()));
         } catch (CannotStartDump $e) {
             $this->logger->error('Cannot start dump:'.$e->getMessage());
         } catch (DumpFailed $e) {
             $this->logger->error('Dump failed:'.$e->getMessage());
         }
-
-        $checker = 1;
     }
 
     public function getBackupData(): mixed
@@ -56,5 +56,32 @@ class AllDbRunner implements BackupInterface
     public function removeBackupData(): void
     {
         // TODO: Implement removeBackupData() method.
+    }
+
+    protected function createBackupFileName(string $databaseName): string
+    {
+        $backupPath = $this->pluginSettings->getBackupPath();
+        $backupDateTimeStamp = $this->pluginSettings->getDateTimestamp();
+        $backupFileName = '';
+
+        if($backupPath !== '') {
+            $backupFileName = $backupPath.'/';
+        }
+
+        if($backupDateTimeStamp !== '') {
+            $backupFileName .= $backupDateTimeStamp.'_';
+        }
+
+        if($databaseName !== '') {
+            $backupFileName .= $databaseName;
+        }
+
+        if($this->pluginSettings->isCompressDbBackupEnabled()) {
+            $backupFileName .= '.backup.sql.gz';
+        } else {
+            $backupFileName .= '.backup.sql';
+        }
+
+        return $backupFileName;
     }
 }

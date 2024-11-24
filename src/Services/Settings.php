@@ -33,6 +33,11 @@ class Settings implements SettingsInterface
         return $this->config->getBool(ConfigPath::CONFIG_PATH_ACTIVE->value);
     }
 
+    public function isCompressDbBackupEnabled(): bool
+    {
+        return $this->config->getBool(ConfigPath::CONFIG_PATH_COMPRESS_DB_BACKUP->value);
+    }
+
     public function getDateTimeStringFormat(): string
     {
         return PluginDefaults::CURRENT_DATETIME_STR_FORMAT;
