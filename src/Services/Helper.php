@@ -52,5 +52,11 @@ class Helper
             mkdir($path, PluginDefaults::BACKUP_FOLDER_PERMISSION, true);
         }
     }
+
+    public function getCurrentDateTimeStr(string $dateTimeFormat): string
+    {
+        $date = new \DateTime();
+        return $date->format($dateTimeFormat);
+    }
 }
 

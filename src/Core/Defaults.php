@@ -15,4 +15,5 @@ class Defaults
 {
     const BACKUP_PATH = '/var/backup';
     const BACKUP_FOLDER_PERMISSION = 0777;
+    const CURRENT_DATETIME_STR_FORMAT = 'Y-m-d_H-i-s';
 }

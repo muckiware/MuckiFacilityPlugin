@@ -33,6 +33,11 @@ class Settings implements SettingsInterface
         return $this->config->getBool(ConfigPath::CONFIG_PATH_ACTIVE->value);
     }
 
+    public function getDateTimeStringFormat(): string
+    {
+        return PluginDefaults::CURRENT_DATETIME_STR_FORMAT;
+    }
+
     public function getDatabaseUrl(): string
     {
         return trim((string) EnvironmentHelper::getVariable('DATABASE_URL', getenv('DATABASE_URL')));
@@ -48,5 +53,10 @@ class Settings implements SettingsInterface
         $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH;
         $this->pluginHelper->ensureDirectoryExists($backupPath);
         return $backupPath;
+    }
+
+    public function getDateTimestamp(): string
+    {
+        return $this->pluginHelper->getCurrentDateTimeStr($this->getDateTimeStringFormat());
     }
 }

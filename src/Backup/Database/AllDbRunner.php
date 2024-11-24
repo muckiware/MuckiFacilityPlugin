@@ -12,7 +12,7 @@
 namespace MuckiFacilityPlugin\Backup\Database;
 
 use Psr\Log\LoggerInterface;
-use Spatie\DbDumper\Databases\MySql;
+use Spatie\DbDumper\Databases\MySql as MySqlDumper;
 use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
 
@@ -27,13 +27,13 @@ class AllDbRunner implements BackupInterface
     ) {}
     public function createBackupData(): void
     {
-        $mysqlDumper = MySql::create();
+        $mysqlDumper = MySqlDumper::create();
         $mysqlDumper->setDatabaseUrl($this->settings->getDatabaseUrl());
 
+        $backupFileName = $this->settings->getBackupPath().'/'.$this->settings->getDateTimestamp().'_'.$mysqlDumper->getDbName().'.backup.sql';
+
         try {
-            $mysqlDumper->dumpToFile(
-                $this->settings->getBackupPath().'/'.$mysqlDumper->getDbName().'.backup.sql'
-            );
+            $mysqlDumper->dumpToFile($backupFileName);
         } catch (CannotStartDump $e) {
             $this->logger->error('Cannot start dump:'.$e->getMessage());
         } catch (DumpFailed $e) {

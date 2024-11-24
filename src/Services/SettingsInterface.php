@@ -21,5 +21,7 @@ interface SettingsInterface
     public function getDatabaseUrl(): string;
 
     public function getBackupPath(): string;
+
+    public function getDateTimestamp(): string;
 }
 
