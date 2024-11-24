@@ -2,7 +2,7 @@
 
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
-        <service id="MuckiFacilityPlugin\Backup\BackupFactory">
+        <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
         </service>
         <service class="MuckiFacilityPlugin\Commands\Backup" id="muwa.facility.command.backup" public="true">
@@ -17,7 +17,7 @@
         </service>
         <service id="MuckiFacilityPlugin\Services\Backup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
-            <argument type="service" id="MuckiFacilityPlugin\Backup\BackupFactory"/>
+            <argument type="service" id="MuckiFacilityPlugin\Backup\BackupRunnerFactory"/>
         </service>
     	<service id="MuckiFacilityPlugin\Services\Settings" public="true">
         	<argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>

@@ -18,7 +18,7 @@ use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Backup\Database\AllDbRunner;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 
-class BackupFactory
+class BackupRunnerFactory
 {
     public function __construct(
         protected LoggerInterface $logger
@@ -27,7 +27,7 @@ class BackupFactory
     /**
      * @throws InvalidBackupTypeException
      */
-    public function createBackupClient(string $backupType): BackupInterface
+    public function createBackupRunner(string $backupType): BackupInterface
     {
         switch ($backupType) {
 

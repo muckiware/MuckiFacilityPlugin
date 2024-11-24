@@ -6,18 +6,18 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 use MuckiFacilityPlugin\Core\BackupTypes;
-use MuckiFacilityPlugin\Backup\BackupFactory;
+use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 
-class BackupFactoryTest extends TestCase
+class BackupRunnerFactoryTest extends TestCase
 {
     public function testCreateRunner(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('error');
-        $backupFactory = new BackupFactory($logger);
-        $runner = $backupFactory->createBackupClient(BackupTypes::DATABASE_ALL->value);
+        $backupFactory = new BackupRunnerFactory($logger);
+        $runner = $backupFactory->createBackupRunner(BackupTypes::DATABASE_ALL->value);
         $this->assertInstanceOf(
             BackupInterface::class,
             $runner,
@@ -32,7 +32,7 @@ class BackupFactoryTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('error');
-        $backupFactory = new BackupFactory($logger);
-        $runner = $backupFactory->createBackupClient('test');
+        $backupFactory = new BackupRunnerFactory($logger);
+        $runner = $backupFactory->createBackupRunner('test');
     }
 }
