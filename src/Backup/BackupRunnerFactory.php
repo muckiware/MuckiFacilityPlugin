@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Backup\Database\CompleteFileRunner;
+use MuckiFacilityPlugin\Backup\Database\CompleteFilesRunner;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 
@@ -33,8 +34,12 @@ class BackupRunnerFactory
     {
         switch ($backupType) {
 
-            case BackupTypes::DATABASE_ALL->value:
+            case BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value:
                 $runner = new CompleteFileRunner($this->logger, $this->settings);
+                break;
+
+            case BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value:
+                $runner = new CompleteFilesRunner($this->logger, $this->settings);
                 break;
 
             default:

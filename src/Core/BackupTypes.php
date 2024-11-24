@@ -13,8 +13,9 @@ namespace MuckiFacilityPlugin\Core;
 
 enum BackupTypes: string
 {
-    case DATABASE_ALL = 'databaseAll';
-    case DATABASE_SELECT_TABLE = 'databaseSelectTable';
+    case COMPLETE_DATABASE_SINGLE_FILE = 'completeDatabaseSingleFile';
+    case COMPLETE_DATABASE_SEPARATE_FILES = 'completeDatabaseSeparateFiles';
+    case SELECTED_DATABASE_TABLE = 'selectDatabaseTable';
     case FILES_ALL = 'filesAll';
 
     case MEDIA = 'media';

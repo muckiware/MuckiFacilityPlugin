@@ -9,15 +9,33 @@ use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
+use MuckiFacilityPlugin\Services\SettingsInterface;
 
 class BackupRunnerFactoryTest extends TestCase
 {
-    public function testCreateRunner(): void
+    public function testCreateRunnerFile(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('error');
-        $backupFactory = new BackupRunnerFactory($logger);
-        $runner = $backupFactory->createBackupRunner(BackupTypes::DATABASE_ALL->value);
+        $settings = $this->createMock(SettingsInterface::class);
+
+        $backupFactory = new BackupRunnerFactory($logger, $settings);
+        $runner = $backupFactory->createBackupRunner(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
+        $this->assertInstanceOf(
+            BackupInterface::class,
+            $runner,
+            'BackupInterface should be implemented'
+        );
+    }
+
+    public function testCreateRunnerFiles(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->method('error');
+        $settings = $this->createMock(SettingsInterface::class);
+
+        $backupFactory = new BackupRunnerFactory($logger, $settings);
+        $runner = $backupFactory->createBackupRunner(BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value);
         $this->assertInstanceOf(
             BackupInterface::class,
             $runner,
@@ -32,7 +50,9 @@ class BackupRunnerFactoryTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('error');
-        $backupFactory = new BackupRunnerFactory($logger);
+        $settings = $this->createMock(SettingsInterface::class);
+
+        $backupFactory = new BackupRunnerFactory($logger, $settings);
         $runner = $backupFactory->createBackupRunner('test');
     }
 }
