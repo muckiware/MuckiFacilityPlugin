@@ -30,6 +30,7 @@ class Backup
     {
         try {
             $backupRunner = $this->backupRunnerFactory->createBackupRunner($backupType);
+            $backupRunner->createBackupData();
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }

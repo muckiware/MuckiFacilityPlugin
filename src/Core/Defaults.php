@@ -13,5 +13,6 @@ namespace MuckiFacilityPlugin\Core;
 
 class Defaults
 {
-
+    const BACKUP_PATH = '/var/backup';
+    const BACKUP_FOLDER_PERMISSION = 0777;
 }

@@ -13,20 +13,40 @@ namespace MuckiFacilityPlugin\Services;
 
 use Symfony\Component\HttpKernel\KernelInterface;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
+use Shopware\Core\DevOps\Environment\EnvironmentHelper;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Core\ConfigPath;
 
 class Settings implements SettingsInterface
 {
     public function __construct(
         protected SystemConfigService $config,
-        protected KernelInterface $kernel
+        protected KernelInterface $kernel,
+        protected PluginHelper $pluginHelper
     )
     {}
     
     public function isEnabled(): bool
     {
         return $this->config->getBool(ConfigPath::CONFIG_PATH_ACTIVE->value);
+    }
+
+    public function getDatabaseUrl(): string
+    {
+        return trim((string) EnvironmentHelper::getVariable('DATABASE_URL', getenv('DATABASE_URL')));
+    }
+
+    public function getBackupPath(): string
+    {
+        return $this->getDefaultBackupPath();
+    }
+
+    public function getDefaultBackupPath(): string
+    {
+        $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH;
+        $this->pluginHelper->ensureDirectoryExists($backupPath);
+        return $backupPath;
     }
 }

@@ -17,11 +17,13 @@ use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Backup\Database\AllDbRunner;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
+use MuckiFacilityPlugin\Services\SettingsInterface;
 
 class BackupRunnerFactory
 {
     public function __construct(
-        protected LoggerInterface $logger
+        protected LoggerInterface $logger,
+        protected SettingsInterface $settings
     ) {}
 
     /**
@@ -32,8 +34,9 @@ class BackupRunnerFactory
         switch ($backupType) {
 
             case BackupTypes::DATABASE_ALL->value:
-                $runner = new AllDbRunner();
+                $runner = new AllDbRunner($this->logger, $this->settings);
                 break;
+
             default:
 
                 $this->logger->error('Invalid backup type:'.$backupType);

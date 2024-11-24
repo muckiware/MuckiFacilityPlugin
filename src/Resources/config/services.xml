@@ -4,6 +4,7 @@
     <services>
         <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
         </service>
         <service class="MuckiFacilityPlugin\Commands\Backup" id="muwa.facility.command.backup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -22,6 +23,7 @@
     	<service id="MuckiFacilityPlugin\Services\Settings" public="true">
         	<argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
         	<argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\SettingsInterface" alias="MuckiLogPlugin\Services\Settings"/>
         <service id="MuckiFacilityPlugin\Services\Helper"/>

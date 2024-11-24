@@ -12,6 +12,7 @@
 namespace MuckiFacilityPlugin\Services;
 
 use MuckiFacilityPlugin\Core\BackupTypes;
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
 class Helper
 {
@@ -43,6 +44,13 @@ class Helper
         }
 
         return false;
+    }
+
+    public function ensureDirectoryExists(string $path): void
+    {
+        if (!is_dir($path)) {
+            mkdir($path, PluginDefaults::BACKUP_FOLDER_PERMISSION, true);
+        }
     }
 }
 
