@@ -25,4 +25,9 @@ class AllDbRunner implements BackupInterface
     {
         // TODO: Implement saveBackupData() method.
     }
+
+    public function removeBackupData(): void
+    {
+        // TODO: Implement removeBackupData() method.
+    }
 }
