@@ -17,10 +17,11 @@ use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
 use Spatie\DbDumper\Compressors\GzipCompressor;
 
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 
-class AllDbRunner implements BackupInterface
+class CompleteFileRunner implements BackupInterface
 {
     public function __construct(
         protected LoggerInterface $logger,
@@ -33,13 +34,14 @@ class AllDbRunner implements BackupInterface
         if($this->pluginSettings->isCompressDbBackupEnabled()) {
             $mysqlDumper->useCompressor(new GzipCompressor());
         }
+        $mysqlDumper->useSingleTransaction();
 
         try {
             $mysqlDumper->dumpToFile($this->createBackupFileName($mysqlDumper->getDbName()));
         } catch (CannotStartDump $e) {
-            $this->logger->error('Cannot start dump:'.$e->getMessage());
+            $this->logger->error('Cannot start dump:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         } catch (DumpFailed $e) {
-            $this->logger->error('Dump failed:'.$e->getMessage());
+            $this->logger->error('Dump failed:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
     }
 
