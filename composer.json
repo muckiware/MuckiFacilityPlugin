@@ -19,7 +19,8 @@
 	},
 	"require" : {
 		"php" : ">= 8.1",
-		"spatie/db-dumper": "^3.7"
+		"spatie/db-dumper": "^3.7",
+		"muckiware/restic": "*"
 	},
 	"require-dev" : {
 		"phpstan/phpstan" : "*"

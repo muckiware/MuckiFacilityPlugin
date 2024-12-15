@@ -5,6 +5,7 @@
         <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
         </service>
         <service class="MuckiFacilityPlugin\Commands\Backup" id="muwa.facility.command.backup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -31,5 +32,9 @@
 <!--            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>-->
 <!--            <argument type="service" id="Psr\Log\LoggerInterface"/>-->
 <!--        </service>-->
+        <service id="MuckiFacilityPlugin\Core\Database\Database">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+        </service>
     </services>
 </container>

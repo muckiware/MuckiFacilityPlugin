@@ -13,6 +13,7 @@ namespace MuckiFacilityPlugin\Backup\Database;
 
 use Psr\Log\LoggerInterface;
 use Spatie\DbDumper\Databases\MySql as MySqlDumper;
+use Spatie\DbDumper\Exceptions\CannotSetParameter;
 use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
 use Spatie\DbDumper\Compressors\GzipCompressor;
@@ -20,28 +21,42 @@ use Spatie\DbDumper\Compressors\GzipCompressor;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
+use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 
 class CompleteFilesRunner implements BackupInterface
 {
     public function __construct(
         protected LoggerInterface $logger,
-        protected SettingsInterface $pluginSettings
+        protected SettingsInterface $pluginSettings,
+        protected CoreDatabase $database
     ) {}
+
     public function createBackupData(): void
     {
-        $mysqlDumper = MySqlDumper::create();
-        $mysqlDumper->setDatabaseUrl($this->pluginSettings->getDatabaseUrl());
-        if($this->pluginSettings->isCompressDbBackupEnabled()) {
-            $mysqlDumper->useCompressor(new GzipCompressor());
-        }
-        $mysqlDumper->useSingleTransaction();
+        $databaseUrl = $this->pluginSettings->getDatabaseUrl();
+        $isCompressDbBackupEnabled = $this->pluginSettings->isCompressDbBackupEnabled();
+        foreach ($this->database->getListOfAllTables() as $table) {
 
-        try {
-            $mysqlDumper->dumpToFile($this->createBackupFileName($mysqlDumper->getDbName()));
-        } catch (CannotStartDump $e) {
-            $this->logger->error('Cannot start dump:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-        } catch (DumpFailed $e) {
-            $this->logger->error('Dump failed:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $mysqlDumper = MySqlDumper::create();
+            $mysqlDumper->setDatabaseUrl($databaseUrl);
+            if($isCompressDbBackupEnabled) {
+                $mysqlDumper->useCompressor(new GzipCompressor());
+            }
+            $mysqlDumper->useSingleTransaction();
+            $backupFileName = $this->createBackupFileName($table);
+
+            try {
+
+                $mysqlDumper->includeTables($table);
+                $mysqlDumper->dumpToFile($this->createBackupFileName($table));
+
+            } catch (CannotStartDump $e) {
+                $this->logger->error('Cannot start dump:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            } catch (DumpFailed $e) {
+                $this->logger->error('Dump failed:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            } catch (CannotSetParameter $e) {
+                $this->logger->error('Cannot set parameter:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            }
         }
     }
 
@@ -62,7 +77,7 @@ class CompleteFilesRunner implements BackupInterface
 
     protected function createBackupFileName(string $databaseName): string
     {
-        $backupPath = $this->pluginSettings->getBackupPath();
+        $backupPath = $this->pluginSettings->getBackupPath(true);
         $backupDateTimeStamp = $this->pluginSettings->getDateTimestamp();
         $backupFileName = '';
 
@@ -79,9 +94,9 @@ class CompleteFilesRunner implements BackupInterface
         }
 
         if($this->pluginSettings->isCompressDbBackupEnabled()) {
-            $backupFileName .= '.backup.sql.gz';
+            $backupFileName .= '.sql.gz';
         } else {
-            $backupFileName .= '.backup.sql';
+            $backupFileName .= '.sql';
         }
 
         return $backupFileName;

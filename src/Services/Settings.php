@@ -43,19 +43,29 @@ class Settings implements SettingsInterface
         return PluginDefaults::CURRENT_DATETIME_STR_FORMAT;
     }
 
+    public function getDateStringFormat(): string
+    {
+        return PluginDefaults::CURRENT_DATE_STR_FORMAT;
+    }
+
     public function getDatabaseUrl(): string
     {
         return trim((string) EnvironmentHelper::getVariable('DATABASE_URL', getenv('DATABASE_URL')));
     }
 
-    public function getBackupPath(): string
+    public function getBackupPath(bool $useSubFolder=false): string
     {
-        return $this->getDefaultBackupPath();
+        return $this->getDefaultBackupPath($useSubFolder);
     }
 
-    public function getDefaultBackupPath(): string
+    public function getDefaultBackupPath(bool $useSubFolder=false): string
     {
-        $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH;
+        if($useSubFolder) {
+            $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH.'/'.$this->getDatestamp();
+        } else {
+            $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH;
+        }
+
         $this->pluginHelper->ensureDirectoryExists($backupPath);
         return $backupPath;
     }
@@ -63,5 +73,10 @@ class Settings implements SettingsInterface
     public function getDateTimestamp(): string
     {
         return $this->pluginHelper->getCurrentDateTimeStr($this->getDateTimeStringFormat());
+    }
+
+    public function getDatestamp(): string
+    {
+        return $this->pluginHelper->getCurrentDateTimeStr($this->getDateStringFormat());
     }
 }
