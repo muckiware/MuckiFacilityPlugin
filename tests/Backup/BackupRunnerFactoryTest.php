@@ -10,6 +10,7 @@ use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 use MuckiFacilityPlugin\Services\SettingsInterface;
+use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 
 class BackupRunnerFactoryTest extends TestCase
 {
@@ -18,8 +19,9 @@ class BackupRunnerFactoryTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('error');
         $settings = $this->createMock(SettingsInterface::class);
+        $coreDatabase = $this->createMock(CoreDatabase::class);
 
-        $backupFactory = new BackupRunnerFactory($logger, $settings);
+        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
         $runner = $backupFactory->createBackupRunner(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
         $this->assertInstanceOf(
             BackupInterface::class,
@@ -33,8 +35,9 @@ class BackupRunnerFactoryTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('error');
         $settings = $this->createMock(SettingsInterface::class);
+        $coreDatabase = $this->createMock(CoreDatabase::class);
 
-        $backupFactory = new BackupRunnerFactory($logger, $settings);
+        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
         $runner = $backupFactory->createBackupRunner(BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value);
         $this->assertInstanceOf(
             BackupInterface::class,
@@ -51,8 +54,9 @@ class BackupRunnerFactoryTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('error');
         $settings = $this->createMock(SettingsInterface::class);
+        $coreDatabase = $this->createMock(CoreDatabase::class);
 
-        $backupFactory = new BackupRunnerFactory($logger, $settings);
+        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
         $runner = $backupFactory->createBackupRunner('test');
     }
 }
