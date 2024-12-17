@@ -13,6 +13,7 @@ namespace MuckiFacilityPlugin\Commands;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -26,10 +27,12 @@ use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 
+#[AsCommand(
+    name: 'muckiware:facility:backup',
+    description: 'Create backups'
+)]
 class Backup extends Command
 {
-    public static string $defaultName = 'muckiware:facility:backup';
-
     protected ?ContainerInterface $container = null;
 
     public function __construct(
@@ -39,7 +42,7 @@ class Backup extends Command
         protected PluginHelper $pluginHelper
     )
     {
-        parent::__construct(self::$defaultName);
+        parent::__construct();
     }
 
     /**
