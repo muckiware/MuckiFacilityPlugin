@@ -14,4 +14,5 @@ namespace MuckiFacilityPlugin\Core;
 enum ConfigPath: string
 {
     case CONFIG_PATH_ACTIVE = 'MuckiFacilityPlugin.config.active';
+    case CONFIG_PATH_COMPRESS_DB_BACKUP = 'MuckiFacilityPlugin.config.compressDbBackup';
 }

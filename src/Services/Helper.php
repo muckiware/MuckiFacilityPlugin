@@ -11,6 +11,9 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
+use MuckiFacilityPlugin\Core\BackupTypes;
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+
 class Helper
 {
     public function getHashData(array|string $data): string
@@ -29,6 +32,31 @@ class Helper
         }
 
         return false !== filter_var($email, FILTER_VALIDATE_EMAIL);
+    }
+
+    public function checkBackupTypByInput(string $backupTypeInput): bool
+    {
+        $backupTypes = BackupTypes::cases();
+        foreach ($backupTypes as $backupType) {
+            if ($backupType->value === $backupTypeInput) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function ensureDirectoryExists(string $path): void
+    {
+        if (!is_dir($path)) {
+            mkdir($path, PluginDefaults::BACKUP_FOLDER_PERMISSION, true);
+        }
+    }
+
+    public function getCurrentDateTimeStr(string $dateTimeFormat): string
+    {
+        $date = new \DateTime();
+        return $date->format($dateTimeFormat);
     }
 }
 

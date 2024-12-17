@@ -16,6 +16,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 use MuckiFacilityPlugin\Services\Settings as PluginSettings;
+use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 
 class SettingsTest extends TestCase
 {
@@ -23,8 +24,9 @@ class SettingsTest extends TestCase
     {
         $kernel = $this->createMock(KernelInterface::class);
         $config = $this->createMock(SystemConfigService::class);
+        $helper = $this->createMock(PluginHelper::class);
 
-        $settingsClass = new PluginSettings($config, $kernel);
+        $settingsClass = new PluginSettings($config, $kernel, $helper);
         $config->method('getBool')->willReturn(true);
         $isEnabled1 = $settingsClass->isEnabled();
         static::assertIsBool($isEnabled1, 'isEnabled method should return boolean');
@@ -35,8 +37,9 @@ class SettingsTest extends TestCase
     {
         $kernel = $this->createMock(KernelInterface::class);
         $config = $this->createMock(SystemConfigService::class);
+        $helper = $this->createMock(PluginHelper::class);
 
-        $settingsClass = new PluginSettings($config, $kernel);
+        $settingsClass = new PluginSettings($config, $kernel, $helper);
 
         $config->method('getBool')->willReturn(false);
         $isEnabled2 = $settingsClass->isEnabled();

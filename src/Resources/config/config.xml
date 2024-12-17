@@ -8,10 +8,14 @@
         </input-field>
     </card>
     <card>
-        <title>MuckiFacilityPlugin db backup settings</title>
+        <title>Database backup settings</title>
         <input-field type="bool">
             <name>activeDbBackup</name>
-            <label>Active Database Backup</label>
+            <label>Active database backup</label>
+        </input-field>
+        <input-field type="bool">
+            <name>compressDbBackup</name>
+            <label>Compress database backup file</label>
         </input-field>
     </card>
 </config>

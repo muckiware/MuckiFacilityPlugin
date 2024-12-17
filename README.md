@@ -1,5 +1,6 @@
 # MuckiFacilityPlugin
-Muckiware Facility Plugin for Shopware 6 Webshops
+Muckiware Facility Plugin for Shopware 6 Web shops.
+- The plugin provides a backup functionality for the database.
 
 
 ## Installation
@@ -7,12 +8,17 @@ Muckiware Facility Plugin for Shopware 6 Webshops
 composer require muckiware/facility-plugin
 bin/console plugin:install -a MuckiFacilityPlugin
 ```
-
-
-## CLIs
+## Command Line Interface
+## Backup
+Backups via command line interface are possible with the following commands:
 ```shell
-bin/console muckiware:create:backup:db
+bin/console muckiware:facility:backup <backupType>
 ```
+| Option backup type            | Desc                                                                                                                                                                                        |
+|:------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| completeDatabaseSingleFile    | Backup the complete database as single file. The backup is stored in the directory `var/backup/db/` with the filename `YYYY-MM-DD_HH-MM-SS_db_backup.sql.gz`                                |
+| completeDatabaseSeparateFiles | Backup the complete database as single file for each database table. The backup is stored in the directory `var/backup/YYYY-MM-DD` with the filename `YYYY-MM-DD_HH-MM-SS_tablename.sql.gz` |
+
 This command execute a backup of the database. The backup is stored in the directory `var/backup/db/` with the filename `db_backup_YYYY-MM-DD_HH-MM-SS.sql.gz`
 # Testing
 ## phpstan
