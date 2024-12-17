@@ -1,5 +1,5 @@
 # MuckiFacilityPlugin
-Muckiware Facility Plugin for Shopware 6 Webshops.
+Muckiware Facility Plugin for Shopware 6 Web shops.
 - The plugin provides a backup functionality for the database.
 
 
