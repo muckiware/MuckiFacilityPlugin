@@ -1,7 +1,9 @@
 <?xml version="1.0" ?>
-
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
+        <service id="MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition">
+            <tag name="shopware.entity.definition" entity="muwa_backup_repository" />
+        </service>
         <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
