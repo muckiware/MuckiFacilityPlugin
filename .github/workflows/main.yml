@@ -27,7 +27,7 @@ jobs:
       matrix:
         php-versions: [ '8.2' ]
         mysql-versions: [ '8.0' ]
-        shopware-versions: [ 'v6.5.8.0', 'v6.6.9.0' ]
+        shopware-versions: [ 'v6.5.8.0' ]
     services:
       mysql:
         image: mysql:${{ matrix.mysql-versions }}
@@ -78,9 +78,8 @@ jobs:
       - name: "Install Shopware dependencies"
         # Install Shopware with --no-dev to prevent that dev-tools of the module got in conflict with the tools of shopware
         run: |
-          composer req shopware/core:${{ matrix.shopware-version }} shopware/administration:* shopware/storefront:* --no-update
-          composer remove shopware/elasticsearch --no-update
-          composer install
+          composer req shopware/administration:${{ matrix.shopware-versions }} shopware/core:${{ matrix.shopware-versions }} shopware/elasticsearch:${{ matrix.shopware-versions }} shopware/storefront:${{ matrix.shopware-versions }} --no-update
+          composer install --no-dev
 
       - name: "Install DEV-Tools"
         working-directory: custom/plugins/${{ env.MODULE_NAME }}
