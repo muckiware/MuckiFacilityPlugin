@@ -13,6 +13,7 @@ on:
 
 env:
   MODULE_NAME: MuckiFacilityPlugin
+  MODULE_DIR: custom/plugins/MuckiFacilityPlugin
   COMPOSER_NAME: muckiware/facility-plugin
   TEST_DATABASE_URL: "mysql://root:root@127.0.0.1:3306/db_test"
 
@@ -77,8 +78,9 @@ jobs:
       - name: "Install Shopware dependencies"
         # Install Shopware with --no-dev to prevent that dev-tools of the module got in conflict with the tools of shopware
         run: |
-          composer req shopware/administration:${{ matrix.shopware-versions }} shopware/core:${{ matrix.shopware-versions }} shopware/elasticsearch:${{ matrix.shopware-versions }} shopware/storefront:${{ matrix.shopware-versions }} --no-update
-          composer install --no-dev
+          composer req shopware/core:${{ matrix.shopware-version }} shopware/administration:* shopware/storefront:* --no-update
+          composer remove shopware/elasticsearch --no-update
+          composer install
 
       - name: "Install DEV-Tools"
         working-directory: custom/plugins/${{ env.MODULE_NAME }}
