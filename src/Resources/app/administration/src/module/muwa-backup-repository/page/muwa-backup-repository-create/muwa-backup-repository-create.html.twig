@@ -1,0 +1,76 @@
+{% block muwa_search_structure_detail %}
+    <sw-page class="muwa-backup-repository-tabs-detail">
+        {% block muwa_search_structure_detail_smart_bar_actions %}
+            <template #smart-bar-actions>
+                <sw-button :routerLink="{ name: 'sw.settings.index.plugins'}">
+                    {{ $tc('muwa-backup-repository.list.header.cancelButtonLabel') }}
+                </sw-button>
+
+                <sw-button-process
+                        position-identifier="muwa-backup-repository"
+                        :isLoading="isLoading"
+                        :processSuccess="processSuccess"
+                        variant="primary"
+                        @process-finish="saveFinish"
+                        @click="onClickSave"
+                >
+                    {{ $tc('muwa-backup-repository.list.header.createStructureLabel') }}
+                </sw-button-process>
+            </template>
+        {% endblock %}
+
+        <template #content>
+            {% block muwa_search_structure_detail_content %}
+                <sw-card-view>
+                    <sw-card positionIdentifier="muwaSearchStructure" v-if="backupRepository" :title="backupRepository.label">
+                        <sw-switch-field
+                            :label="$tc('muwa-backup-repository.detail.activeLabel')"
+                            v-model:value="backupRepository.active"
+                        >
+                        </sw-switch-field>
+                        <sw-text-field
+                            :label="$tc('muwa-backup-repository.detail.nameLabel')"
+                            v-model:value="backupRepository.name"
+                            maxlength="70"
+                            validation="required"
+                            required
+                        >
+                        </sw-text-field>
+                        <sw-select-field
+                                v-if="backupRepository"
+                                v-model:value="backupRepository.type"
+                                validation="required"
+                                required
+                                type="select"
+                                :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
+                                :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                        >
+                            <option slot="options"
+                                    v-for="option in type"
+                                    :key="option.value"
+                                    :value="option.value">
+                                {{ option.label }}
+                            </option>
+                        </sw-select-field>
+                        <sw-text-field
+                            :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
+                            v-model:value="backupRepository.repositoryPath"
+                            maxlength="255"
+                            validation="required"
+                            required
+                        >
+                        </sw-text-field>
+                        <sw-password-field
+                            :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
+                            v-model:value="backupRepository.repositoryPassword"
+                            maxlength="255"
+                            validation="required"
+                            required
+                        >
+                        </sw-password-field>
+                    </sw-card>
+                </sw-card-view>
+            {% endblock %}
+        </template>
+    </sw-page>
+{% endblock %}

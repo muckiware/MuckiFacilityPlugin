@@ -29,7 +29,7 @@ class BackupRepositoryEntity extends Entity
      */
     protected string $name;
 
-    protected BackupTypes $type;
+    protected string $type;
 
     protected string $repositoryPath;
 
@@ -37,11 +37,9 @@ class BackupRepositoryEntity extends Entity
 
     protected string $restorePath;
 
-    protected string $backupPath;
+    protected array $backupPaths;
 
     protected ForgetTypes $forgetParameters;
-
-    protected string $resticBinaryPath;
 
     protected bool $compress;
 
@@ -93,12 +91,12 @@ class BackupRepositoryEntity extends Entity
         $this->name = $name;
     }
 
-    public function getType(): BackupTypes
+    public function getType(): string
     {
         return $this->type;
     }
 
-    public function setType(BackupTypes $type): void
+    public function setType(string $type): void
     {
         $this->type = $type;
     }
@@ -133,14 +131,14 @@ class BackupRepositoryEntity extends Entity
         $this->restorePath = $restorePath;
     }
 
-    public function getBackupPath(): string
+    public function getBackupPaths(): array
     {
-        return $this->backupPath;
+        return $this->backupPaths;
     }
 
-    public function setBackupPath(string $backupPath): void
+    public function setBackupPaths(array $backupPaths): void
     {
-        $this->backupPath = $backupPath;
+        $this->backupPaths = $backupPaths;
     }
 
     public function getForgetParameters(): ForgetTypes
@@ -151,16 +149,6 @@ class BackupRepositoryEntity extends Entity
     public function setForgetParameters(ForgetTypes $forgetParameters): void
     {
         $this->forgetParameters = $forgetParameters;
-    }
-
-    public function getResticBinaryPath(): string
-    {
-        return $this->resticBinaryPath;
-    }
-
-    public function setResticBinaryPath(string $resticBinaryPath): void
-    {
-        $this->resticBinaryPath = $resticBinaryPath;
     }
 
     public function isCompress(): bool

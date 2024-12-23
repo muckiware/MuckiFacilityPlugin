@@ -1,0 +1,74 @@
+{
+  "muwa-backup-repository": {
+    "general" : {
+      "mainMenuLabel": "Backup Repositories",
+      "description": "Backup Repositories Administration",
+      "saveSuccessAlertTitle": "Successfully saved",
+      "saveSuccessAlertMessage": "Search index structure was saved successfully.",
+      "types": {
+        "files": "Files",
+        "completeDatabaseSeparateFiles": "Complete database (separate files)",
+        "completeDatabaseSingleFile": "Complete database (single file)"
+      }
+    },
+    "tabs": {
+      "repositoryList": "Backup Repository Configuration"
+    },
+    "list": {
+      "header": {
+        "createButtonLabel": "Add",
+        "cancelButtonLabel": "Cancel",
+        "saveButtonLabel": "Save",
+        "createStructureLabel" : "Add structure"
+      },
+      "emptyListText": "No search index structure entries available.",
+      "nameLabel": "Name",
+      "entityLabel": "Entity",
+      "activeLabel": "Active",
+      "createDateLabel": "Created",
+      "updateDateLabel": "Updated",
+      "healthLabel": "Condition",
+      "statusLabel": "Status",
+      "primariesLabel": "Primary",
+      "replicasLabel": "Copies",
+      "docsCountLabel": "Number of documents",
+      "storageSizeLabel": "storage size",
+      "docsDeletedLabel": "Deleted documents"
+    },
+    "detail": {
+      "mappingLabel": "Mappings (language-dependent)",
+      "settingsLabel": "Settings (language-dependent)",
+      "generalLabel": "General (global)",
+      "activeLabel": "Active",
+      "nameLabel": "Technical name",
+      "repositoryPathLabel": "Repository Path",
+      "repositoryPasswordLabel": "Repository Password",
+      "addBackupPathLabel": "Add backup path",
+      "backupPathsDescription": "Add backup paths here that are to be saved in the backup repository.",
+      "backupPathLabel": "Backup Path",
+      "backupPaths": "Backup Paths"
+    },
+    "create": {
+      "errorTitle": "Storage problem occurred"
+    },
+    "mappingList": {
+      "inputDataTypeLabel": "Data type",
+      "inputHighlightingLabel": "Highlighting",
+      "defaultValue": "Default Value",
+      "entityLabel": "Database item",
+      "deleteMappingLabel": "Remove mapping",
+      "highlightingLabel": "Active"
+    },
+    "settingList": {
+      "settingKey": "Key",
+      "settingValue": "Value",
+      "deleteSettingLabel": "Remove setting"
+    },
+    "serverInfo": {
+      "keyLabel": "Name",
+      "valueLabel": "Value",
+      "generalLabel": "General",
+      "versionLabel": "Version"
+    }
+  }
+}

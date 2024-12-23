@@ -1,0 +1,160 @@
+{% block muwa_search_structure_detail %}
+    <sw-page class="muwa-backup-repository-tabs-detail">
+        {% block muwa_search_structure_detail_smart_bar_actions %}
+            <template #smart-bar-actions>
+                <sw-button :routerLink="{ name: 'sw.settings.index.plugins'}">
+                    {{ $tc('muwa-backup-repository.list.header.cancelButtonLabel') }}
+                </sw-button>
+
+                <sw-button-process
+                        position-identifier="muwa-backup-repository"
+                        :isLoading="isLoading"
+                        :processSuccess="processSuccess"
+                        variant="primary"
+                        @process-finish="saveFinish"
+                        @click="onClickSave"
+                >
+                    {{ $tc('muwa-backup-repository.list.header.saveButtonLabel') }}
+                </sw-button-process>
+            </template>
+        {% endblock %}
+
+        <template #content>
+            {% block muwa_search_structure_detail_content %}
+                <sw-card-view>
+                    <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.generalLabel')">
+                        <sw-switch-field
+                            :label="$tc('muwa-backup-repository.detail.activeLabel')"
+                            v-model:value="backupRepository.active"
+                        >
+                        </sw-switch-field>
+                        <sw-text-field
+                            :label="$tc('muwa-backup-repository.detail.nameLabel')"
+                            v-model:value="backupRepository.name"
+                            maxlength="70"
+                            validation="required"
+                            required
+                        >
+                        </sw-text-field>
+                        <sw-select-field
+                                v-if="backupRepository"
+                                v-model:value="backupRepository.type"
+                                validation="required"
+                                required
+                                type="select"
+                                :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
+                                :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                        >
+                            <option slot="options"
+                                    v-for="option in type"
+                                    :key="option.value"
+                                    :value="option.value">
+                                {{ option.label }}
+                            </option>
+                        </sw-select-field>
+                        <sw-text-field
+                                :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
+                                v-model:value="backupRepository.repositoryPath"
+                                maxlength="255"
+                                validation="required"
+                                required
+                        >
+                        </sw-text-field>
+                        <sw-password-field
+                                :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
+                                v-model:value="backupRepository.repositoryPassword"
+                                maxlength="255"
+                                validation="required"
+                                required
+                        >
+                        </sw-password-field>
+                        <sw-text-field
+                                :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
+                                v-model:value="backupRepository.restorePath"
+                                maxlength="255"
+                                validation="required"
+                                required
+                        >
+                        </sw-text-field>
+                        <sw-text-field
+                                :label="$tc('muwa-backup-repository.detail.resticBinaryPathLabel')"
+                                v-model:value="backupRepository.resticBinaryPath"
+                                maxlength="255"
+                        >
+                        </sw-text-field>
+                    </sw-card>
+
+                    <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.backupPaths')">
+                        <sw-button
+                                v-tooltip="{
+                            message: $tc('sw-import-export.profile.addMappingTooltipText'),
+                            showOnDisabledElements: true
+                        }"
+                                class="sw-import-export-edit-profile-modal-mapping__add-action"
+                                variant="ghost"
+                                size="small"
+                                @click="onAddBackupPath"
+                        >
+                            {{ $tc('muwa-backup-repository.detail.addBackupPathLabel') }}
+                        </sw-button>
+                        {% block muwa_search_structure_detail_backup_paths_description %}
+                            <div
+                                    v-html="$tc('muwa-backup-repository.detail.backupPathsDescription')"
+                                    class="muwa-search-structure-detail-backup-paths__description"
+                            ></div>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block wuwa_search_structure_mapping_grid %}
+                            <sw-data-grid
+                                    v-if="backupPathExist"
+                                    :data-source="getBackupPaths"
+                                    :compact-mode="false"
+                                    :show-selection="false"
+                                    :columns="backupPathsColumns"
+                                    plain-appearance
+                                    class="sw-import-export-edit-profile-modal-mapping__grid"
+                            >
+                                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                {% block wuwa_backup_repository_backup_paths_grid_data_type_column %}
+                                    <template #column-backupPath="{ item, itemIndex }">
+                                        <sw-text-field
+                                            v-model:value="item.backupPath"
+                                            :name="`backupPath-${itemIndex}`"
+                                            :disabled="false"
+                                        />
+                                    </template>
+                                {% endblock %}
+
+                                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                {% block wuwa_search_structure_mapping_grid_context_menu_delete %}
+                                    <template #actions="{ item }">
+                                        <sw-context-menu-item
+                                                variant="danger"
+                                                :disabled="false"
+                                                @click="onDeleteBackupPath(item.id)"
+                                        >
+                                            {{ $tc('muwa-backup-repository.backupPaths.deletePathLabel') }}
+                                        </sw-context-menu-item>
+                                    </template>
+                                {% endblock %}
+
+                            </sw-data-grid>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block wuwa_search_structure_mapping_empty_state %}
+                            <sw-empty-state
+                                    v-else
+                                    class="sw-import-export-edit-profile-modal-mapping__empty-state"
+                                    :title="$tc('muwa-backup-repository.detail.mappingEmptyState')"
+                                    :absolute="false"
+                                    icon="regular-file"
+                            />
+                        {% endblock %}
+                    </sw-card>
+                </sw-card-view>
+            {% endblock %}
+        </template>
+    </sw-page>
+{% endblock %}

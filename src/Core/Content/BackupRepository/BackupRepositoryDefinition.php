@@ -52,15 +52,14 @@ class BackupRepositoryDefinition extends EntityDefinition
         return new FieldCollection([
             (new idField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
             (new BoolField('active', 'active'))->addFlags(new ApiAware(), new Inherited()),
-            (new StringField('name', 'name'))->addFlags(new ApiAware(), new Inherited()),
+            (new StringField('name', 'name'))->addFlags(new Required(), new ApiAware()),
             (new StringField('type', 'type'))->addFlags(new ApiAware()),
-            (new StringField('repository_path', 'repositoryPath'))->addFlags(new ApiAware()),
-            (new StringField('repository_password', 'repositoryPassword'))->addFlags(new ApiAware()),
+            (new StringField('repository_path', 'repositoryPath'))->addFlags(new Required(), new ApiAware()),
+            (new StringField('repository_password', 'repositoryPassword'))->addFlags(new Required(), new ApiAware()),
             (new StringField('restore_path', 'restorePath'))->addFlags(new ApiAware()),
-            (new StringField('backup_path', 'backupPath'))->addFlags(new ApiAware()),
-            (new StringField('forget_parameters', 'forgetParameters'))->addFlags(new ApiAware()),
-            (new StringField('restic_binary_path', 'resticBinaryPath'))->addFlags(new ApiAware()),
-            (new BoolField('compress', 'compress'))->addFlags(new ApiAware(), new Inherited()),
+            (new JsonField('backup_paths', 'backupPaths', [], []))->addFlags(new ApiAware()),
+            (new JsonField('forget_parameters', 'forgetParameters', [], []))->addFlags(new ApiAware()),
+            (new BoolField('compress', 'compress'))->addFlags(new ApiAware()),
 
             new CreatedAtField(),
             new UpdatedAtField()

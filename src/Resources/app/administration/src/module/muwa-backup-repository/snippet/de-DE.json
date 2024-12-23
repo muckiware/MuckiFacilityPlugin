@@ -1,0 +1,69 @@
+{
+  "muwa-backup-repository": {
+    "general" : {
+      "mainMenuLabel": "Backup Repositories",
+      "description": "Backup Repositories Verwaltung",
+      "saveSuccessAlertTitle": "Erfolgreich gespeichert",
+      "saveSuccessAlertMessage": "Such-Index Struktur wurde erfolgreich gespeichert.",
+      "types": {
+        "files": "Dateien",
+        "completeDatabaseSeparateFiles": "Komplette Datenbank (separate Dateien)",
+        "completeDatabaseSingleFile": "Komplette Datenbank (eine Datei)"
+      }
+    },
+    "tabs": {
+      "repositoryList": "Backup Repository Konfiguration"
+    },
+    "list": {
+      "header": {
+        "createButtonLabel": "Hinzufügen",
+        "cancelButtonLabel": "Abbrechen",
+        "saveButtonLabel": "speichern",
+        "createStructureLabel" : "Struktur hinzufügen"
+      },
+      "emptyListText": "Keine Such-Index Struktur Einträge vorhanden.",
+      "nameLabel": "Name",
+      "entityLabel": "Entität",
+      "activeLabel": "Aktiv",
+      "createDateLabel": "Erstellt",
+      "updateDateLabel": "Aktualisiert",
+      "healthLabel": "Zustand",
+      "statusLabel": "Status",
+      "primariesLabel": "Primär",
+      "replicasLabel": "Kopien",
+      "docsCountLabel": "Anzahl Dokumente",
+      "storageSizeLabel": "Speichergröße",
+      "docsDeletedLabel": "gelöschte Dokumente"
+    },
+    "detail": {
+      "mappingLabel": "Zuweisungen (sprachabhängig)",
+      "settingsLabel": "Einstellungen (sprachabhängig)",
+      "generalLabel": "Backup Konfiguration",
+      "activeLabel": "Aktiv",
+      "nameLabel": "Technischer Name",
+      "repositoryPathLabel": "Repository Pfad",
+      "repositoryPasswordLabel": "Repository Passwort",
+      "addBackupPathLabel": "Backup Pfad hinzufügen",
+      "backupPathsDescription": "Füge hier Backup Pfade hinzu, die in das Backup Repository gesichert werden sollen.",
+      "backupPathLabel": "Backup Pfad",
+      "backupPaths": "Backup Pfade"
+    },
+    "create": {
+      "errorTitle": "Speicherproblem aufgetreten"
+    },
+    "backupPaths": {
+      "deletePathLabel": "Pfad entfernen"
+    },
+    "settingList": {
+      "settingKey": "Schlüssel",
+      "settingValue": "Wert",
+      "deleteSettingLabel": "Einstellung entfernen"
+    },
+    "serverInfo": {
+      "keyLabel": "Name",
+      "valueLabel": "Wert",
+      "generalLabel": "Allgemein",
+      "versionLabel": "Version"
+    }
+  }
+}
