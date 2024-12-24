@@ -16,7 +16,10 @@ Component.extend('muwa-backup-repository-create', 'muwa-backup-repository-detail
             // set default values
             this.backupRepository.active = true;
             this.backupRepository.name = '';
-
+            this.backupRepository.forgetDaily = 7;
+            this.backupRepository.forgetWeekly = 5;
+            this.backupRepository.forgetMonthly = 12;
+            this.backupRepository.forgetYearly = 35;
         },
 
         onClickSave() {
@@ -34,13 +37,13 @@ Component.extend('muwa-backup-repository-create', 'muwa-backup-repository-detail
                     this.isLoading = false;
                     this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
                     this.createNotificationSuccess({
-                        title: this.$t('lightson-pseudo-product.detail.success-title'),
-                        message: this.$t('lightson-pseudo-product.detail.success-message')
+                        title: this.$t('muwa.backup.repository.detail.success-title'),
+                        message: this.$t('muwa.backup.repository.detail.success-message')
                     });
                 }).catch((exception) => {
                 this.isLoading = false;
                 this.createNotificationError({
-                    title: this.$t('lightson-pseudo-product.detail.error-message'),
+                    title: this.$t('muwa.backup.repository.detail.error-message'),
                     message: exception
                 });
             });
