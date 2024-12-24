@@ -15,8 +15,5 @@ enum BackupTypes: string
 {
     case COMPLETE_DATABASE_SINGLE_FILE = 'completeDatabaseSingleFile';
     case COMPLETE_DATABASE_SEPARATE_FILES = 'completeDatabaseSeparateFiles';
-    case SELECTED_DATABASE_TABLE = 'selectDatabaseTable';
-    case FILES_ALL = 'filesAll';
-
-    case MEDIA = 'media';
+    case FILES = 'files';
 }
