@@ -18,6 +18,13 @@ use Shopware\Core\Framework\Plugin\Context\InstallContext;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
 use Shopware\Core\Framework\Plugin\Context\UpdateContext;
 
+/**
+ * Add dependencies from composer
+ */
+if(file_exists(dirname(__DIR__) . "/vendor/autoload.php")) {
+    require_once dirname(__DIR__) . '/vendor/autoload.php';
+}
+
 class MuckiFacilityPlugin extends Plugin
 {
     /**

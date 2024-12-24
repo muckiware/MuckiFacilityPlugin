@@ -1,0 +1,102 @@
+{% block muwa_backup_repository_list %}
+    <sw-page class="muwa-backup-repository-list">
+        {% block muwa_backup_repository_list_smart_bar_actions %}
+            <template #smart-bar-actions>
+                <sw-button
+                    variant="primary"
+                    position-identifier="muwa-backup-repository-create-button"
+                    :routerLink="{name: 'muwa.backup.repository.create'}"
+                >
+                    {{ $tc('muwa-backup-repository.list.header.createButtonLabel') }}
+                </sw-button>
+            </template>
+        {% endblock %}
+
+        <template #content>
+            {% block muwa_backup_repository_list_content %}
+                {% block muwa_search_structure_content_tabs %}
+                    <sw-tabs default-item="repositoryList" class="muwa-backup-repository-content-tabs" position-identifier="muwa-backup-repository-content-tabs">
+                        <template #default="{ active }">
+                            <sw-tabs-item
+                                key="repositoryList"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.index', params: { tab: 'repositoryList' } }"
+                                @click="getList()"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.repositoryList') }}
+                            </sw-tabs-item>
+                        </template>
+                    </sw-tabs>
+                {% endblock %}
+
+                <sw-entity-listing
+                        v-if="backupRepository && tab === 'repositoryList'"
+                        :isLoading="isLoading"
+                        :items="backupRepository"
+                        :repository="repository"
+                        :columns="columns"
+                        :showActions="true"
+                        :showSelection="true"
+                        :showSettings="true"
+                >
+                    <template #column-name="{item}">
+                        <router-link :to="{ name: 'muwa.backup.repository.detail', params: { id: item.id } }">
+                            <div v-if="item.name" :title="item.name">
+                                {{ item.name }}
+                            </div>
+                            <div v-else :title="item.name">
+                                <sw-icon class="muwa.search.structure-list-times" name="regular-times" small></sw-icon>
+                            </div>
+                        </router-link>
+                    </template>
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block lion_pseudo_product_list_grid_columns_active %}
+                        <template #column-active="{ item, isInlineEdit }">
+                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                            {% block lion_pseudo_product_list_grid_columns_active_inline_edit %}
+                                <template v-if="isInlineEdit">
+                                    <sw-checkbox-field
+                                            v-model:value="item.active"
+                                    />
+                                </template>
+                            {% endblock %}
+
+                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                            {% block lion_pseudo_product_list_grid_columns_active_content %}
+                                <template v-else>
+                                    <sw-icon
+                                            v-if="item.active"
+                                            name="regular-checkmark-xs"
+                                            small
+                                            class="is--active"
+                                    />
+                                    <sw-icon
+                                            v-else
+                                            name="regular-times-s"
+                                            small
+                                            class="is--inactive"
+                                    />
+                                </template>
+                            {% endblock %}
+                        </template>
+                    {% endblock %}
+                    <template #column-createdAt="{ item }">
+                        {{ dateFilter(item.createdAt) }}
+                    </template>
+                    <template #column-updatedAt="{ item }">
+                        {{ dateFilter(item.updatedAt) }}
+                    </template>
+                    <template #delete-action="{ item }">
+                        <sw-context-menu-item @click="deleteIndices(item)"
+                                              variant="danger"
+                        >
+                            {{ $tc('global.default.delete') }}
+                        </sw-context-menu-item>
+                    </template>
+                </sw-entity-listing>
+            {% endblock %}
+        </template>
+    </sw-page>
+
+{% endblock %}

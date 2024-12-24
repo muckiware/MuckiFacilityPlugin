@@ -13,12 +13,14 @@
 		"shopware-plugin-class" : "MuckiFacilityPlugin\\MuckiFacilityPlugin",
 		"copyright" : "(c) by muckiware",
 		"label" : {
-			"de-DE" : "Mucki Log Erweiterung",
-			"en-GB" : "Mucki Log Plugin"
+			"de-DE" : "Mucki Facility Erweiterung",
+			"en-GB" : "Mucki Facility Plugin"
 		}
 	},
 	"require" : {
-		"php" : ">= 8.1"
+		"php" : ">= 8.1",
+		"spatie/db-dumper": "^3.7",
+		"muckiware/restic": "^1.0"
 	},
 	"require-dev" : {
 		"phpstan/phpstan" : "*"

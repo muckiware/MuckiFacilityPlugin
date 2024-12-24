@@ -1,16 +1,42 @@
 <?xml version="1.0" ?>
-
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
-    	<service id="MuckiLogPlugin\Services\Settings" public="true">
+        <service id="MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition">
+            <tag name="shopware.entity.definition" entity="muwa_backup_repository" />
+        </service>
+        <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
+        </service>
+        <service class="MuckiFacilityPlugin\Commands\Backup" id="muwa.facility.command.backup" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Backup" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Backup\BackupRunnerFactory"/>
+        </service>
+    	<service id="MuckiFacilityPlugin\Services\Settings" public="true">
         	<argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
         	<argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
-        <service id="MuckiLogPlugin\Services\SettingsInterface" alias="MuckiLogPlugin\Services\Settings"/>
-        <service id="MuckiLogPlugin\Services\Helper"/>
-        <service id="MuckiLogPlugin\Services\CliOutput">
-            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+        <service id="MuckiFacilityPlugin\Services\SettingsInterface" alias="MuckiLogPlugin\Services\Settings"/>
+        <service id="MuckiFacilityPlugin\Services\Helper"/>
+<!--        <service id="MuckiLogPlugin\Services\CliOutput">-->
+<!--            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>-->
+<!--            <argument type="service" id="Psr\Log\LoggerInterface"/>-->
+<!--        </service>-->
+        <service id="MuckiFacilityPlugin\Core\Database\Database">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
         </service>
     </services>
 </container>

@@ -11,8 +11,9 @@
  */
 namespace MuckiFacilityPlugin\Core;
 
-enum ConfigPath: string
+enum BackupTypes: string
 {
-    case CONFIG_PATH_ACTIVE = 'MuckiFacilityPlugin.config.active';
-    case CONFIG_PATH_COMPRESS_DB_BACKUP = 'MuckiFacilityPlugin.config.compressDbBackup';
+    case COMPLETE_DATABASE_SINGLE_FILE = 'completeDatabaseSingleFile';
+    case COMPLETE_DATABASE_SEPARATE_FILES = 'completeDatabaseSeparateFiles';
+    case FILES = 'files';
 }
