@@ -46,7 +46,10 @@
       "addBackupPathLabel": "Backup Pfad hinzufügen",
       "backupPathsDescription": "Füge hier Backup Pfade hinzu, die in das Backup Repository gesichert werden sollen.",
       "backupPathLabel": "Backup Pfad",
-      "backupPaths": "Backup Pfade"
+      "backupPaths": "Backup Pfade",
+      "restorePathLabel": "Wiederherstellungspfad",
+      "compressPathLabel": "Compress",
+      "compressLabel": "Compress"
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten"

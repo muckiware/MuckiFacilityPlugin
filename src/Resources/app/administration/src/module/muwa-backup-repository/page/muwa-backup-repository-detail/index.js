@@ -27,6 +27,8 @@ Component.register('muwa-backup-repository-detail', {
 
     data() {
         return {
+            V6_5_0_0: false,
+            V6_6_0_0: false,
             backupRepository: {
                 backupPaths: null
             },
@@ -45,12 +47,14 @@ Component.register('muwa-backup-repository-detail', {
     created() {
 
         console.log('this.feature', this.feature);
-
-        if (this.feature.isActive('VUE3')) {
-            console.log('VUE3 is active');
-        } else {
-            console.log('VUE3 is not active');
+        if (this.feature.isActive('V6_6_0_0')) {
+            this.V6_6_0_0 = true;
         }
+
+        if (this.feature.isActive('V6_5_0_0') && !this.feature.isActive('V6_6_0_0')) {
+            this.V6_5_0_0 = true;
+        }
+
         this.createdComponent();
     },
 
@@ -88,12 +92,28 @@ Component.register('muwa-backup-repository-detail', {
 
         backupPathsColumns() {
 
-            return [{
+            return [
+                {
                     property: 'backupPath',
                     label: 'muwa-backup-repository.detail.backupPathLabel',
                     allowResize: true,
-                    width: '100%',
-            }];
+                    width: '95%',
+                },
+                {
+                    property: 'compress',
+                    label: 'muwa-backup-repository.detail.compressPathLabel',
+                    allowResize: true,
+                    width: '5%',
+                }
+            ];
+        },
+
+        isV6600() {
+            return this.V6_6_0_0;
+        },
+        isV6500() {
+            console.log('this.V6_5_0_0', this.V6_5_0_0);
+            return this.V6_5_0_0;
         }
     },
 
@@ -192,6 +212,7 @@ Component.register('muwa-backup-repository-detail', {
                 id: createId(),
                 isDefault: false,
                 backupPath: '',
+                compress: false,
                 position: 0
             });
 
@@ -205,6 +226,6 @@ Component.register('muwa-backup-repository-detail', {
             });
 
             this.loadBackupsPaths();
-        },
+        }
     }
 });

@@ -7,12 +7,12 @@
                 </sw-button>
 
                 <sw-button-process
-                        position-identifier="muwa-backup-repository"
-                        :isLoading="isLoading"
-                        :processSuccess="processSuccess"
-                        variant="primary"
-                        @process-finish="saveFinish"
-                        @click="onClickSave"
+                    position-identifier="muwa-backup-repository"
+                    :isLoading="isLoading"
+                    :processSuccess="processSuccess"
+                    variant="primary"
+                    @process-finish="saveFinish"
+                    @click="onClickSave"
                 >
                     {{ $tc('muwa-backup-repository.list.header.saveButtonLabel') }}
                 </sw-button-process>
@@ -24,11 +24,20 @@
                 <sw-card-view>
                     <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.generalLabel')">
                         <sw-switch-field
+                            v-if="isV6600"
                             :label="$tc('muwa-backup-repository.detail.activeLabel')"
                             v-model:value="backupRepository.active"
                         >
                         </sw-switch-field>
+                        <sw-switch-field
+                            v-if="isV6500"
+                            :label="$tc('muwa-backup-repository.detail.activeLabel')"
+                            v-model="backupRepository.active"
+                        >
+                        </sw-switch-field>
+
                         <sw-text-field
+                            v-if="isV6600"
                             :label="$tc('muwa-backup-repository.detail.nameLabel')"
                             v-model:value="backupRepository.name"
                             maxlength="70"
@@ -36,52 +45,108 @@
                             required
                         >
                         </sw-text-field>
+                        <sw-text-field
+                            v-if="isV6500"
+                            :label="$tc('muwa-backup-repository.detail.nameLabel')"
+                            v-model="backupRepository.name"
+                            maxlength="70"
+                            validation="required"
+                            required
+                        >
+                        </sw-text-field>
+
                         <sw-select-field
-                                v-if="backupRepository"
-                                v-model:value="backupRepository.type"
-                                validation="required"
-                                required
-                                type="select"
-                                :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
-                                :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                            v-if="backupRepository&& isV6600"
+                            v-model:value="backupRepository.type"
+                            validation="required"
+                            required
+                            type="select"
+                            :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
+                            :label="$tc('lightson-pseudo-product.detail.card-base.type')"
                         >
                             <option slot="options"
-                                    v-for="option in type"
-                                    :key="option.value"
-                                    :value="option.value">
+                                v-for="option in type"
+                                :key="option.value"
+                                :value="option.value"
+                            >
                                 {{ option.label }}
                             </option>
                         </sw-select-field>
+                        <sw-select-field
+                            v-if="backupRepository && isV6500"
+                            v-model="backupRepository.type"
+                            validation="required"
+                            required
+                            type="select"
+                            :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
+                            :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                        >
+                            <option slot="options"
+                                v-for="option in type"
+                                :key="option.value"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </sw-select-field>
+
                         <sw-text-field
-                                :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
-                                v-model:value="backupRepository.repositoryPath"
-                                maxlength="255"
-                                validation="required"
-                                required
+                            v-if="isV6600"
+                            :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
+                            v-model:value="backupRepository.repositoryPath"
+                            maxlength="255"
+                            validation="required"
+                            required
                         >
                         </sw-text-field>
+                        <sw-text-field
+                            v-if="isV6500"
+                            :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
+                            v-model="backupRepository.repositoryPath"
+                            maxlength="255"
+                            validation="required"
+                            required
+                        >
+                        </sw-text-field>
+
                         <sw-password-field
-                                :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
-                                v-model:value="backupRepository.repositoryPassword"
-                                maxlength="255"
-                                validation="required"
-                                required
+                            v-if="isV6600"
+                            :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
+                            v-model:value="backupRepository.repositoryPassword"
+                            maxlength="255"
+                            validation="required"
+                            required
                         >
                         </sw-password-field>
+                        <sw-password-field
+                            v-if="isV6500"
+                            :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
+                            v-model="backupRepository.repositoryPassword"
+                            maxlength="255"
+                            validation="required"
+                            required
+                        >
+                        </sw-password-field>
+
                         <sw-text-field
-                                :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
-                                v-model:value="backupRepository.restorePath"
-                                maxlength="255"
-                                validation="required"
-                                required
+                            v-if="isV6600"
+                            :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
+                            v-model:value="backupRepository.restorePath"
+                            maxlength="255"
+                            validation="required"
+                            required
                         >
                         </sw-text-field>
                         <sw-text-field
-                                :label="$tc('muwa-backup-repository.detail.resticBinaryPathLabel')"
-                                v-model:value="backupRepository.resticBinaryPath"
-                                maxlength="255"
+                            v-if="isV6500"
+                            :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
+                            v-model="backupRepository.restorePath"
+                            maxlength="255"
+                            validation="required"
+                            required
                         >
                         </sw-text-field>
+
                     </sw-card>
 
                     <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.backupPaths')">
@@ -119,10 +184,35 @@
                                 {% block wuwa_backup_repository_backup_paths_grid_data_type_column %}
                                     <template #column-backupPath="{ item, itemIndex }">
                                         <sw-text-field
+                                            v-if="isV6600"
                                             v-model:value="item.backupPath"
                                             :name="`backupPath-${itemIndex}`"
                                             :disabled="false"
                                         />
+                                        <sw-text-field
+                                            v-if="isV6500"
+                                            v-model="item.backupPath"
+                                            :name="`backupPath-${itemIndex}`"
+                                            :disabled="false"
+                                        />
+                                    </template>
+                                {% endblock %}
+                                {% block wuwa_backup_repository_compress_grid_data_type_column %}
+                                    <template #column-compress="{ item, itemIndex }">
+                                        <sw-switch-field
+                                            v-if="isV6600"
+                                            :label="$tc('muwa-backup-repository.detail.compressLabel')"
+                                            :name="`compress-${itemIndex}`"
+                                            v-model:value="item.compress"
+                                        >
+                                        </sw-switch-field>
+                                        <sw-switch-field
+                                            v-if="isV6500"
+                                            :label="$tc('muwa-backup-repository.detail.compressLabel')"
+                                            :name="`compress-${itemIndex}`"
+                                            v-model="item.compress"
+                                        >
+                                        </sw-switch-field>
                                     </template>
                                 {% endblock %}
 

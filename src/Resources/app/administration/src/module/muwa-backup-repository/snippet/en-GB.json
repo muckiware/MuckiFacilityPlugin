@@ -46,7 +46,10 @@
       "addBackupPathLabel": "Add backup path",
       "backupPathsDescription": "Add backup paths here that are to be saved in the backup repository.",
       "backupPathLabel": "Backup Path",
-      "backupPaths": "Backup Paths"
+      "backupPaths": "Backup Paths",
+      "restorePathLabel": "Restore Path",
+      "compressPathLabel": "Komprimieren",
+      "compressLabel": "Komprimieren"
     },
     "create": {
       "errorTitle": "Storage problem occurred"
