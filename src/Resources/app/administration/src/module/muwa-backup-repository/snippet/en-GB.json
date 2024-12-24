@@ -48,8 +48,10 @@
       "backupPathLabel": "Backup Path",
       "backupPaths": "Backup Paths",
       "restorePathLabel": "Restore Path",
-      "compressPathLabel": "Komprimieren",
-      "compressLabel": "Komprimieren"
+      "compressPathLabel": "Data Compression",
+      "compressLabel": "Compress",
+      "forget": "Delete of snapshots",
+      "forgetDescription": "Specify here the deletion of snapshots that are older than the specified number of days."
     },
     "create": {
       "errorTitle": "Storage problem occurred"

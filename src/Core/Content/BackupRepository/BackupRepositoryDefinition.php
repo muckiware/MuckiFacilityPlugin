@@ -58,8 +58,10 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new StringField('repository_password', 'repositoryPassword'))->addFlags(new Required(), new ApiAware()),
             (new StringField('restore_path', 'restorePath'))->addFlags(new ApiAware()),
             (new JsonField('backup_paths', 'backupPaths', [], []))->addFlags(new ApiAware()),
-            (new JsonField('forget_parameters', 'forgetParameters', [], []))->addFlags(new ApiAware()),
-            (new BoolField('compress', 'compress'))->addFlags(new ApiAware()),
+            (new IntField('forget_daily', 'forgetDaily'))->addFlags(new ApiAware()),
+            (new IntField('forget_weekly', 'forgetWeekly'))->addFlags(new ApiAware()),
+            (new IntField('forget_monthly', 'forgetMonthly'))->addFlags(new ApiAware()),
+            (new IntField('forget_yearly', 'forgetYearly'))->addFlags(new ApiAware()),
 
             new CreatedAtField(),
             new UpdatedAtField()

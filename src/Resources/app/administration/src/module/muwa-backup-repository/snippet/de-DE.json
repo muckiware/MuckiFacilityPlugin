@@ -48,8 +48,14 @@
       "backupPathLabel": "Backup Pfad",
       "backupPaths": "Backup Pfade",
       "restorePathLabel": "Wiederherstellungspfad",
-      "compressPathLabel": "Compress",
-      "compressLabel": "Compress"
+      "compressPathLabel": "Daten komprimieren",
+      "compressLabel": "Komprimieren",
+      "forgetDailyLabel": "Tägliche Sicherungen löschen",
+      "forgetWeeklyLabel": "Wöchendliche Sicherungen löschen",
+      "forgetMonthlyLabel": "Monatliche Sicherungen löschen",
+      "forgetYearlyLabel": "Jährliche Sicherungen löschen",
+      "forget": "Löschen von Snapshots",
+      "forgetDescription": "Lege hier das Löschen von Snapshots fest, die älter sind als die angegebene Anzahl von Tagen, Wochen, etc."
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten"
