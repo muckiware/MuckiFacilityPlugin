@@ -58,7 +58,8 @@
       "forgetDescription": "Lege hier das Löschen von Snapshots fest, die älter sind als die angegebene Anzahl von Tagen, Wochen, etc."
     },
     "create": {
-      "errorTitle": "Speicherproblem aufgetreten"
+      "errorTitle": "Speicherproblem aufgetreten",
+      "createButtonLabel": "Neues Repository erstellen"
     },
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"

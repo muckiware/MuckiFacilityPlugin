@@ -54,7 +54,8 @@
       "forgetDescription": "Specify here the deletion of snapshots that are older than the specified number of days."
     },
     "create": {
-      "errorTitle": "Storage problem occurred"
+      "errorTitle": "Storage problem occurred",
+      "createButtonLabel": "Create new Repository"
     },
     "mappingList": {
       "inputDataTypeLabel": "Data type",

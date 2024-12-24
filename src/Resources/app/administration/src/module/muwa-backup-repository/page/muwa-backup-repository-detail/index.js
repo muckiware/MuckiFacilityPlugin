@@ -46,7 +46,6 @@ Component.register('muwa-backup-repository-detail', {
 
     created() {
 
-        console.log('this.feature', this.feature);
         if (this.feature.isActive('V6_6_0_0')) {
             this.V6_6_0_0 = true;
         }
@@ -112,7 +111,6 @@ Component.register('muwa-backup-repository-detail', {
             return this.V6_6_0_0;
         },
         isV6500() {
-            console.log('this.V6_5_0_0', this.V6_5_0_0);
             return this.V6_5_0_0;
         }
     },
@@ -157,8 +155,6 @@ Component.register('muwa-backup-repository-detail', {
 
         onClickSave() {
 
-            console.log('onClickSave', this.backupRepository);
-
             this.castValues();
 
             if (this.hasErrors()) {
@@ -191,7 +187,6 @@ Component.register('muwa-backup-repository-detail', {
 
         loadBackupsPaths() {
 
-            console.log('this.backupRepository.backupPaths in loadBackupsPaths()', this.backupRepository);
             if(this.backupRepository && this.backupRepository.backupPaths) {
 
                 this.backupRepository.backupPaths.forEach((backupPath) => {
