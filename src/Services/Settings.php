@@ -79,4 +79,18 @@ class Settings implements SettingsInterface
     {
         return $this->pluginHelper->getCurrentDateTimeStr($this->getDateStringFormat());
     }
+
+    public function hasOwnResticBinaryPath(): bool
+    {
+        return $this->config->getBool(ConfigPath::CONFIG_USE_OWN_PATH_RESTIC_BINARY->value);
+    }
+
+    public function getOwnResticBinaryPath(): ?string
+    {
+        $ownResctivPath = $this->config->getString(ConfigPath::CONFIG_OWN_PATH_RESTIC_BINARY->value);
+        if($ownResctivPath !== '') {
+            return $ownResctivPath;
+        }
+        return null;
+    }
 }

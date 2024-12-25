@@ -23,8 +23,8 @@
             <label>Use own restic path</label>
         </input-field>
         <input-field type="text">
-            <name>pathResticBinary</name>
-            <label>Path to binary of restic</label>
+            <name>ownPathResticBinary</name>
+            <label>Own path to binary of restic</label>
         </input-field>
     </card>
 </config>

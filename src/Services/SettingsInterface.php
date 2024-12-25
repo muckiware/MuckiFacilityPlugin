@@ -23,4 +23,6 @@ interface SettingsInterface
     public function getBackupPath(): string;
     public function getDateTimestamp(): string;
     public function getDatestamp(): string;
+    public function hasOwnResticBinaryPath(): bool;
+    public function getOwnResticBinaryPath(): ?string;
 }

@@ -15,109 +15,47 @@ use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenContainerEve
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\Framework\DataAbstractionLayer\Write\WriteException;
 
+use MuckiRestic\Library\Backup;
+use MuckiRestic\Entity\Result\ResultEntity;
+use MuckiRestic\Exception\InvalidConfigurationException;
+
+use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
+use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
+
 class BackupRepository
 {
     public function __construct(
         protected LoggerInterface $logger,
+        protected PluginSettings $pluginSettings,
         protected EntityRepository $backupRepository,
     )
     {}
 
     /**
-     * @throws \Exception
+     * @throws InvalidConfigurationException
      */
-    public function saveMappingsSettingsByLanguageId(
-        array $mapping,
-        array $settings,
-        string $indexStructureId,
-        string $languageId,
-        Context $context
-    ): ?EntityWrittenContainerEvent
+    public function initRepository(string $backupRepositoryId): ResultEntity
     {
-        try {
-            return $this->indexStructureTranslationRepository->update(
-                array(
-                    array(
-                        'muwaIndexStructureId' => $indexStructureId,
-                        'languageId' => $languageId,
-                        'updated_at' => new \DateTime(),
-                        'mappings' => $mapping,
-                        'settings' => $settings
-                    ),
-                ),
-                $context
-            );
-        } catch (WriteException $exception) {
-            $this->logger->error('Update mapping not possible');
-            $this->logger->error($exception->getMessage());
+        $backupRepository = $this->getBackupRepositoryById($backupRepositoryId);
+        $backupClient = Backup::create();
+        $ownResticPath = $this->pluginSettings->getOwnResticBinaryPath();
+        if($ownResticPath) {
+            $backupClient->setBinaryPath($ownResticPath);
         }
-
-        return null;
+        $backupClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
+        $backupClient->setRepositoryPath($backupRepository->getRepositoryPath());
+        return $backupClient->createRepository();
     }
 
-    public function getAllActiveIndexStructure(): EntitySearchResult
+    public function getBackupRepositoryById(string $backupRepositoryId): ?BackupRepositoryEntity
     {
         $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('active', true));
-        $criteria->addSorting(new FieldSorting('createdAt', FieldSorting::DESCENDING));
-        $criteria->addAssociation('translations');
-        $criteria->addAssociation('translations.language');
-        $criteria->addAssociation('translations.language.translationCode');
+        $criteria->addFilter(new EqualsFilter('id', $backupRepositoryId));
+        $criteria->setLimit(1);
 
-        return $this->indexStructureRepository->search($criteria, Context::createDefaultContext());
-    }
-
-    public function getIndexStructureById(
-        string $indexStructureId,
-        string $languageId,
-        Context $context
-    ): ?IndexStructureEntity
-    {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsAnyFilter('id', [$indexStructureId]));
-        $criteria->addFilter(new EqualsAnyFilter('translations.languageId', [$languageId]));
-        $criteria->addAssociation('translations');
-        $criteria->addAssociation('translations.mappings');
-
-        $indexStructureResult = $this->indexStructureRepository->search($criteria, $context);
-        if ($indexStructureResult->count() >= 1) {
-            return $indexStructureResult->first();
-        } else {
-            return null;
-        }
-    }
-
-    public function getCurrentIndexStructure(
-        string $entity,
-        string $languageId,
-        string $salesChannelId,
-        Context $context
-    ): ?IndexStructureEntity
-    {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('entity', $entity));
-        $criteria->addFilter(new EqualsFilter('salesChannelId', $salesChannelId));
-        $criteria->addFilter(new EqualsFilter('translations.languageId', $languageId));
-        $criteria->addAssociation('translations');
-        $criteria->addAssociation('translations.mappings');
-
-        $indexStructureResult = $this->indexStructureRepository->search($criteria, $context);
-        if ($indexStructureResult->count() >= 1) {
-            return $indexStructureResult->first();
-        } else {
-            return null;
-        }
-    }
-
-    public function removeIndexStructureById(string $indexStructureId, Context $context): ?EntityWrittenContainerEvent
-    {
-        try {
-            return $this->indexStructureRepository->delete(
-                array(array('id' => $indexStructureId)), $context
-            );
-        } catch (WriteException $exception) {
-            $this->logger->error('Update mapping not possible');
-            $this->logger->error($exception->getMessage());
+        $backupRepository = $this->backupRepository->search($criteria, Context::createDefaultContext());
+        if ($backupRepository->count() === 1) {
+            return $backupRepository->first();
         }
 
         return null;

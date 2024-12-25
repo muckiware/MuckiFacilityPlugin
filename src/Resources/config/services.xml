@@ -1,6 +1,12 @@
 <?xml version="1.0" ?>
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
+        <service id="MuckiFacilityPlugin\Controller\InitBackupRepositoryController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service id="MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition">
             <tag name="shopware.entity.definition" entity="muwa_backup_repository" />
         </service>
@@ -18,6 +24,11 @@
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Content\BackupRepository" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="muwa_backup_repository.repository"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\Backup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>

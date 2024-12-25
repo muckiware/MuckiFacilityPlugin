@@ -99,7 +99,15 @@ Component.register('muwa-backup-repository-list', {
         },
         updateTotal({ total }) {
             this.total = total;
-        }
+        },
+
+        deleteBackupRepository(item) {
+
+            let that = this;
+            that.repository.delete(item.id, Shopware.Context.api).then(() => {
+                this.getList();
+            });
+        },
     },
 
     created() {

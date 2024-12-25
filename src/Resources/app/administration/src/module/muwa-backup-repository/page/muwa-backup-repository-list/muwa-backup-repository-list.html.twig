@@ -51,19 +51,17 @@
                     </template>
 
                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                    {% block lion_pseudo_product_list_grid_columns_active %}
+                    {% block muwa_backup_repository_list_grid_columns_active %}
                         <template #column-active="{ item, isInlineEdit }">
                             <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                            {% block lion_pseudo_product_list_grid_columns_active_inline_edit %}
+                            {% block muwa_backup_repository_list_grid_columns_active_inline_edit %}
                                 <template v-if="isInlineEdit">
-                                    <sw-checkbox-field
-                                            v-model:value="item.active"
-                                    />
+                                    <sw-checkbox-field v-model:value="item.active"/>
                                 </template>
                             {% endblock %}
 
                             <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                            {% block lion_pseudo_product_list_grid_columns_active_content %}
+                            {% block muwa_backup_repository_list_grid_columns_active_content %}
                                 <template v-else>
                                     <sw-icon
                                             v-if="item.active"
@@ -87,13 +85,13 @@
                     <template #column-updatedAt="{ item }">
                         {{ dateFilter(item.updatedAt) }}
                     </template>
-                    <template #delete-action="{ item }">
-                        <sw-context-menu-item @click="deleteIndices(item)"
-                                              variant="danger"
-                        >
-                            {{ $tc('global.default.delete') }}
-                        </sw-context-menu-item>
-                    </template>
+                    {% block muwa_backup_repository_list_grid_columns_actions %}
+                        <template #delete-action="{ item }">
+                            <sw-context-menu-item @click="deleteBackupRepository(item)" variant="danger">
+                                {{ $tc('global.default.delete') }}
+                            </sw-context-menu-item>
+                        </template>
+                    {% endblock %}
                 </sw-entity-listing>
             {% endblock %}
         </template>
