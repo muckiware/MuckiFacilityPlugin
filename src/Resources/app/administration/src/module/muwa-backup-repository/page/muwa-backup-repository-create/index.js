@@ -10,7 +10,7 @@ Component.extend('muwa-backup-repository-create', 'muwa-backup-repository-detail
 
     data() {
         return {
-            isLoading: false,
+            isLoadingInit: false,
             processSuccess: false,
             httpClient: null,
             requestInitRepository: '/_action/muwa/backup/repository/init'
@@ -44,7 +44,7 @@ Component.extend('muwa-backup-repository-create', 'muwa-backup-repository-detail
                 return;
             }
 
-            this.isLoading = true;
+            this.isLoadingInit = true;
 
             this.httpClient.post(this.requestInitRepository, this.backupRepository, { headers: this.getApiHeader() }).then(() => {
 
@@ -62,22 +62,23 @@ Component.extend('muwa-backup-repository-create', 'muwa-backup-repository-detail
 
             }).then(() => {
 
-                // this.repository.save(this.backupRepository, Shopware.Context.api).then(() => {
-                //     this.isLoading = false;
-                //     this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
-                //     this.createNotificationSuccess({
-                //         title: this.$t('muwa.backup.repository.create.success-title'),
-                //         message: this.$t('muwa.backup.repository.create.success-message')
-                //     });
-                //
-                // }).catch((exception) => {
-                //
-                //     this.isLoading = false;
-                //     this.createNotificationError({
-                //         title: this.$t('muwa.backup.repository.create.error-message'),
-                //         message: exception
-                //     });
-                // });
+                this.repository.save(this.backupRepository, Shopware.Context.api).then(() => {
+
+                    this.isLoadingInit = false;
+                    this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
+                    this.createNotificationSuccess({
+                        title: this.$t('muwa.backup.repository.create.success-title'),
+                        message: this.$t('muwa.backup.repository.create.success-message')
+                    });
+
+                }).catch((exception) => {
+
+                    this.isLoading = false;
+                    this.createNotificationError({
+                        title: this.$t('muwa.backup.repository.create.error-message'),
+                        message: exception
+                    });
+                });
             });
         },
 
