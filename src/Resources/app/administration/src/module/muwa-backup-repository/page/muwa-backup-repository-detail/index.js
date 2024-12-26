@@ -30,7 +30,7 @@ Component.register('muwa-backup-repository-detail', {
             V6_5_0_0: false,
             V6_6_0_0: false,
             backupRepository: {
-                backupPaths: null
+                backupPaths: []
             },
             isLoading: false,
             isSaveSuccessful: false,
@@ -38,9 +38,7 @@ Component.register('muwa-backup-repository-detail', {
                 { value: 'files', label: this.$tc('muwa-backup-repository.general.types.files') },
                 { value: 'completeDatabaseSingleFile', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSingleFile') },
                 { value: 'completeDatabaseSeparateFiles', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSeparateFiles') }
-            ],
-            backupPaths: [],
-            forgetParameters: [],
+            ]
         };
     },
 
@@ -130,7 +128,6 @@ Component.register('muwa-backup-repository-detail', {
                 .get(this.$route.params.id, Shopware.Context.api, this.criteria)
                 .then((entity) => {
 
-                    console.log('entity', entity);
                     this.backupRepository = entity;
                     this.isLoading = false;
                 });
@@ -187,22 +184,24 @@ Component.register('muwa-backup-repository-detail', {
 
         loadBackupsPaths() {
 
-            if(this.backupRepository && this.backupRepository.backupPaths) {
-
-                this.backupRepository.backupPaths.forEach((backupPath) => {
-                    if (!backupPath.id) {
-                        backupPath.id = createId();
-                    }
-                });
-            }
+            // if(this.backupRepository && this.backupRepository.backupPaths) {
+            //
+            //     this.backupRepository.backupPaths.forEach((backupPath) => {
+            //         if (!backupPath.id) {
+            //             backupPath.id = createId();
+            //         }
+            //     });
+            // }
         },
 
         onAddBackupPath() {
 
-            if(!this.backupRepository.backupPaths) {
+            if(this.backupRepository.backupPaths.length !== undefined && this.backupRepository.backupPaths.length >= 1) {
+                this.backupRepository.backupPaths.forEach(currentBackupPath => { currentBackupPath.position += 1; });
+            } else {
                 this.backupRepository.backupPaths = [];
             }
-            this.backupRepository.backupPaths.forEach(currentBackupPath => { currentBackupPath.position += 1; });
+
             this.backupRepository.backupPaths.unshift({
                 id: createId(),
                 isDefault: false,

@@ -56,7 +56,8 @@
       "forgetMonthlyLabel": "Monatliche Sicherungen löschen",
       "forgetYearlyLabel": "Jährliche Sicherungen löschen",
       "forget": "Löschen von Snapshots",
-      "forgetDescription": "Lege hier das Löschen von Snapshots fest, die älter sind als die angegebene Anzahl von Tagen, Wochen, etc."
+      "forgetDescription": "Lege hier das Löschen von Snapshots fest, die älter sind als die angegebene Anzahl von Tagen, Wochen, etc.",
+      "pathEmptyState": "Keine Backup Pfade vorhanden"
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten",

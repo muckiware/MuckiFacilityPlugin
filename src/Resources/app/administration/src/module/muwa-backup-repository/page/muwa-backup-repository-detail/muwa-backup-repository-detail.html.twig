@@ -113,27 +113,6 @@
                         >
                         </sw-text-field>
 
-                        <sw-password-field
-                            v-if="isV6600"
-                            :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
-                            v-model:value="backupRepository.repositoryPassword"
-                            maxlength="255"
-                            validation="required"
-                            required
-                            :disabled="true"
-                        >
-                        </sw-password-field>
-                        <sw-password-field
-                            v-if="isV6500"
-                            :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
-                            v-model="backupRepository.repositoryPassword"
-                            maxlength="255"
-                            validation="required"
-                            required
-                            :disabled="true"
-                        >
-                        </sw-password-field>
-
                         <sw-text-field
                             v-if="isV6600"
                             :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
@@ -243,7 +222,7 @@
                             <sw-empty-state
                                 v-else
                                 class="sw-import-export-edit-profile-modal-mapping__empty-state"
-                                :title="$tc('muwa-backup-repository.detail.mappingEmptyState')"
+                                :title="$tc('muwa-backup-repository.detail.pathEmptyState')"
                                 :absolute="false"
                                 icon="regular-file"
                             />

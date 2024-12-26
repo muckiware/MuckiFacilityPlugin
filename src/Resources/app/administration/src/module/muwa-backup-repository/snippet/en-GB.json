@@ -52,7 +52,8 @@
       "compressPathLabel": "Data Compression",
       "compressLabel": "Compress",
       "forget": "Delete of snapshots",
-      "forgetDescription": "Specify here the deletion of snapshots that are older than the specified number of days."
+      "forgetDescription": "Specify here the deletion of snapshots that are older than the specified number of days.",
+      "pathEmptyState": "No backup paths exists"
     },
     "create": {
       "errorTitle": "Storage problem occurred",
