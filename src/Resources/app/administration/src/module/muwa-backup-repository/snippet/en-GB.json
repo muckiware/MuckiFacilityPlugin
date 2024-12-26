@@ -43,6 +43,7 @@
       "nameLabel": "Technical name",
       "repositoryPathLabel": "Repository Path",
       "repositoryPasswordLabel": "Repository Password",
+      "repositoryRepeatPasswordLabel": "Repeat Repository Password",
       "addBackupPathLabel": "Add backup path",
       "backupPathsDescription": "Add backup paths here that are to be saved in the backup repository.",
       "backupPathLabel": "Backup Path",
@@ -55,7 +56,9 @@
     },
     "create": {
       "errorTitle": "Storage problem occurred",
-      "createButtonLabel": "Create new Repository"
+      "createButtonLabel": "Create new Repository",
+      "error-message": "An error has occurred",
+      "success-title": "Backup repository saved"
     },
     "mappingList": {
       "inputDataTypeLabel": "Data type",

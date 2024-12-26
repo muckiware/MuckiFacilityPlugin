@@ -46,33 +46,38 @@ Component.extend('muwa-backup-repository-create', 'muwa-backup-repository-detail
 
             this.isLoading = true;
 
-            this.repository.save(this.backupRepository, Shopware.Context.api).then(() => {
-                this.isLoading = false;
-                this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
+            this.httpClient.post(this.requestInitRepository, this.backupRepository, { headers: this.getApiHeader() }).then(() => {
+
                 this.createNotificationSuccess({
-                    title: this.$t('muwa.backup.repository.detail.success-title'),
-                    message: this.$t('muwa.backup.repository.detail.success-message')
+                    title: this.$t('muwa-backup-repository.create.success-title'),
+                    message: this.$t('muwa-backup-repository.create.success-message')
                 });
 
             }).catch((exception) => {
-                this.isLoading = false;
+
                 this.createNotificationError({
-                    title: this.$t('muwa.backup.repository.detail.error-message'),
-                    message: exception
+                    title: this.$t('muwa-backup-repository.create.error-message'),
+                    message: exception.response.data.errors[0].detail
                 });
+
             }).then(() => {
-               
-                this.httpClient.post(this.requestInitRepository, { id: this.backupRepository.id }, { headers: this.getApiHeader() }).then(() => {
-                    this.createNotificationSuccess({
-                        title: this.$t('muwa.backup.repository.detail.success-title'),
-                        message: this.$t('muwa.backup.repository.detail.success-message')
-                    });
-                }).catch((exception) => {
-                    this.createNotificationError({
-                        title: this.$t('muwa.backup.repository.detail.error-message'),
-                        message: exception
-                    });
-                });
+
+                // this.repository.save(this.backupRepository, Shopware.Context.api).then(() => {
+                //     this.isLoading = false;
+                //     this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
+                //     this.createNotificationSuccess({
+                //         title: this.$t('muwa.backup.repository.create.success-title'),
+                //         message: this.$t('muwa.backup.repository.create.success-message')
+                //     });
+                //
+                // }).catch((exception) => {
+                //
+                //     this.isLoading = false;
+                //     this.createNotificationError({
+                //         title: this.$t('muwa.backup.repository.create.error-message'),
+                //         message: exception
+                //     });
+                // });
             });
         },
 

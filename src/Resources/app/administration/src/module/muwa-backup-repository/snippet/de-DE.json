@@ -43,6 +43,7 @@
       "nameLabel": "Technischer Name",
       "repositoryPathLabel": "Repository Pfad",
       "repositoryPasswordLabel": "Repository Passwort",
+      "repositoryRepeatPasswordLabel": "Repository Passwort wiederholen",
       "addBackupPathLabel": "Backup Pfad hinzufügen",
       "backupPathsDescription": "Füge hier Backup Pfade hinzu, die in das Backup Repository gesichert werden sollen.",
       "backupPathLabel": "Backup Pfad",
@@ -59,7 +60,9 @@
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten",
-      "createButtonLabel": "Neues Repository erstellen"
+      "createButtonLabel": "Neues Repository erstellen",
+      "error-message": "Ein Fehler ist aufgetreten",
+      "success-title": "Backup repository gespeichert"
     },
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"

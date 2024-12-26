@@ -21,6 +21,7 @@ use MuckiRestic\Exception\InvalidConfigurationException;
 
 use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
+use MuckiFacilityPlugin\Entity\RepositoryInitInputs;
 
 class BackupRepository
 {
@@ -34,16 +35,15 @@ class BackupRepository
     /**
      * @throws InvalidConfigurationException
      */
-    public function initRepository(string $backupRepositoryId): ResultEntity
+    public function initRepository(RepositoryInitInputs $backupRepositoryInput): ResultEntity
     {
-        $backupRepository = $this->getBackupRepositoryById($backupRepositoryId);
         $backupClient = Backup::create();
         $ownResticPath = $this->pluginSettings->getOwnResticBinaryPath();
         if($ownResticPath) {
             $backupClient->setBinaryPath($ownResticPath);
         }
-        $backupClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
-        $backupClient->setRepositoryPath($backupRepository->getRepositoryPath());
+        $backupClient->setRepositoryPassword($backupRepositoryInput->getRepositoryPassword());
+        $backupClient->setRepositoryPath($backupRepositoryInput->getRepositoryPath());
         return $backupClient->createRepository();
     }
 

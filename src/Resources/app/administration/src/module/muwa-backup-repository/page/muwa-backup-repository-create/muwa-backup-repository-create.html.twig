@@ -112,26 +112,48 @@
                         >
                         </sw-text-field>
 
-                        <sw-password-field
-                                v-if="isV6600"
-                                :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
-                                v-model:value="backupRepository.repositoryPassword"
-                                maxlength="255"
-                                validation="required"
-                                required
-                                :disabled="false"
-                        >
-                        </sw-password-field>
-                        <sw-password-field
-                                v-if="isV6500"
-                                :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
-                                v-model="backupRepository.repositoryPassword"
-                                maxlength="255"
-                                validation="required"
-                                required
-                                :disabled="false"
-                        >
-                        </sw-password-field>
+                        <sw-container style="grid-template-columns: 1fr 1fr; gap: 0px 30px; place-items: stretch;">
+                            <sw-password-field
+                                    v-if="isV6600"
+                                    :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
+                                    v-model:value="backupRepository.repositoryPassword"
+                                    maxlength="50%"
+                                    validation="required"
+                                    required
+                                    :disabled="false"
+                            >
+                            </sw-password-field>
+                            <sw-password-field
+                                    v-if="isV6500"
+                                    :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
+                                    v-model="backupRepository.repositoryPassword"
+                                    maxlength="50%"
+                                    validation="required"
+                                    required
+                                    :disabled="false"
+                            >
+                            </sw-password-field>
+                            <sw-password-field
+                                    v-if="isV6600"
+                                    :label="$tc('muwa-backup-repository.detail.repositoryRepeatPasswordLabel')"
+                                    v-model:value="backupRepository.repositoryRepeatPassword"
+                                    maxlength="50%"
+                                    validation="required"
+                                    required
+                                    :disabled="false"
+                            >
+                            </sw-password-field>
+                            <sw-password-field
+                                    v-if="isV6500"
+                                    :label="$tc('muwa-backup-repository.detail.repositoryRepeatPasswordLabel')"
+                                    v-model="backupRepository.repositoryRepeatPassword"
+                                    maxlength="50%"
+                                    validation="required"
+                                    required
+                                    :disabled="false"
+                            >
+                            </sw-password-field>
+                        </sw-container>
 
                         <sw-text-field
                                 v-if="isV6600"
