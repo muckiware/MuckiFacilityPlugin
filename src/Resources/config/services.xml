@@ -57,6 +57,7 @@
         </service>
         <service id="MuckiFacilityPlugin\MessageQueue\Handler\CreateBackupHandler">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
             <tag name="messenger.message_handler"/>
         </service>
     </services>

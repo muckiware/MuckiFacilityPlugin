@@ -26,6 +26,7 @@ use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
+use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 
 #[AsCommand(
     name: 'muckiware:facility:backup',
@@ -82,7 +83,10 @@ class Backup extends Command
         $output->writeln('Start to run backup');
         $inputBackupType = $this->checkInputForBackupType($input);
         if($this->pluginSettings->isEnabled() && $inputBackupType) {
-            $this->backupService->createBackup($inputBackupType);
+
+            $createBackup = new CreateBackupEntity();
+            $createBackup->setBackupType($inputBackupType);
+            $this->backupService->createBackup($createBackup);
         }
         $output->writeln('Backup is done');
 

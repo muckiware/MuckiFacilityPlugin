@@ -7,6 +7,7 @@ namespace MuckiFacilityPlugin\Entity;
 class CreateBackupEntity
 {
     protected string $backupRepositoryId;
+    protected string $backupType;
     protected string $repositoryPassword;
     protected string $repositoryPath;
 
@@ -53,5 +54,15 @@ class CreateBackupEntity
     public function setBackupPaths(array $backupPaths): void
     {
         $this->backupPaths = $backupPaths;
+    }
+
+    public function getBackupType(): string
+    {
+        return $this->backupType;
+    }
+
+    public function setBackupType(string $backupType): void
+    {
+        $this->backupType = $backupType;
     }
 }

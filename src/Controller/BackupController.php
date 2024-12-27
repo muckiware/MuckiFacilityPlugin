@@ -47,6 +47,7 @@ class BackupController extends AbstractController
         $message->setRepositoryPassword($requestDataBag->get('repositoryPassword'));
         $message->setBackupPaths($this->createBackupPaths($requestDataBag->get('backupPaths')));
         $message->setRepositoryPath($requestDataBag->get('repositoryPath'));
+        $message->setBackupType($requestDataBag->get('type'));
 
         $this->messageBus->dispatch($message);
 

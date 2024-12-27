@@ -11,6 +11,7 @@ use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
+use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 
 class BackupRunnerFactoryTest extends TestCase
 {
@@ -22,7 +23,9 @@ class BackupRunnerFactoryTest extends TestCase
         $coreDatabase = $this->createMock(CoreDatabase::class);
 
         $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
-        $runner = $backupFactory->createBackupRunner(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
+        $createBackup = new CreateBackupEntity();
+        $createBackup->setBackupType(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
+        $runner = $backupFactory->createBackupRunner($createBackup);
         $this->assertInstanceOf(
             BackupInterface::class,
             $runner,
@@ -38,7 +41,9 @@ class BackupRunnerFactoryTest extends TestCase
         $coreDatabase = $this->createMock(CoreDatabase::class);
 
         $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
-        $runner = $backupFactory->createBackupRunner(BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value);
+        $createBackup = new CreateBackupEntity();
+        $createBackup->setBackupType(BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value);
+        $runner = $backupFactory->createBackupRunner($createBackup);
         $this->assertInstanceOf(
             BackupInterface::class,
             $runner,
@@ -57,6 +62,8 @@ class BackupRunnerFactoryTest extends TestCase
         $coreDatabase = $this->createMock(CoreDatabase::class);
 
         $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
-        $runner = $backupFactory->createBackupRunner('test');
+        $createBackup = new CreateBackupEntity();
+        $createBackup->setBackupType('test');
+        $runner = $backupFactory->createBackupRunner($createBackup);
     }
 }
