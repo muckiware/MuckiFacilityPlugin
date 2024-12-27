@@ -18,7 +18,7 @@ use MuckiFacilityPlugin\Core\ConfigPath;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Core\BackupTypes;
 
-class Backup
+class BackupQueue
 {
     public function __construct(
         protected LoggerInterface $logger,
@@ -28,11 +28,6 @@ class Backup
 
     public function createBackup(string $backupType): void
     {
-        try {
-            $backupRunner = $this->backupRunnerFactory->createBackupRunner($backupType);
-            $backupRunner->createBackupData();
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-        }
+
     }
 }

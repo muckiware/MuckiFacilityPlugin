@@ -18,6 +18,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
 use MuckiFacilityPlugin\Entity\RepositoryInitInputs;
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
+use MuckiFacilityPlugin\Entity\BackupPathEntity;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
 #[Package('create-backup-repository')]
@@ -43,8 +44,29 @@ class BackupController extends AbstractController
     {
         $message = new CreateBackupMessage();
         $message->setBackupRepositoryId($requestDataBag->get('id'));
+        $message->setRepositoryPassword($requestDataBag->get('repositoryPassword'));
+        $message->setBackupPaths($this->createBackupPaths($requestDataBag->get('backupPaths')));
+        $message->setRepositoryPath($requestDataBag->get('repositoryPath'));
+
         $this->messageBus->dispatch($message);
 
         return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    protected function createBackupPaths(RequestDataBag $requestDataBag): array
+    {
+        $backupPaths = [];
+        /** @var RequestDataBag $backupPath */
+        foreach ($requestDataBag->getIterator() as $backupPath) {
+
+            $backupPathEntity = new BackupPathEntity();
+            $backupPathEntity->setId($backupPath->get('id'));
+            $backupPathEntity->setBackupPath($backupPath->get('backupPath'));
+            $backupPathEntity->setCompress($backupPath->get('compress'));
+            $backupPathEntity->setPosition($backupPath->get('position'));
+
+            $backupPaths[] = $backupPathEntity;
+        }
+        return $backupPaths;
     }
 }

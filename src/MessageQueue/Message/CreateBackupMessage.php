@@ -3,18 +3,9 @@
 namespace MuckiFacilityPlugin\MessageQueue\Message;
 
 use Shopware\Core\Framework\MessageQueue\AsyncMessageInterface;
+use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 
-class CreateBackupMessage implements AsyncMessageInterface
+class CreateBackupMessage extends CreateBackupEntity implements AsyncMessageInterface
 {
-    private string $backupRepositoryId;
 
-    public function getBackupRepositoryId(): string
-    {
-        return $this->backupRepositoryId;
-    }
-
-    public function setBackupRepositoryId(string $backupRepositoryId): void
-    {
-        $this->backupRepositoryId = $backupRepositoryId;
-    }
 }

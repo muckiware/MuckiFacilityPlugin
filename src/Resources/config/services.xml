@@ -55,5 +55,9 @@
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="Doctrine\DBAL\Connection"/>
         </service>
+        <service id="MuckiFacilityPlugin\MessageQueue\Handler\CreateBackupHandler">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <tag name="messenger.message_handler"/>
+        </service>
     </services>
 </container>
