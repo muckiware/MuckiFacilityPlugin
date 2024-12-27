@@ -16,6 +16,17 @@
                 >
                     {{ $tc('muwa-backup-repository.list.header.saveButtonLabel') }}
                 </sw-button-process>
+                <sw-button-process
+                        variant="ghost"
+                        class="sw-settings-search__search-index-rebuild-button"
+                        :is-loading="isBackupProcessInProgress"
+                        :disabled="isBackupProcessInProgress || !acl.can('backup_repository.editor')"
+                        :process-success="isBackupProcessSuccess"
+                        @update:process-success="createFinish"
+                        @click="onBackupProcess"
+                >
+                    {{ $tc('muwa-backup-repository.detail.startBackup') }}
+                </sw-button-process>
             </template>
         {% endblock %}
 

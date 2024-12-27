@@ -11,7 +11,8 @@ Component.register('muwa-backup-repository-detail', {
 
     inject: [
         'repositoryFactory',
-        'feature'
+        'feature',
+        'acl'
     ],
 
     mixins: [
@@ -38,7 +39,11 @@ Component.register('muwa-backup-repository-detail', {
                 { value: 'files', label: this.$tc('muwa-backup-repository.general.types.files') },
                 { value: 'completeDatabaseSingleFile', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSingleFile') },
                 { value: 'completeDatabaseSeparateFiles', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSeparateFiles') }
-            ]
+            ],
+            isBackupProcessInProgress: false,
+            isBackupProcessSuccess: false,
+            requestBackupProcess: '/_action/muwa/backup/process',
+            httpClient: null,
         };
     },
 
@@ -52,6 +57,7 @@ Component.register('muwa-backup-repository-detail', {
             this.V6_5_0_0 = true;
         }
 
+        this.httpClient = Shopware.Application.getContainer('init').httpClient;
         this.createdComponent();
     },
 
@@ -118,6 +124,7 @@ Component.register('muwa-backup-repository-detail', {
         createdComponent() {
 
             this.isLoading = true;
+            this.isBackupProcessInProgress = true;
             this.getBackupRepository();
             this.loadBackupsPaths();
         },
@@ -130,6 +137,7 @@ Component.register('muwa-backup-repository-detail', {
 
                     this.backupRepository = entity;
                     this.isLoading = false;
+                    this.isBackupProcessInProgress = false;
                 });
         },
 
@@ -179,6 +187,34 @@ Component.register('muwa-backup-repository-detail', {
             });
         },
 
+        onBackupProcess() {
+
+            if (this.hasErrors()) {
+                return;
+            }
+
+            this.isBackupProcessInProgress = true;
+            this.isSaveSuccessful = false;
+
+            this.httpClient.post(this.requestBackupProcess, this.backupRepository, { headers: this.getApiHeader() }).then(() => {
+
+                this.createNotificationSuccess({
+                    title: this.$t('muwa-backup-repository.create.success-title'),
+                    message: this.$t('muwa-backup-repository.create.success-message')
+                });
+
+                this.isBackupProcessInProgress = false;
+
+            }).catch((exception) => {
+
+                this.createNotificationError({
+                    title: this.$t('muwa-backup-repository.create.error-message'),
+                    message: exception.response.data.errors[0].detail
+                });
+
+            });
+        },
+
         saveFinish() {
         },
 
@@ -220,6 +256,15 @@ Component.register('muwa-backup-repository-detail', {
             });
 
             this.loadBackupsPaths();
+        },
+
+        getApiHeader() {
+
+            return {
+                Accept: 'application/vnd.api+json',
+                Authorization: `Bearer ${ Shopware.Context.api.authToken.access }`,
+                'Content-Type': 'application/json'
+            }
         }
     }
 });
