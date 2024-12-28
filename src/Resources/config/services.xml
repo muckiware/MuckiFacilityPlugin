@@ -21,7 +21,8 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
         </service>
-        <service class="MuckiFacilityPlugin\Commands\Backup" id="muwa.facility.command.backup" public="true">
+
+        <service class="MuckiFacilityPlugin\Commands\BackupCheck" id="muwa.command.backup.check" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
@@ -31,7 +32,27 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
-        <service class="MuckiFacilityPlugin\Commands\Manage" id="muwa.facility.command.manage" public="true">
+        <service class="MuckiFacilityPlugin\Commands\BackupCreate" id="muwa.command.backup.create" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service class="MuckiFacilityPlugin\Commands\ManageSnapshots" id="muwa.command.manage.snapshots" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service class="MuckiFacilityPlugin\Commands\ManageForget" id="muwa.command.manage.forget" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>

@@ -12,27 +12,22 @@
 namespace MuckiFacilityPlugin\Commands;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Shopware\Core\Framework\Context;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
-use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 
 #[AsCommand(
-    name: 'muckiware:facility:backup',
-    description: 'Create backups'
+    name: 'muckiware:backup:create',
+    description: 'Create a backup into existing repository'
 )]
-class Backup extends Command
+class BackupCreate extends Commands
 {
     protected ?ContainerInterface $container = null;
 
@@ -67,8 +62,8 @@ class Backup extends Command
      */
     public function configure(): void
     {
-        $this->setDescription('This Muckilog plugin command for to send logger events by email');
-        $this->addArgument('backupType',InputArgument::REQUIRED, 'Type of backup');
+        $this->setDescription('Id for the existing backup repository');
+        $this->addArgument('backupRepositoryId',InputArgument::REQUIRED, 'Backup repository id');
         parent::configure();
     }
 
@@ -81,29 +76,14 @@ class Backup extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Start to run backup');
-        $inputBackupType = $this->checkInputForBackupType($input);
-        if($this->pluginSettings->isEnabled() && $inputBackupType) {
+        $backupRepositoryId = $this->checkInputForBackupRepositoryId($input);
+        if($this->pluginSettings->isEnabled() && $backupRepositoryId) {
 
-            $createBackup = new CreateBackupEntity();
-            $createBackup->setBackupType($inputBackupType);
+            $createBackup = $this->backupService->prepareCreateBackup($backupRepositoryId, $output);
             $this->backupService->createBackup($createBackup);
         }
         $output->writeln('Backup is done');
 
         return 0;
-    }
-
-    protected function checkInputForBackupType(InputInterface $input): string
-    {
-        $backupTypeInput = $input->getArgument('backupType');
-        if(
-            $backupTypeInput &&
-            $backupTypeInput !== '' &&
-            $this->pluginHelper->checkBackupTypByInput($backupTypeInput)
-        ) {
-            return $backupTypeInput;
-        }
-
-        throw new \InvalidArgumentException('Invalid backup type');
     }
 }
