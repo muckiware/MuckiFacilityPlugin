@@ -10,6 +10,7 @@ use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Backup\BackupInterface;
+use MuckiRestic\Exception\InvalidConfigurationException;
 
 class FilesRunner implements BackupInterface
 {
@@ -21,7 +22,7 @@ class FilesRunner implements BackupInterface
 
     public function createBackupData(): void
     {
-        $backupClient = $this->prepareBackup();
+        $backupClient = $this->prepareBackupClient();
 
         /** @var BackupPathEntity $backupPath */
         foreach ($this->createBackup->getBackupPaths() as $backupPath) {
@@ -34,6 +35,19 @@ class FilesRunner implements BackupInterface
             $createBackup = $backupClient->createBackup();
             $this->logger->info($createBackup->getOutput(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
+    }
+
+    /**
+     * @throws InvalidConfigurationException
+     */
+    public function checkBackupData(): string
+    {
+        $backupClient = $this->prepareBackupClient();
+        $createBackup = $backupClient->checkBackup();
+
+        $this->logger->info($createBackup->getOutput(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+
+        return $createBackup->getOutput();
     }
 
     public function getBackupData(): mixed
@@ -51,7 +65,7 @@ class FilesRunner implements BackupInterface
         // TODO: Implement removeBackupData() method.
     }
 
-    public function prepareBackup(): Backup
+    public function prepareBackupClient(): Backup
     {
         $backupClient = Backup::create();
         if($this->pluginSettings->hasOwnResticBinaryPath()) {

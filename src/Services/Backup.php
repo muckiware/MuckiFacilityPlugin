@@ -60,6 +60,18 @@ class Backup
         }
     }
 
+    public function checkBackup(CreateBackupEntity $createBackup): string
+    {
+        try {
+            $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
+            return $backupRunner->checkBackupData();
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+
+        return '';
+    }
+
     public function prepareBackupPaths(array $backupPaths): array
     {
         $preparedBackupPaths = [];

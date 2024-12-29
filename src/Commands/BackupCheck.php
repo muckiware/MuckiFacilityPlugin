@@ -75,14 +75,13 @@ class BackupCheck extends Commands
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $output->writeln('Start to run backup');
+        $output->writeln('Start to check backup');
         $backupRepositoryId = $this->checkInputForBackupRepositoryId($input);
         if($this->pluginSettings->isEnabled() && $backupRepositoryId) {
 
             $createBackup = $this->backupService->prepareCreateBackup($backupRepositoryId, $output);
-            $this->backupService->createBackup($createBackup);
+            $output->writeln($this->backupService->checkBackup($createBackup));
         }
-        $output->writeln('Backup is done');
 
         return 0;
     }

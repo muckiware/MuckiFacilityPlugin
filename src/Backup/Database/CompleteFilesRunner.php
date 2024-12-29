@@ -101,4 +101,9 @@ class CompleteFilesRunner implements BackupInterface
 
         return $backupFileName;
     }
+
+    public function checkBackupData(): void
+    {
+        // TODO: Implement checkBackupData() method.
+    }
 }

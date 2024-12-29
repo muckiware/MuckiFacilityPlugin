@@ -1,3 +1,4 @@
+!vendor/muckiware/restic/*
 *.DS_Store
 var/cache/*
 /composer.lock

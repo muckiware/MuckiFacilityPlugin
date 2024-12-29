@@ -70,6 +70,7 @@
         <service id="MuckiFacilityPlugin\Services\Backup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Backup\BackupRunnerFactory"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
         </service>
     	<service id="MuckiFacilityPlugin\Services\Settings" public="true">
         	<argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
