@@ -17,6 +17,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
 
+use MuckiFacilityPlugin\Core\BackupTypes;
+
 class Commands extends Command
 {
     protected function checkInputForBackupRepositoryId(InputInterface $input): string
@@ -31,5 +33,33 @@ class Commands extends Command
         }
 
         throw new \InvalidArgumentException('Invalid or missing backup repository id');
+    }
+
+    protected function checkInputForBackupType(InputInterface $input): string
+    {
+        $backupTypeInput = $input->getArgument('backupType');
+        if(
+            $backupTypeInput &&
+            $backupTypeInput !== '' &&
+            $this->checkBackupTypByInput($backupTypeInput)
+        ) {
+            return $backupTypeInput;
+        } else {
+
+            // Default backup type
+            return BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value;
+        }
+    }
+
+    public function checkBackupTypByInput(string $backupTypeInput): bool
+    {
+        $backupTypes = BackupTypes::cases();
+        foreach ($backupTypes as $backupType) {
+            if ($backupType->value === $backupTypeInput) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

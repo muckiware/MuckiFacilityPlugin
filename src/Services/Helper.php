@@ -11,7 +11,6 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
-use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
 class Helper
@@ -32,18 +31,6 @@ class Helper
         }
 
         return false !== filter_var($email, FILTER_VALIDATE_EMAIL);
-    }
-
-    public function checkBackupTypByInput(string $backupTypeInput): bool
-    {
-        $backupTypes = BackupTypes::cases();
-        foreach ($backupTypes as $backupType) {
-            if ($backupType->value === $backupTypeInput) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public function ensureDirectoryExists(string $path): void

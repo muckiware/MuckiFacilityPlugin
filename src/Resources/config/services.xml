@@ -42,6 +42,16 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service class="MuckiFacilityPlugin\Commands\Dump" id="muwa.command.db.dump" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service class="MuckiFacilityPlugin\Commands\ManageSnapshots" id="muwa.command.manage.snapshots" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
