@@ -17,6 +17,8 @@ use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
 use Spatie\DbDumper\Compressors\GzipCompressor;
 
+use MuckiRestic\Entity\Result\ResultEntity;
+
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
@@ -27,7 +29,7 @@ class CompleteFileRunner implements BackupInterface
         protected LoggerInterface $logger,
         protected SettingsInterface $pluginSettings
     ) {}
-    public function createBackupData(): void
+    public function createBackupData(bool $isJsonOutput=true): void
     {
         $mysqlDumper = MySqlDumper::create();
         $mysqlDumper->setDatabaseUrl($this->pluginSettings->getDatabaseUrl());
@@ -90,5 +92,11 @@ class CompleteFileRunner implements BackupInterface
     public function checkBackupData(): void
     {
         // TODO: Implement checkBackupData() method.
+    }
+
+    public function getBackupResults(): array
+    {
+        // TODO: Implement getBackupResult() method.
+        return array();
     }
 }

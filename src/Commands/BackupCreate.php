@@ -18,6 +18,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+use MuckiRestic\Entity\Result\ResultEntity;
+
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
@@ -80,7 +82,12 @@ class BackupCreate extends Commands
         if($this->pluginSettings->isEnabled() && $backupRepositoryId) {
 
             $createBackup = $this->backupService->prepareCreateBackup($backupRepositoryId, $output);
-            $this->backupService->createBackup($createBackup);
+            $this->backupService->createBackup($createBackup, false);
+
+            /** @var ResultEntity $result */
+            foreach ($this->backupService->getBackup()->getBackupResults() as $result) {
+                $output->writeln($result->getOutput());
+            }
         }
         $output->writeln('Backup is done');
 

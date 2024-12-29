@@ -17,19 +17,30 @@ use Symfony\Component\Console\Output\OutputInterface;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Core\ConfigPath;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
-use MuckiFacilityPlugin\Core\BackupTypes;
+use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 
 class Backup
 {
+    protected BackupInterface $backup;
     public function __construct(
         protected LoggerInterface $logger,
         protected BackupRunnerFactory $backupRunnerFactory,
         protected BackupRepository $backupRepository
     )
     {}
+
+    public function getBackup(): BackupInterface
+    {
+        return $this->backup;
+    }
+
+    public function setBackup(BackupInterface $backup): void
+    {
+        $this->backup = $backup;
+    }
 
     public function prepareCreateBackup(string $backupRepositoryId, OutputInterface $output): CreateBackupEntity
     {
@@ -50,26 +61,28 @@ class Backup
         return $createBackup;
     }
 
-    public function createBackup(CreateBackupEntity $createBackup): void
+    public function createBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
     {
         try {
             $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
-            $backupRunner->createBackupData();
+            $backupRunner->createBackupData($isJsonOutput);
+            $this->setBackup($backupRunner);
+
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
     }
 
-    public function checkBackup(CreateBackupEntity $createBackup): string
+    public function checkBackup(CreateBackupEntity $createBackup): void
     {
         try {
             $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
-            return $backupRunner->checkBackupData();
+            $backupRunner->checkBackupData();
+            $this->setBackup($backupRunner);
+
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
-
-        return '';
     }
 
     public function prepareBackupPaths(array $backupPaths): array

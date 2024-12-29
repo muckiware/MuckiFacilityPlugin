@@ -19,5 +19,7 @@ interface BackupInterface
 
     public function removeBackupData(): void;
 
-    public function checkBackupData(): string;
+    public function checkBackupData(): void;
+
+    public function getBackupResults(): array;
 }

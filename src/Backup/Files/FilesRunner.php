@@ -1,10 +1,21 @@
-<?php
-
+<?php declare(strict_types=1);
+/**
+ * MuckiFacilityPlugin
+ *
+ * @category   SW6 Plugin
+ * @package    MuckiFacility
+ * @copyright  Copyright (c) 2024 by Muckiware
+ * @license    MIT
+ * @author     Muckiware
+ *
+ */
 namespace MuckiFacilityPlugin\Backup\Files;
 
 use Psr\Log\LoggerInterface;
 
 use MuckiRestic\Library\Backup;
+use MuckiRestic\Entity\Result\ResultEntity;
+
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Entity\CreateBackupEntity;
@@ -14,15 +25,32 @@ use MuckiRestic\Exception\InvalidConfigurationException;
 
 class FilesRunner implements BackupInterface
 {
+    /**
+     * @var array<ResultEntity> $backupResultsq
+     */
+    protected array $backupResults;
     public function __construct(
         protected LoggerInterface $logger,
         protected PluginSettings $pluginSettings,
         protected CreateBackupEntity $createBackup
     ) {}
 
-    public function createBackupData(): void
+    public function getBackupResults(): array
     {
-        $backupClient = $this->prepareBackupClient();
+        return $this->backupResults;
+    }
+
+    public function addBackupResult(ResultEntity $backupResult): void
+    {
+        $this->backupResults[] = $backupResult;
+    }
+
+    /**
+     * @throws InvalidConfigurationException
+     */
+    public function createBackupData(bool $isJsonOutput=true): void
+    {
+        $backupClient = $this->prepareBackupClient($isJsonOutput);
 
         /** @var BackupPathEntity $backupPath */
         foreach ($this->createBackup->getBackupPaths() as $backupPath) {
@@ -33,6 +61,7 @@ class FilesRunner implements BackupInterface
             }
 
             $createBackup = $backupClient->createBackup();
+            $this->addBackupResult($createBackup);
             $this->logger->info($createBackup->getOutput(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
     }
@@ -40,14 +69,13 @@ class FilesRunner implements BackupInterface
     /**
      * @throws InvalidConfigurationException
      */
-    public function checkBackupData(): string
+    public function checkBackupData(): void
     {
         $backupClient = $this->prepareBackupClient();
-        $createBackup = $backupClient->checkBackup();
+        $checkBackup = $backupClient->checkBackup();
+        $this->addBackupResult($checkBackup);
 
-        $this->logger->info($createBackup->getOutput(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-
-        return $createBackup->getOutput();
+        $this->logger->info($checkBackup->getOutput(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
     }
 
     public function getBackupData(): mixed
@@ -65,7 +93,7 @@ class FilesRunner implements BackupInterface
         // TODO: Implement removeBackupData() method.
     }
 
-    public function prepareBackupClient(): Backup
+    public function prepareBackupClient(bool $isJsonOutput=true): Backup
     {
         $backupClient = Backup::create();
         if($this->pluginSettings->hasOwnResticBinaryPath()) {
@@ -74,6 +102,7 @@ class FilesRunner implements BackupInterface
 
         $backupClient->setRepositoryPassword($this->createBackup->getRepositoryPassword());
         $backupClient->setRepositoryPath($this->createBackup->getRepositoryPath());
+        $backupClient->setJsonOutput($isJsonOutput);
 
         return $backupClient;
     }
