@@ -39,7 +39,10 @@ class BackupRepositoryEntity extends Entity
 
     protected array $backupPaths;
 
-    protected ForgetTypes $forgetParameters;
+    protected int $forgetDaily;
+    protected int $forgetWeekly;
+    protected int $forgetMonthly;
+    protected int $forgetYearly;
 
     protected bool $compress;
 
@@ -141,16 +144,6 @@ class BackupRepositoryEntity extends Entity
         $this->backupPaths = $backupPaths;
     }
 
-    public function getForgetParameters(): ForgetTypes
-    {
-        return $this->forgetParameters;
-    }
-
-    public function setForgetParameters(ForgetTypes $forgetParameters): void
-    {
-        $this->forgetParameters = $forgetParameters;
-    }
-
     public function isCompress(): bool
     {
         return $this->compress;
@@ -159,5 +152,45 @@ class BackupRepositoryEntity extends Entity
     public function setCompress(bool $compress): void
     {
         $this->compress = $compress;
+    }
+
+    public function getForgetDaily(): int
+    {
+        return $this->forgetDaily;
+    }
+
+    public function setForgetDaily(int $forgetDaily): void
+    {
+        $this->forgetDaily = $forgetDaily;
+    }
+
+    public function getForgetWeekly(): int
+    {
+        return $this->forgetWeekly;
+    }
+
+    public function setForgetWeekly(int $forgetWeekly): void
+    {
+        $this->forgetWeekly = $forgetWeekly;
+    }
+
+    public function getForgetMonthly(): int
+    {
+        return $this->forgetMonthly;
+    }
+
+    public function setForgetMonthly(int $forgetMonthly): void
+    {
+        $this->forgetMonthly = $forgetMonthly;
+    }
+
+    public function getForgetYearly(): int
+    {
+        return $this->forgetYearly;
+    }
+
+    public function setForgetYearly(int $forgetYearly): void
+    {
+        $this->forgetYearly = $forgetYearly;
     }
 }

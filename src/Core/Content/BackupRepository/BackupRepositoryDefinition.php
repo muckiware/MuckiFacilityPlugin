@@ -36,19 +36,23 @@ class BackupRepositoryDefinition extends EntityDefinition
 {
     const ENTITY_NAME = 'muwa_backup_repository';
 
-    public function getEntityName(): string {
+    public function getEntityName(): string
+    {
         return self::ENTITY_NAME;
     }
 
-    public function getEntityClass(): string {
+    public function getEntityClass(): string
+    {
         return BackupRepositoryEntity::class;
     }
 
-    public function getCollectionClass(): string {
+    public function getCollectionClass(): string
+    {
         return BackupRepositoryCollection::class;
     }
 
-    protected function defineFields(): FieldCollection {
+    protected function defineFields(): FieldCollection
+    {
         return new FieldCollection([
             (new idField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
             (new BoolField('active', 'active'))->addFlags(new ApiAware(), new Inherited()),

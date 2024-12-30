@@ -7,6 +7,7 @@
       "saveSuccessAlertMessage": "Such-Index Struktur wurde erfolgreich gespeichert.",
       "types": {
         "files": "Dateien",
+        "noneDatabase": "Keine Datenbank",
         "completeDatabaseSeparateFiles": "Komplette Datenbank (separate Dateien)",
         "completeDatabaseSingleFile": "Komplette Datenbank (eine Datei)"
       }
@@ -43,6 +44,7 @@
       "nameLabel": "Technischer Name",
       "repositoryPathLabel": "Repository Pfad",
       "repositoryPasswordLabel": "Repository Passwort",
+      "repositoryRepeatPasswordLabel": "Repository Passwort wiederholen",
       "addBackupPathLabel": "Backup Pfad hinzufügen",
       "backupPathsDescription": "Füge hier Backup Pfade hinzu, die in das Backup Repository gesichert werden sollen.",
       "backupPathLabel": "Backup Pfad",
@@ -55,10 +57,15 @@
       "forgetMonthlyLabel": "Monatliche Sicherungen löschen",
       "forgetYearlyLabel": "Jährliche Sicherungen löschen",
       "forget": "Löschen von Snapshots",
-      "forgetDescription": "Lege hier das Löschen von Snapshots fest, die älter sind als die angegebene Anzahl von Tagen, Wochen, etc."
+      "forgetDescription": "Lege hier das Löschen von Snapshots fest, die älter sind als die angegebene Anzahl von Tagen, Wochen, etc.",
+      "pathEmptyState": "Keine Backup Pfade vorhanden",
+      "startBackup": "Backup starten"
     },
     "create": {
-      "errorTitle": "Speicherproblem aufgetreten"
+      "errorTitle": "Speicherproblem aufgetreten",
+      "createButtonLabel": "Neues Repository erstellen",
+      "error-message": "Ein Fehler ist aufgetreten",
+      "success-title": "Backup repository gespeichert"
     },
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"

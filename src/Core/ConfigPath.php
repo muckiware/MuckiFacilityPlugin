@@ -15,4 +15,7 @@ enum ConfigPath: string
 {
     case CONFIG_PATH_ACTIVE = 'MuckiFacilityPlugin.config.active';
     case CONFIG_PATH_COMPRESS_DB_BACKUP = 'MuckiFacilityPlugin.config.compressDbBackup';
+
+    case CONFIG_USE_OWN_PATH_RESTIC_BINARY = 'MuckiFacilityPlugin.config.useOwnResticPath';
+    case CONFIG_OWN_PATH_RESTIC_BINARY = 'MuckiFacilityPlugin.config.ownPathResticBinary';
 }

@@ -2,7 +2,7 @@
     <sw-page class="muwa-backup-repository-tabs-detail">
         {% block muwa_search_structure_detail_smart_bar_actions %}
             <template #smart-bar-actions>
-                <sw-button :routerLink="{ name: 'sw.settings.index.plugins'}">
+                <sw-button :routerLink="{ name: 'muwa.backup.repository.index'}">
                     {{ $tc('muwa-backup-repository.list.header.cancelButtonLabel') }}
                 </sw-button>
 
@@ -15,6 +15,17 @@
                     @click="onClickSave"
                 >
                     {{ $tc('muwa-backup-repository.list.header.saveButtonLabel') }}
+                </sw-button-process>
+                <sw-button-process
+                        variant="ghost"
+                        class="sw-settings-search__search-index-rebuild-button"
+                        :is-loading="isBackupProcessInProgress"
+                        :disabled="isBackupProcessInProgress || !acl.can('backup_repository.editor')"
+                        :process-success="isBackupProcessSuccess"
+                        @update:process-success="createFinish"
+                        @click="onBackupProcess"
+                >
+                    {{ $tc('muwa-backup-repository.detail.startBackup') }}
                 </sw-button-process>
             </template>
         {% endblock %}
@@ -60,7 +71,7 @@
                             v-model:value="backupRepository.type"
                             validation="required"
                             required
-                            :disabled="true"
+                            :disabled="false"
                             type="select"
                             :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
                             :label="$tc('lightson-pseudo-product.detail.card-base.type')"
@@ -112,27 +123,6 @@
                             :disabled="true"
                         >
                         </sw-text-field>
-
-                        <sw-password-field
-                            v-if="isV6600"
-                            :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
-                            v-model:value="backupRepository.repositoryPassword"
-                            maxlength="255"
-                            validation="required"
-                            required
-                            :disabled="true"
-                        >
-                        </sw-password-field>
-                        <sw-password-field
-                            v-if="isV6500"
-                            :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
-                            v-model="backupRepository.repositoryPassword"
-                            maxlength="255"
-                            validation="required"
-                            required
-                            :disabled="true"
-                        >
-                        </sw-password-field>
 
                         <sw-text-field
                             v-if="isV6600"
@@ -243,7 +233,7 @@
                             <sw-empty-state
                                 v-else
                                 class="sw-import-export-edit-profile-modal-mapping__empty-state"
-                                :title="$tc('muwa-backup-repository.detail.mappingEmptyState')"
+                                :title="$tc('muwa-backup-repository.detail.pathEmptyState')"
                                 :absolute="false"
                                 icon="regular-file"
                             />

@@ -8,7 +8,7 @@
         </input-field>
     </card>
     <card>
-        <title>Database backup settings</title>
+        <title>Global backup settings</title>
         <input-field type="bool">
             <name>activeDbBackup</name>
             <label>Active database backup</label>
@@ -16,6 +16,15 @@
         <input-field type="bool">
             <name>compressDbBackup</name>
             <label>Compress database backup file</label>
+        </input-field>
+
+        <input-field type="bool">
+            <name>useOwnResticPath</name>
+            <label>Use own restic path</label>
+        </input-field>
+        <input-field type="text">
+            <name>ownPathResticBinary</name>
+            <label>Own path to binary of restic</label>
         </input-field>
     </card>
 </config>

@@ -2,19 +2,19 @@
     <sw-page class="muwa-backup-repository-tabs-detail">
         {% block muwa_search_structure_detail_smart_bar_actions %}
             <template #smart-bar-actions>
-                <sw-button :routerLink="{ name: 'sw.settings.index.plugins'}">
+                <sw-button :routerLink="{ name: 'muwa.backup.repository.index'}">
                     {{ $tc('muwa-backup-repository.list.header.cancelButtonLabel') }}
                 </sw-button>
 
                 <sw-button-process
                         position-identifier="muwa-backup-repository"
-                        :isLoading="isLoading"
+                        :isLoading="isLoadingInit"
                         :processSuccess="processSuccess"
                         variant="primary"
                         @process-finish="saveFinish"
                         @click="onClickSave"
                 >
-                    {{ $tc('muwa-backup-repository.list.header.createStructureLabel') }}
+                    {{ $tc('muwa-backup-repository.create.createButtonLabel') }}
                 </sw-button-process>
             </template>
         {% endblock %}
@@ -22,25 +22,45 @@
         <template #content>
             {% block muwa_search_structure_detail_content %}
                 <sw-card-view>
-                    <sw-card positionIdentifier="muwaSearchStructure" v-if="backupRepository" :title="backupRepository.label">
+                    <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.generalLabel')">
                         <sw-switch-field
-                            :label="$tc('muwa-backup-repository.detail.activeLabel')"
-                            v-model:value="backupRepository.active"
+                                v-if="isV6600"
+                                :label="$tc('muwa-backup-repository.detail.activeLabel')"
+                                v-model:value="backupRepository.active"
                         >
                         </sw-switch-field>
+                        <sw-switch-field
+                                v-if="isV6500"
+                                :label="$tc('muwa-backup-repository.detail.activeLabel')"
+                                v-model="backupRepository.active"
+                        >
+                        </sw-switch-field>
+
                         <sw-text-field
-                            :label="$tc('muwa-backup-repository.detail.nameLabel')"
-                            v-model:value="backupRepository.name"
-                            maxlength="70"
-                            validation="required"
-                            required
+                                v-if="isV6600"
+                                :label="$tc('muwa-backup-repository.detail.nameLabel')"
+                                v-model:value="backupRepository.name"
+                                maxlength="70"
+                                validation="required"
+                                required
                         >
                         </sw-text-field>
+                        <sw-text-field
+                                v-if="isV6500"
+                                :label="$tc('muwa-backup-repository.detail.nameLabel')"
+                                v-model="backupRepository.name"
+                                maxlength="70"
+                                validation="required"
+                                required
+                        >
+                        </sw-text-field>
+
                         <sw-select-field
-                                v-if="backupRepository"
+                                v-if="backupRepository&& isV6600"
                                 v-model:value="backupRepository.type"
                                 validation="required"
                                 required
+                                :disabled="false"
                                 type="select"
                                 :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
                                 :label="$tc('lightson-pseudo-product.detail.card-base.type')"
@@ -48,26 +68,286 @@
                             <option slot="options"
                                     v-for="option in type"
                                     :key="option.value"
-                                    :value="option.value">
+                                    :value="option.value"
+                            >
                                 {{ option.label }}
                             </option>
                         </sw-select-field>
+                        <sw-select-field
+                                v-if="backupRepository && isV6500"
+                                v-model="backupRepository.type"
+                                validation="required"
+                                required
+                                :disabled="false"
+                                type="select"
+                                :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
+                                :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                        >
+                            <option slot="options"
+                                    v-for="option in type"
+                                    :key="option.value"
+                                    :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </sw-select-field>
+
                         <sw-text-field
-                            :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
-                            v-model:value="backupRepository.repositoryPath"
-                            maxlength="255"
-                            validation="required"
-                            required
+                                v-if="isV6600"
+                                :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
+                                v-model:value="backupRepository.repositoryPath"
+                                maxlength="255"
+                                validation="required"
+                                required
+                                :disabled="false"
                         >
                         </sw-text-field>
-                        <sw-password-field
-                            :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
-                            v-model:value="backupRepository.repositoryPassword"
-                            maxlength="255"
-                            validation="required"
-                            required
+                        <sw-text-field
+                                v-if="isV6500"
+                                :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
+                                v-model="backupRepository.repositoryPath"
+                                maxlength="255"
+                                validation="required"
+                                required
+                                :disabled="false"
                         >
-                        </sw-password-field>
+                        </sw-text-field>
+
+                        <sw-container style="grid-template-columns: 1fr 1fr; gap: 0px 30px; place-items: stretch;">
+                            <sw-password-field
+                                    v-if="isV6600"
+                                    :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
+                                    v-model:value="backupRepository.repositoryPassword"
+                                    maxlength="50%"
+                                    validation="required"
+                                    required
+                                    :disabled="false"
+                            >
+                            </sw-password-field>
+                            <sw-password-field
+                                    v-if="isV6500"
+                                    :label="$tc('muwa-backup-repository.detail.repositoryPasswordLabel')"
+                                    v-model="backupRepository.repositoryPassword"
+                                    maxlength="50%"
+                                    validation="required"
+                                    required
+                                    :disabled="false"
+                            >
+                            </sw-password-field>
+                            <sw-password-field
+                                    v-if="isV6600"
+                                    :label="$tc('muwa-backup-repository.detail.repositoryRepeatPasswordLabel')"
+                                    v-model:value="backupRepository.repositoryRepeatPassword"
+                                    maxlength="50%"
+                                    validation="required"
+                                    required
+                                    :disabled="false"
+                            >
+                            </sw-password-field>
+                            <sw-password-field
+                                    v-if="isV6500"
+                                    :label="$tc('muwa-backup-repository.detail.repositoryRepeatPasswordLabel')"
+                                    v-model="backupRepository.repositoryRepeatPassword"
+                                    maxlength="50%"
+                                    validation="required"
+                                    required
+                                    :disabled="false"
+                            >
+                            </sw-password-field>
+                        </sw-container>
+
+                        <sw-text-field
+                                v-if="isV6600"
+                                :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
+                                v-model:value="backupRepository.restorePath"
+                                maxlength="255"
+                                validation="required"
+                                required
+                        >
+                        </sw-text-field>
+                        <sw-text-field
+                                v-if="isV6500"
+                                :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
+                                v-model="backupRepository.restorePath"
+                                maxlength="255"
+                                validation="required"
+                                required
+                        >
+                        </sw-text-field>
+
+                    </sw-card>
+
+                    <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.backupPaths')">
+                        <sw-button
+                                v-tooltip="{
+                                message: $tc('sw-import-export.profile.addMappingTooltipText'),
+                                showOnDisabledElements: true
+                            }"
+                                class="sw-import-export-edit-profile-modal-mapping__add-action"
+                                variant="ghost"
+                                size="small"
+                                @click="onAddBackupPath"
+                        >
+                            {{ $tc('muwa-backup-repository.detail.addBackupPathLabel') }}
+                        </sw-button>
+                        {% block muwa_search_structure_detail_backup_paths_description %}
+                            <div
+                                    v-html="$tc('muwa-backup-repository.detail.backupPathsDescription')"
+                                    class="muwa-backup-repository-detail-backup-paths__description"
+                            ></div>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block wuwa_search_structure_mapping_grid %}
+                            <sw-data-grid
+                                    v-if="backupPathExist"
+                                    :data-source="getBackupPaths"
+                                    :compact-mode="false"
+                                    :show-selection="false"
+                                    :columns="backupPathsColumns"
+                                    plain-appearance
+                                    class="sw-import-export-edit-profile-modal-mapping__grid"
+                            >
+                                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                {% block wuwa_backup_repository_backup_paths_grid_data_type_column %}
+                                    <template #column-backupPath="{ item, itemIndex }">
+                                        <sw-text-field
+                                                v-if="isV6600"
+                                                v-model:value="item.backupPath"
+                                                :name="`backupPath-${itemIndex}`"
+                                                :disabled="false"
+                                        />
+                                        <sw-text-field
+                                                v-if="isV6500"
+                                                v-model="item.backupPath"
+                                                :name="`backupPath-${itemIndex}`"
+                                                :disabled="false"
+                                        />
+                                    </template>
+                                {% endblock %}
+                                {% block wuwa_backup_repository_compress_grid_data_type_column %}
+                                    <template #column-compress="{ item, itemIndex }">
+                                        <sw-switch-field
+                                                v-if="isV6600"
+                                                :label="$tc('muwa-backup-repository.detail.compressLabel')"
+                                                :name="`compress-${itemIndex}`"
+                                                v-model:value="item.compress"
+                                        >
+                                        </sw-switch-field>
+                                        <sw-switch-field
+                                                v-if="isV6500"
+                                                :label="$tc('muwa-backup-repository.detail.compressLabel')"
+                                                :name="`compress-${itemIndex}`"
+                                                v-model="item.compress"
+                                        >
+                                        </sw-switch-field>
+                                    </template>
+                                {% endblock %}
+
+                                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                {% block wuwa_search_structure_mapping_grid_context_menu_delete %}
+                                    <template #actions="{ item }">
+                                        <sw-context-menu-item
+                                                variant="danger"
+                                                :disabled="false"
+                                                @click="onDeleteBackupPath(item.id)"
+                                        >
+                                            {{ $tc('muwa-backup-repository.backupPaths.deletePathLabel') }}
+                                        </sw-context-menu-item>
+                                    </template>
+                                {% endblock %}
+
+                            </sw-data-grid>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block wuwa_search_structure_mapping_empty_state %}
+                            <sw-empty-state
+                                    v-else
+                                    class="sw-import-export-edit-profile-modal-mapping__empty-state"
+                                    :title="$tc('muwa-backup-repository.detail.mappingEmptyState')"
+                                    :absolute="false"
+                                    icon="regular-file"
+                            />
+                        {% endblock %}
+                    </sw-card>
+
+                    <sw-card positionIdentifier="muwaBackupRepositoryForget" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.forget')">
+                        {% block muwa_search_structure_detail_forget_description %}
+                            <div
+                                    v-html="$tc('muwa-backup-repository.detail.forgetDescription')"
+                                    class="muwa-backup-repository-detail-forget__description"
+                            ></div>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block wuwa_backup_repository_forget_list %}
+                            {% block wuwa_backup_repository_backup_paths_list_forget_daily_column %}
+                                <sw-number-field
+                                        v-if="isV6600"
+                                        v-model:value="backupRepository.forgetDaily"
+                                        :name="dailyForget"
+                                        :label="$tc('muwa-backup-repository.detail.forgetDailyLabel')"
+                                        :disabled="false"
+                                />
+                                <sw-number-field
+                                        v-if="isV6500"
+                                        v-model="backupRepository.forgetDaily"
+                                        :name="dailyForget"
+                                        :label="$tc('muwa-backup-repository.detail.forgetDailyLabel')"
+                                        :disabled="false"
+                                />
+                            {% endblock %}
+                            {% block wuwa_backup_repository_backup_paths_list_forget_weekly_column %}
+                                <sw-number-field
+                                        v-if="isV6600"
+                                        v-model:value="backupRepository.forgetWeekly"
+                                        :name="dailyForget"
+                                        :label="$tc('muwa-backup-repository.detail.forgetWeeklyLabel')"
+                                        :disabled="false"
+                                />
+                                <sw-number-field
+                                        v-if="isV6500"
+                                        v-model="backupRepository.forgetWeekly"
+                                        :name="dailyForget"
+                                        :label="$tc('muwa-backup-repository.detail.forgetWeeklyLabel')"
+                                        :disabled="false"
+                                />
+                            {% endblock %}
+                            {% block wuwa_backup_repository_backup_paths_list_forget_monthly_column %}
+                                <sw-number-field
+                                        v-if="isV6600"
+                                        v-model:value="backupRepository.forgetMonthly"
+                                        :name="dailyForget"
+                                        :label="$tc('muwa-backup-repository.detail.forgetMonthlyLabel')"
+                                        :disabled="false"
+                                />
+                                <sw-number-field
+                                        v-if="isV6500"
+                                        v-model="backupRepository.forgetMonthly"
+                                        :name="dailyForget"
+                                        :label="$tc('muwa-backup-repository.detail.forgetMonthlyLabel')"
+                                        :disabled="false"
+                                />
+                            {% endblock %}
+                            {% block wuwa_backup_repository_backup_paths_list_forget_yearly_column %}
+                                <sw-number-field
+                                        v-if="isV6600"
+                                        v-model:value="backupRepository.forgetYearly"
+                                        :name="dailyForget"
+                                        :label="$tc('muwa-backup-repository.detail.forgetYearlyLabel')"
+                                        :disabled="false"
+                                />
+                                <sw-number-field
+                                        v-if="isV6500"
+                                        v-model="backupRepository.forgetYearly"
+                                        :name="dailyForget"
+                                        :label="$tc('muwa-backup-repository.detail.forgetYearlyLabel')"
+                                        :disabled="false"
+                                />
+                            {% endblock %}
+                        {% endblock %}
+
                     </sw-card>
                 </sw-card-view>
             {% endblock %}

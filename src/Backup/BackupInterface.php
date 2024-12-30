@@ -18,4 +18,8 @@ interface BackupInterface
     public function saveBackupData(mixed $data): void;
 
     public function removeBackupData(): void;
+
+    public function checkBackupData(): void;
+
+    public function getBackupResults(): array;
 }

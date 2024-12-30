@@ -61,9 +61,9 @@ class Settings implements SettingsInterface
     public function getDefaultBackupPath(bool $useSubFolder=false): string
     {
         if($useSubFolder) {
-            $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH.'/'.$this->getDatestamp();
+            $backupPath = $this->kernel->getProjectDir().PluginDefaults::DATABASE_BACKUP_PATH.'/'.$this->getDatestamp();
         } else {
-            $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH;
+            $backupPath = $this->kernel->getProjectDir().PluginDefaults::DATABASE_BACKUP_PATH;
         }
 
         $this->pluginHelper->ensureDirectoryExists($backupPath);
@@ -78,5 +78,19 @@ class Settings implements SettingsInterface
     public function getDatestamp(): string
     {
         return $this->pluginHelper->getCurrentDateTimeStr($this->getDateStringFormat());
+    }
+
+    public function hasOwnResticBinaryPath(): bool
+    {
+        return $this->config->getBool(ConfigPath::CONFIG_USE_OWN_PATH_RESTIC_BINARY->value);
+    }
+
+    public function getOwnResticBinaryPath(): ?string
+    {
+        $ownResctivPath = $this->config->getString(ConfigPath::CONFIG_OWN_PATH_RESTIC_BINARY->value);
+        if($ownResctivPath !== '') {
+            return $ownResctivPath;
+        }
+        return null;
     }
 }

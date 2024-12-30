@@ -18,8 +18,11 @@ use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Backup\Database\CompleteFileRunner;
 use MuckiFacilityPlugin\Backup\Database\CompleteFilesRunner;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
+use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
+use MuckiFacilityPlugin\Backup\Files\FilesRunner;
+use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 
 class BackupRunnerFactory
 {
@@ -32,9 +35,9 @@ class BackupRunnerFactory
     /**
      * @throws InvalidBackupTypeException
      */
-    public function createBackupRunner(string $backupType): BackupInterface
+    public function createBackupRunner(CreateBackupEntity $createBackup): BackupInterface
     {
-        switch ($backupType) {
+        switch ($createBackup->getBackupType()) {
 
             case BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value:
                 $runner = new CompleteFileRunner($this->logger, $this->settings);
@@ -43,10 +46,12 @@ class BackupRunnerFactory
             case BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value:
                 $runner = new CompleteFilesRunner($this->logger, $this->settings, $this->database);
                 break;
+            case BackupTypes::FILES->value:
+                $runner = new FilesRunner($this->logger, $this->settings, $createBackup);
+                break;
 
             default:
-
-                $this->logger->error('Invalid backup type:'.$backupType);
+                $this->logger->error('Invalid backup type:'.$createBackup->getBackupType());
                 throw new InvalidBackupTypeException();
         }
 

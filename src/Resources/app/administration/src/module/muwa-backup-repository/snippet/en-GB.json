@@ -7,6 +7,7 @@
       "saveSuccessAlertMessage": "Search index structure was saved successfully.",
       "types": {
         "files": "Files",
+        "noneDatabase": "none database",
         "completeDatabaseSeparateFiles": "Complete database (separate files)",
         "completeDatabaseSingleFile": "Complete database (single file)"
       }
@@ -43,6 +44,7 @@
       "nameLabel": "Technical name",
       "repositoryPathLabel": "Repository Path",
       "repositoryPasswordLabel": "Repository Password",
+      "repositoryRepeatPasswordLabel": "Repeat Repository Password",
       "addBackupPathLabel": "Add backup path",
       "backupPathsDescription": "Add backup paths here that are to be saved in the backup repository.",
       "backupPathLabel": "Backup Path",
@@ -51,10 +53,15 @@
       "compressPathLabel": "Data Compression",
       "compressLabel": "Compress",
       "forget": "Delete of snapshots",
-      "forgetDescription": "Specify here the deletion of snapshots that are older than the specified number of days."
+      "forgetDescription": "Specify here the deletion of snapshots that are older than the specified number of days.",
+      "pathEmptyState": "No backup paths exists",
+      "startBackup": "Start backup"
     },
     "create": {
-      "errorTitle": "Storage problem occurred"
+      "errorTitle": "Storage problem occurred",
+      "createButtonLabel": "Create new Repository",
+      "error-message": "An error has occurred",
+      "success-title": "Backup repository saved"
     },
     "mappingList": {
       "inputDataTypeLabel": "Data type",

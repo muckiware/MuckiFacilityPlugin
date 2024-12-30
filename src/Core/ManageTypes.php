@@ -11,10 +11,8 @@
  */
 namespace MuckiFacilityPlugin\Core;
 
-enum BackupTypes: string
+enum ManageTypes: string
 {
-    case COMPLETE_DATABASE_SINGLE_FILE = 'completeDatabaseSingleFile';
-    case COMPLETE_DATABASE_SEPARATE_FILES = 'completeDatabaseSeparateFiles';
-    case FILES = 'files';
-    case NONE_DATABASE = 'noneDatabase';
+    case SNAPSHOTS = 'snapshots';
+    case REMOVE_SNAPSHOTS = 'removeSnapshots';
 }

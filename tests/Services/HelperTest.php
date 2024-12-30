@@ -32,17 +32,17 @@ class HelperTest extends TestCase
         static::assertFalse($isValidEmailResultsNoValid, 'isValidEmailResult should be false. E-Mail not valid');
     }
 
-    public function testCheckBackupType()
-    {
-        $helperClass = new Helper();
-        $backupTypes = BackupTypes::cases();
-        foreach ($backupTypes as $backupType) {
-
-            $checkBackupTypByInputResult = $helperClass->checkBackupTypByInput($backupType->value);
-            static::assertTrue($checkBackupTypByInputResult, 'Backup type '.$backupType->value.'is not valid');
-        }
-
-        $checkBackupTypByInputResult = $helperClass->checkBackupTypByInput('test');
-        static::assertFalse($checkBackupTypByInputResult, 'Backup type "test" should not valid');
-    }
+//    public function testCheckBackupType()
+//    {
+//        $helperClass = new Helper();
+//        $backupTypes = BackupTypes::cases();
+//        foreach ($backupTypes as $backupType) {
+//
+//            $checkBackupTypByInputResult = $helperClass->checkBackupTypByInput($backupType->value);
+//            static::assertTrue($checkBackupTypByInputResult, 'Backup type '.$backupType->value.'is not valid');
+//        }
+//
+//        $checkBackupTypByInputResult = $helperClass->checkBackupTypByInput('test');
+//        static::assertFalse($checkBackupTypByInputResult, 'Backup type "test" should not valid');
+//    }
 }

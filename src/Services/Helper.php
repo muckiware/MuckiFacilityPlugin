@@ -11,7 +11,8 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
-use MuckiFacilityPlugin\Core\BackupTypes;
+use Psr\Log\LoggerInterface;
+
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
 class Helper
@@ -34,18 +35,6 @@ class Helper
         return false !== filter_var($email, FILTER_VALIDATE_EMAIL);
     }
 
-    public function checkBackupTypByInput(string $backupTypeInput): bool
-    {
-        $backupTypes = BackupTypes::cases();
-        foreach ($backupTypes as $backupType) {
-            if ($backupType->value === $backupTypeInput) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public function ensureDirectoryExists(string $path): void
     {
         if (!is_dir($path)) {
@@ -58,5 +47,22 @@ class Helper
         $date = new \DateTime();
         return $date->format($dateTimeFormat);
     }
-}
 
+    public function deleteDirectory($dirPath): void
+    {
+        if (is_dir($dirPath)) {
+            $files = scandir($dirPath);
+            foreach ($files as $file) {
+                if ($file !== '.' && $file !== '..') {
+                    $filePath = $dirPath . '/' . $file;
+                    if (is_dir($filePath)) {
+                        $this->deleteDirectory($filePath);
+                    } else {
+                        unlink($filePath);
+                    }
+                }
+            }
+            rmdir($dirPath);
+        }
+    }
+}
