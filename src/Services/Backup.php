@@ -23,6 +23,7 @@ use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
+use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 
 class Backup
 {
@@ -32,7 +33,8 @@ class Backup
         protected LoggerInterface $logger,
         protected BackupRunnerFactory $backupRunnerFactory,
         protected BackupRepository $backupRepository,
-        protected PluginSettings $pluginSettings
+        protected PluginSettings $pluginSettings,
+        protected PluginHelper $pluginHelper
     )
     {}
 
@@ -58,6 +60,7 @@ class Backup
 
     public function createBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
     {
+        $cachePaths = $createBackup->getBackupPaths();
         if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
 
             $backupPath = new BackupPathEntity();
@@ -67,12 +70,17 @@ class Backup
             $backupPath->setIsDefault(false);
 
             $createBackup->setBackupPaths(array($backupPath));
+
             $this->startBackupRunner($createBackup, $isJsonOutput);
+
+            $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
         }
 
         if(!empty($createBackup->getBackupPaths())) {
 
             $createBackup->setBackupType(BackupTypes::FILES->value);
+            $createBackup->setBackupPaths($cachePaths);
+
             $this->startBackupRunner($createBackup, $isJsonOutput);
         }
     }

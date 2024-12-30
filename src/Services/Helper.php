@@ -47,4 +47,22 @@ class Helper
         $date = new \DateTime();
         return $date->format($dateTimeFormat);
     }
+
+    public function deleteDirectory($dirPath): void
+    {
+        if (is_dir($dirPath)) {
+            $files = scandir($dirPath);
+            foreach ($files as $file) {
+                if ($file !== '.' && $file !== '..') {
+                    $filePath = $dirPath . '/' . $file;
+                    if (is_dir($filePath)) {
+                        $this->deleteDirectory($filePath);
+                    } else {
+                        unlink($filePath);
+                    }
+                }
+            }
+            rmdir($dirPath);
+        }
+    }
 }
