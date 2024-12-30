@@ -171,6 +171,24 @@ class Backup
         return $createBackup;
     }
 
+    public function prepareCheckBackup(string $backupRepositoryId, OutputInterface $output): CreateBackupEntity
+    {
+        $output->writeln('Prepare checkup');
+        $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+        $createBackup = new CreateBackupEntity();
+
+        if($backupRepository) {
+
+            $createBackup->setBackupType(BackupTypes::FILES->value);
+            $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
+            $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
+        } else {
+            $output->writeln('Missing backup repository for id: '.$backupRepositoryId);
+        }
+
+        return $createBackup;
+    }
+
     public function prepareDbBackupFileName(string $databaseName, bool $useSubFolder=false): string
     {
         $backupPath = $this->pluginSettings->getBackupPath($useSubFolder);

@@ -81,7 +81,7 @@ class BackupCheck extends Commands
         $backupRepositoryId = $this->checkInputForBackupRepositoryId($input);
         if($this->pluginSettings->isEnabled() && $backupRepositoryId) {
 
-            $createBackup = $this->backupService->prepareCreateBackup($backupRepositoryId, $output);
+            $createBackup = $this->backupService->prepareCheckBackup($backupRepositoryId, $output);
             $this->backupService->checkBackup($createBackup);
 
             /** @var ResultEntity $result */
