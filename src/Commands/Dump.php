@@ -87,7 +87,7 @@ class Dump extends Commands
             $createBackup = new CreateBackupEntity();
             $createBackup->setBackupType($inputBackupType);
 
-            $this->backupService->createBackup($createBackup);
+            $this->backupService->createDump($createBackup);
         }
 
         return 0;

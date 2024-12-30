@@ -12,6 +12,7 @@
 namespace MuckiFacilityPlugin\Services;
 
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
@@ -61,28 +62,49 @@ class Backup
     public function createBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
     {
         $cachePaths = $createBackup->getBackupPaths();
+
+        //Backup database
         if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
-
-            $backupPath = new BackupPathEntity();
-            $backupPath->setBackupPath($this->pluginSettings->getBackupPath());
-            $backupPath->setPosition(0);
-            $backupPath->setCompress($this->pluginSettings->isCompressDbBackupEnabled());
-            $backupPath->setIsDefault(false);
-
-            $createBackup->setBackupPaths(array($backupPath));
-
-            $this->startBackupRunner($createBackup, $isJsonOutput);
-
-            $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
+            $this->runDatabaseBackup($createBackup, $isJsonOutput);
         }
 
+        //Backup files
         if(!empty($createBackup->getBackupPaths())) {
-
-            $createBackup->setBackupType(BackupTypes::FILES->value);
-            $createBackup->setBackupPaths($cachePaths);
-
-            $this->startBackupRunner($createBackup, $isJsonOutput);
+            $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
         }
+    }
+
+    public function createDump(CreateBackupEntity $createBackup): void
+    {
+        $this->startBackupRunner($createBackup, false);
+    }
+
+    public function runDatabaseBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
+    {
+        $backupPath = new BackupPathEntity();
+        $backupPath->setBackupPath($this->pluginSettings->getBackupPath());
+        $backupPath->setPosition(0);
+        $backupPath->setCompress($this->pluginSettings->isCompressDbBackupEnabled());
+        $backupPath->setIsDefault(false);
+
+        $createBackup->setBackupPaths(array($backupPath));
+
+        //create database dump
+        $this->startBackupRunner($createBackup, $isJsonOutput);
+
+        //write dump into backup repository
+        $createBackup->setBackupType(BackupTypes::FILES->value);
+        $this->startBackupRunner($createBackup, $isJsonOutput);
+
+        $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
+    }
+
+    public function runFilesBackup(CreateBackupEntity $createBackup, $cachePaths, bool $isJsonOutput=true): void
+    {
+        $createBackup->setBackupType(BackupTypes::FILES->value);
+        $createBackup->setBackupPaths($cachePaths);
+
+        $this->startBackupRunner($createBackup, $isJsonOutput);
     }
 
     public function checkBackup(CreateBackupEntity $createBackup): void
