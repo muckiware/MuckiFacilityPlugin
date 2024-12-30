@@ -7,6 +7,7 @@
       "saveSuccessAlertMessage": "Search index structure was saved successfully.",
       "types": {
         "files": "Files",
+        "noneDatabase": "none database",
         "completeDatabaseSeparateFiles": "Complete database (separate files)",
         "completeDatabaseSingleFile": "Complete database (single file)"
       }

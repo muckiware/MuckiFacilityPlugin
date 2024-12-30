@@ -16,19 +16,23 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Core\ConfigPath;
+use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
+use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 
 class Backup
 {
+    protected array $allResults = [];
     protected BackupInterface $backup;
     public function __construct(
         protected LoggerInterface $logger,
         protected BackupRunnerFactory $backupRunnerFactory,
-        protected BackupRepository $backupRepository
+        protected BackupRepository $backupRepository,
+        protected PluginSettings $pluginSettings
     )
     {}
 
@@ -42,34 +46,34 @@ class Backup
         $this->backup = $backup;
     }
 
-    public function prepareCreateBackup(string $backupRepositoryId, OutputInterface $output): CreateBackupEntity
+    public function getAllResults(): array
     {
-        $output->writeln('Prepare backup');
-        $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
-        $createBackup = new CreateBackupEntity();
+        return $this->allResults;
+    }
 
-        if($backupRepository) {
-
-            $createBackup->setBackupType($backupRepository->getType());
-            $createBackup->setBackupPaths($this->prepareBackupPaths($backupRepository->getBackupPaths()));
-            $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
-            $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
-        } else {
-            $output->writeln('Prepare backup');
-        }
-
-        return $createBackup;
+    public function addAllResult(array $allResults): void
+    {
+        $this->allResults = array_merge($this->allResults, $allResults);
     }
 
     public function createBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
     {
-        try {
-            $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
-            $backupRunner->createBackupData($isJsonOutput);
-            $this->setBackup($backupRunner);
+        if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
 
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $backupPath = new BackupPathEntity();
+            $backupPath->setBackupPath($this->pluginSettings->getBackupPath());
+            $backupPath->setPosition(0);
+            $backupPath->setCompress($this->pluginSettings->isCompressDbBackupEnabled());
+            $backupPath->setIsDefault(false);
+
+            $createBackup->setBackupPaths(array($backupPath));
+            $this->startBackupRunner($createBackup, $isJsonOutput);
+        }
+
+        if(!empty($createBackup->getBackupPaths())) {
+
+            $createBackup->setBackupType(BackupTypes::FILES->value);
+            $this->startBackupRunner($createBackup, $isJsonOutput);
         }
     }
 
@@ -78,6 +82,22 @@ class Backup
         try {
             $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
             $backupRunner->checkBackupData();
+
+            $this->addAllResult($backupRunner->getBackupResults());
+            $this->setBackup($backupRunner);
+
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+    }
+
+    public function startBackupRunner(CreateBackupEntity $createBackup, bool $isJsonOutput): void
+    {
+        try {
+            $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
+            $backupRunner->createBackupData($isJsonOutput);
+
+            $this->addAllResult($backupRunner->getBackupResults());
             $this->setBackup($backupRunner);
 
         } catch (\Exception $e) {
@@ -100,5 +120,51 @@ class Backup
         }
 
         return $preparedBackupPaths;
+    }
+
+    public function prepareCreateBackup(string $backupRepositoryId, OutputInterface $output): CreateBackupEntity
+    {
+        $output->writeln('Prepare backup');
+        $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+        $createBackup = new CreateBackupEntity();
+
+        if($backupRepository) {
+
+            $createBackup->setBackupType($backupRepository->getType());
+            $createBackup->setBackupPaths($this->prepareBackupPaths($backupRepository->getBackupPaths()));
+            $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
+            $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
+        } else {
+            $output->writeln('Prepare backup');
+        }
+
+        return $createBackup;
+    }
+
+    public function prepareDbBackupFileName(string $databaseName, bool $useSubFolder=false): string
+    {
+        $backupPath = $this->pluginSettings->getBackupPath($useSubFolder);
+        $backupDateTimeStamp = $this->pluginSettings->getDateTimestamp();
+        $backupFileName = '';
+
+        if($backupPath !== '') {
+            $backupFileName = $backupPath.'/';
+        }
+
+        if($backupDateTimeStamp !== '') {
+            $backupFileName .= $backupDateTimeStamp.'_';
+        }
+
+        if($databaseName !== '') {
+            $backupFileName .= $databaseName;
+        }
+
+        if($this->pluginSettings->isCompressDbBackupEnabled()) {
+            $backupFileName .= '.backup.sql.gz';
+        } else {
+            $backupFileName .= '.backup.sql';
+        }
+
+        return $backupFileName;
     }
 }

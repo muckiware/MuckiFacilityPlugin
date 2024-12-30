@@ -62,9 +62,20 @@ class CompleteFileRunner implements BackupInterface
         // TODO: Implement removeBackupData() method.
     }
 
-    protected function createBackupFileName(string $databaseName): string
+    public function checkBackupData(): void
     {
-        $backupPath = $this->pluginSettings->getBackupPath();
+        // TODO: Implement checkBackupData() method.
+    }
+
+    public function getBackupResults(): array
+    {
+        // TODO: Implement getBackupResult() method.
+        return array();
+    }
+
+    public function createBackupFileName(string $databaseName, bool $useSubFolder=false): string
+    {
+        $backupPath = $this->pluginSettings->getBackupPath($useSubFolder);
         $backupDateTimeStamp = $this->pluginSettings->getDateTimestamp();
         $backupFileName = '';
 
@@ -87,16 +98,5 @@ class CompleteFileRunner implements BackupInterface
         }
 
         return $backupFileName;
-    }
-
-    public function checkBackupData(): void
-    {
-        // TODO: Implement checkBackupData() method.
-    }
-
-    public function getBackupResults(): array
-    {
-        // TODO: Implement getBackupResult() method.
-        return array();
     }
 }

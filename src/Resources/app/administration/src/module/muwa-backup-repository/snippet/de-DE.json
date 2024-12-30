@@ -7,6 +7,7 @@
       "saveSuccessAlertMessage": "Such-Index Struktur wurde erfolgreich gespeichert.",
       "types": {
         "files": "Dateien",
+        "noneDatabase": "Keine Datenbank",
         "completeDatabaseSeparateFiles": "Komplette Datenbank (separate Dateien)",
         "completeDatabaseSingleFile": "Komplette Datenbank (eine Datei)"
       }

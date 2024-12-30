@@ -61,9 +61,9 @@ class Settings implements SettingsInterface
     public function getDefaultBackupPath(bool $useSubFolder=false): string
     {
         if($useSubFolder) {
-            $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH.'/'.$this->getDatestamp();
+            $backupPath = $this->kernel->getProjectDir().PluginDefaults::DATABASE_BACKUP_PATH.'/'.$this->getDatestamp();
         } else {
-            $backupPath = $this->kernel->getProjectDir().PluginDefaults::BACKUP_PATH;
+            $backupPath = $this->kernel->getProjectDir().PluginDefaults::DATABASE_BACKUP_PATH;
         }
 
         $this->pluginHelper->ensureDirectoryExists($backupPath);

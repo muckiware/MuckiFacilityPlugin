@@ -36,7 +36,7 @@ Component.register('muwa-backup-repository-detail', {
             isLoading: false,
             isSaveSuccessful: false,
             type: [
-                { value: 'files', label: this.$tc('muwa-backup-repository.general.types.files') },
+                { value: 'noneDatabase', label: this.$tc('muwa-backup-repository.general.types.noneDatabase') },
                 { value: 'completeDatabaseSingleFile', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSingleFile') },
                 { value: 'completeDatabaseSeparateFiles', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSeparateFiles') }
             ],

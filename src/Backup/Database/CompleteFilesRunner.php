@@ -45,12 +45,11 @@ class CompleteFilesRunner implements BackupInterface
                 $mysqlDumper->useCompressor(new GzipCompressor());
             }
             $mysqlDumper->useSingleTransaction();
-            $backupFileName = $this->createBackupFileName($table);
 
             try {
 
                 $mysqlDumper->includeTables($table);
-                $mysqlDumper->dumpToFile($this->createBackupFileName($table));
+                $mysqlDumper->dumpToFile($this->createBackupFileName($table, true));
 
             } catch (CannotStartDump $e) {
                 $this->logger->error('Cannot start dump:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
@@ -77,9 +76,20 @@ class CompleteFilesRunner implements BackupInterface
         // TODO: Implement removeBackupData() method.
     }
 
-    protected function createBackupFileName(string $databaseName): string
+    public function checkBackupData(): void
     {
-        $backupPath = $this->pluginSettings->getBackupPath(true);
+        // TODO: Implement checkBackupData() method.
+    }
+
+    public function getBackupResults(): array
+    {
+        // TODO: Implement getBackupResult() method.
+        return array();
+    }
+
+    public function createBackupFileName(string $databaseName, bool $useSubFolder=false): string
+    {
+        $backupPath = $this->pluginSettings->getBackupPath($useSubFolder);
         $backupDateTimeStamp = $this->pluginSettings->getDateTimestamp();
         $backupFileName = '';
 
@@ -96,22 +106,11 @@ class CompleteFilesRunner implements BackupInterface
         }
 
         if($this->pluginSettings->isCompressDbBackupEnabled()) {
-            $backupFileName .= '.sql.gz';
+            $backupFileName .= '.backup.sql.gz';
         } else {
-            $backupFileName .= '.sql';
+            $backupFileName .= '.backup.sql';
         }
 
         return $backupFileName;
-    }
-
-    public function checkBackupData(): void
-    {
-        // TODO: Implement checkBackupData() method.
-    }
-
-    public function getBackupResults(): array
-    {
-        // TODO: Implement getBackupResult() method.
-        return array();
     }
 }

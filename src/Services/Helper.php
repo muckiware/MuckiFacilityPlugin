@@ -11,6 +11,8 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
+use Psr\Log\LoggerInterface;
+
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
 class Helper
@@ -46,4 +48,3 @@ class Helper
         return $date->format($dateTimeFormat);
     }
 }
-

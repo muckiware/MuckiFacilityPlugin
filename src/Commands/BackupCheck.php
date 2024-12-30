@@ -85,7 +85,7 @@ class BackupCheck extends Commands
             $this->backupService->checkBackup($createBackup);
 
             /** @var ResultEntity $result */
-            foreach ($this->backupService->getBackup()->getBackupResults() as $result) {
+            foreach ($this->backupService->getAllResults() as $result) {
                 $output->writeln($result->getOutput());
             }
         }

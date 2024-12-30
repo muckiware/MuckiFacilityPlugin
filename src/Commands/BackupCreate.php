@@ -85,7 +85,7 @@ class BackupCreate extends Commands
             $this->backupService->createBackup($createBackup, false);
 
             /** @var ResultEntity $result */
-            foreach ($this->backupService->getBackup()->getBackupResults() as $result) {
+            foreach ($this->backupService->getAllResults() as $result) {
                 $output->writeln($result->getOutput());
             }
         }
