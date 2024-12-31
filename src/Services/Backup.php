@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
+use MuckiRestic\Entity\Result\ResultEntity;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -23,6 +24,7 @@ use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
+use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 
@@ -34,6 +36,7 @@ class Backup
         protected LoggerInterface $logger,
         protected BackupRunnerFactory $backupRunnerFactory,
         protected BackupRepository $backupRepository,
+        protected BackupRepositoryChecks $backupRepositoryChecks,
         protected PluginSettings $pluginSettings,
         protected PluginHelper $pluginHelper
     )
@@ -109,6 +112,8 @@ class Backup
 
     public function checkBackup(CreateBackupEntity $createBackup): void
     {
+        $createBackup = clone $createBackup;
+        $createBackup->setBackupType(BackupTypes::FILES->value);
         try {
             $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
             $backupRunner->checkBackupData();
@@ -129,9 +134,22 @@ class Backup
 
             $this->addAllResult($backupRunner->getBackupResults());
             $this->setBackup($backupRunner);
+            $this->createCheckItem($createBackup);
 
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+    }
+
+    public function createCheckItem(CreateBackupEntity $createBackup): void
+    {
+        $this->checkBackup($createBackup);
+
+        /** @var ResultEntity $result */
+        foreach ($this->getAllResults() as $result) {
+
+            $checkResults = $this->pluginHelper->getCheckResults($result->getOutput());
+            $this->backupRepositoryChecks->saveNewCheck($createBackup->getBackupRepositoryId(), end($checkResults));
         }
     }
 
@@ -160,6 +178,7 @@ class Backup
 
         if($backupRepository) {
 
+            $createBackup->setBackupRepositoryId($backupRepositoryId);
             $createBackup->setBackupType($backupRepository->getType());
             $createBackup->setBackupPaths($this->prepareBackupPaths($backupRepository->getBackupPaths()));
             $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());

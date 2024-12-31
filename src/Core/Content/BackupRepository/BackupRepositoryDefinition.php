@@ -19,19 +19,15 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Inherited;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
-use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\SearchRanking;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IdField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IntField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\JsonField;
-use Shopware\Core\Framework\DataAbstractionLayer\Field\ManyToManyAssociationField;
-use Shopware\Core\Framework\DataAbstractionLayer\Field\ManyToOneAssociationField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToManyAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
-use Shopware\Core\Framework\DataAbstractionLayer\Field\TranslatedField;
-use Shopware\Core\Framework\DataAbstractionLayer\Field\TranslationsAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\UpdatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
-use Shopware\Core\System\SalesChannel\SalesChannelDefinition;
 
+use MuckiFacilityPlugin\Core\Content\BackupRepositoryChecks\BackupRepositoryChecksCollection;
 class BackupRepositoryDefinition extends EntityDefinition
 {
     const ENTITY_NAME = 'muwa_backup_repository';
@@ -66,6 +62,8 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new IntField('forget_weekly', 'forgetWeekly'))->addFlags(new ApiAware()),
             (new IntField('forget_monthly', 'forgetMonthly'))->addFlags(new ApiAware()),
             (new IntField('forget_yearly', 'forgetYearly'))->addFlags(new ApiAware()),
+
+            (new OneToManyAssociationField('backupRepositoryChecks', 'backup_repository_id', BackupRepositoryChecksCollection::class)),
 
             new CreatedAtField(),
             new UpdatedAtField()
