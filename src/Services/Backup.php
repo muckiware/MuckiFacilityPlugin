@@ -75,6 +75,8 @@ class Backup
         if(!empty($createBackup->getBackupPaths())) {
             $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
         }
+
+        $this->createCheckItem($createBackup);
     }
 
     public function createDump(CreateBackupEntity $createBackup): void
@@ -84,6 +86,8 @@ class Backup
 
     public function runDatabaseBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
     {
+        $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
+
         $backupPath = new BackupPathEntity();
         $backupPath->setBackupPath($this->pluginSettings->getBackupPath());
         $backupPath->setPosition(0);
@@ -134,7 +138,6 @@ class Backup
 
             $this->addAllResult($backupRunner->getBackupResults());
             $this->setBackup($backupRunner);
-            $this->createCheckItem($createBackup);
 
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
