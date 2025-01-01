@@ -47,7 +47,11 @@ class BackupRepositoryChecksDefinition extends EntityDefinition
     {
         return new FieldCollection([
             (new idField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
-            (new FkField('backup_repository_id', 'backupRepositoryId', BackupRepositoryDefinition::class))->addFlags(new Required()),
+            (new FkField(
+                'backup_repository_id',
+                'backupRepositoryId',
+                BackupRepositoryDefinition::class
+            ))->addFlags(new Required()),
             (new StringField('check_status', 'checkStatus'))->addFlags(new Required(), new ApiAware()),
 
             new CreatedAtField(),

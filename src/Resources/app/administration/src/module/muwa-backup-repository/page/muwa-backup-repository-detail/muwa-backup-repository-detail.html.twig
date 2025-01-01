@@ -32,8 +32,37 @@
 
         <template #content>
             {% block muwa_search_structure_detail_content %}
+
+                {% block muwa_search_structure_content_tabs %}
+                    <sw-tabs default-item="repositoryList" class="muwa-backup-repository-content-tabs" position-identifier="muwa-backup-repository-content-tabs">
+                        <template #default="{ active }">
+                            <sw-tabs-item
+                                key="backupRepositoryConfig"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryConfig' } }"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.config') }}
+                            </sw-tabs-item>
+                            <sw-tabs-item
+                                key="backupRepositoryChecks"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryChecks' } }"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.checks') }}
+                            </sw-tabs-item>
+                            <sw-tabs-item
+                                    key="backupRepositorySnapshots"
+                                    :active-tab="active"
+                                    :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositorySnapshots' } }"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.Snapshots') }}
+                            </sw-tabs-item>
+                        </template>
+                    </sw-tabs>
+                {% endblock %}
+
                 <sw-card-view>
-                    <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.generalLabel')">
+                    <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.generalLabel')">
                         <sw-switch-field
                             v-if="isV6600"
                             :label="$tc('muwa-backup-repository.detail.activeLabel')"
@@ -144,8 +173,7 @@
                         </sw-text-field>
 
                     </sw-card>
-
-                    <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.backupPaths')">
+                    <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.backupPaths')">
                         <sw-button
                             v-tooltip="{
                                 message: $tc('sw-import-export.profile.addMappingTooltipText'),
@@ -240,7 +268,7 @@
                         {% endblock %}
                     </sw-card>
 
-                    <sw-card positionIdentifier="muwaBackupRepositoryForget" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.forget')">
+                    <sw-card positionIdentifier="muwaBackupRepositoryForget" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.forget')">
                         {% block muwa_search_structure_detail_forget_description %}
                             <div
                                 v-html="$tc('muwa-backup-repository.detail.forgetDescription')"
@@ -317,6 +345,30 @@
                         {% endblock %}
 
                     </sw-card>
+
+                    {# checks tab #}
+                    <sw-entity-listing
+                        v-if="backupRepository && tab === 'backupRepositoryChecks'"
+                        :isLoading="isLoading"
+                        :items="backupRepositoryChecks"
+                        :repository="backupRepositoryChecksRepository"
+                        :columns="backupChecksColumns"
+                        :showActions="false"
+                        :showSelection="false"
+                        :showSettings="false"
+                        :sort-by="sortBy"
+                        :sort-direction="sortDirection"
+                    >
+                        <template #column-checkStatus="{item}">
+                            <div v-if="item.checkStatus" :title="item.checkStatus">
+                                {{ item.checkStatus }}
+                            </div>
+                        </template>
+                        <template #column-createdAt="{ item }">
+                            {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
+                        </template>
+                    </sw-entity-listing>
+
                 </sw-card-view>
             {% endblock %}
         </template>

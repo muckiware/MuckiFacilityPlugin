@@ -13,7 +13,10 @@
       }
     },
     "tabs": {
-      "repositoryList": "Backup Repository Konfiguration"
+      "repositoryList": "Backup Repository Konfiguration",
+      "config": "Configuration",
+      "checks": "Checks",
+      "Snapshots": "Snapshots"
     },
     "list": {
       "header": {
@@ -59,7 +62,9 @@
       "forget": "Löschen von Snapshots",
       "forgetDescription": "Lege hier das Löschen von Snapshots fest, die älter sind als die angegebene Anzahl von Tagen, Wochen, etc.",
       "pathEmptyState": "Keine Backup Pfade vorhanden",
-      "startBackup": "Backup starten"
+      "startBackup": "Backup starten",
+      "checkCreatedAtLabel": "Erstellt am",
+      "checkStatusLabel": "Status"
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten",

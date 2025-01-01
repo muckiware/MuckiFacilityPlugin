@@ -51,6 +51,7 @@ class BackupRepository
     {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('id', $backupRepositoryId));
+        $criteria->addAssociation('backupRepositoryChecks');
         $criteria->setLimit(1);
 
         $backupRepository = $this->backupRepository->search($criteria, Context::createDefaultContext());

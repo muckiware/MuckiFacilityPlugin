@@ -27,7 +27,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\UpdatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 
-use MuckiFacilityPlugin\Core\Content\BackupRepositoryChecks\BackupRepositoryChecksCollection;
+use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
 class BackupRepositoryDefinition extends EntityDefinition
 {
     const ENTITY_NAME = 'muwa_backup_repository';
@@ -63,7 +63,11 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new IntField('forget_monthly', 'forgetMonthly'))->addFlags(new ApiAware()),
             (new IntField('forget_yearly', 'forgetYearly'))->addFlags(new ApiAware()),
 
-            (new OneToManyAssociationField('backupRepositoryChecks', 'backup_repository_id', BackupRepositoryChecksCollection::class)),
+            (new OneToManyAssociationField(
+                'backupRepositoryChecks',
+                BackupRepositoryChecksDefinition::class,
+                'backup_repository_id'
+            )),
 
             new CreatedAtField(),
             new UpdatedAtField()
