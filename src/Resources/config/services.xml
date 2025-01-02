@@ -27,6 +27,20 @@
         <service id="MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition">
             <tag name="shopware.entity.definition" entity="muwa_backup_repository_checks" />
         </service>
+        <service id="MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition">
+            <tag name="shopware.entity.definition" entity="muwa_backup_repository_snapshots" />
+<!--            <tag name="shopware.entity.definition.noneDb" entity="muwa_backup_repository_snapshots" />-->
+        </service>
+<!--        <service id="muwa_backup_repository_snapshots.repository" class="MuckiFacilityPlugin\Core\Framework\DataAbstractionLayer\FileEntityRepository" public="true">-->
+<!--            <argument type="service" id="MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition"/>-->
+<!--            <argument type="service" id="Shopware\Core\Framework\DataAbstractionLayer\Read\EntityReaderInterface"/>-->
+<!--            <argument type="service" id="Shopware\Core\Framework\DataAbstractionLayer\VersionManager"/>-->
+<!--            <argument type="service" id="Shopware\Elasticsearch\Framework\DataAbstractionLayer\ElasticsearchEntitySearcher"/>-->
+<!--            <argument type="service" id="Shopware\Elasticsearch\Framework\DataAbstractionLayer\ElasticsearchEntityAggregator"/>-->
+<!--            <argument type="service" id="debug.event_dispatcher"/>-->
+<!--            <argument type="service" id="Shopware\Core\Framework\DataAbstractionLayer\Event\EntityLoadedEventFactory"/>-->
+<!--        </service>-->
+
         <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
@@ -83,6 +97,12 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+
+        <service id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="muwa_backup_repository_snapshots.repository"/>
+        </service>
         <service id="MuckiFacilityPlugin\Services\Content\BackupRepository" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
@@ -124,6 +144,7 @@
         <service id="MuckiFacilityPlugin\Services\ManageRepository">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
         </service>
     </services>

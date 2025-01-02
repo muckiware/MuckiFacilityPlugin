@@ -20,7 +20,8 @@
 	"require" : {
 		"php" : ">= 8.1",
 		"spatie/db-dumper": "^3.7",
-		"muckiware/restic": "^1.0"
+		"muckiware/restic": "^1.0",
+		"gabrielelana/byte-units": "^0.5.0"
 	},
 	"require-dev" : {
 		"phpstan/phpstan" : "*"

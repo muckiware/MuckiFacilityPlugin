@@ -17,12 +17,14 @@ use MuckiRestic\Library\Manage;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
+use MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository;
 
 class ManageRepository
 {
     public function __construct(
         protected LoggerInterface $logger,
         protected BackupRepository $backupRepository,
+        protected BackupFileSnapshotsRepository $backupFileSnapshotsRepository,
         protected PluginSettings $pluginSettings
     )
     {}
@@ -47,6 +49,12 @@ class ManageRepository
         }
 
         return '';
+    }
+
+    public function saveSnapshots(string $backupRepositoryId): void
+    {
+        $fileSnapshots = json_decode($this->getSnapshots($backupRepositoryId), true);
+        $this->backupFileSnapshotsRepository->saveSnapshots($backupRepositoryId, $fileSnapshots);
     }
 
     public function removeSnapshotById(string $backupRepositoryId, string $snapshotId, bool $isJsonOutput=true): string

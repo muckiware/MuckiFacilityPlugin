@@ -57,6 +57,7 @@ Component.register('muwa-backup-repository-detail', {
             requestBackupProcess: '/_action/muwa/backup/process',
             httpClient: null,
             backupRepositoryChecks: [],
+            backupRepositorySnapshots: [],
         };
     },
 
@@ -88,11 +89,14 @@ Component.register('muwa-backup-repository-detail', {
             return this.repositoryFactory.create('muwa_backup_repository_checks');
         },
 
+        backupRepositorySnapshotsRepository() {
+            return this.repositoryFactory.create('muwa_backup_repository_snapshots');
+        },
+
         criteria() {
             const criteria = new Criteria();
             criteria.addAssociation('backupRepositoryChecks');
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
-            // criteria.addSorting(Criteria.sort('backupRepository.backupRepositoryChecks.createdAt', 'DESC'));
             return criteria;
         },
 
@@ -146,6 +150,38 @@ Component.register('muwa-backup-repository-detail', {
             ];
         },
 
+        backupSnapshotsColumns() {
+
+            return [
+                {
+                    property: 'snapshotShortId',
+                    label: 'muwa-backup-repository.detail.snapshotShortIdStatusLabel',
+                    allowResize: true,
+                    width: '10%',
+                },
+                {
+                    property: 'paths',
+                    label: 'muwa-backup-repository.detail.pathsLabel',
+                    allowResize: true,
+                    width: '70%',
+                },
+                {
+                    property: 'size',
+                    label: 'muwa-backup-repository.detail.sizeLabel',
+                    allowResize: true,
+                    width: '10%',
+                },
+                {
+                    property: 'createdAt',
+                    label: 'muwa-backup-repository.detail.createdAtLabel',
+                    allowResize: true,
+                    dataIndex: 'createdAt',
+                    align: 'right',
+                    width: '10%',
+                }
+            ];
+        },
+
         isV6600() {
             return this.V6_6_0_0;
         },
@@ -171,6 +207,7 @@ Component.register('muwa-backup-repository-detail', {
             this.getBackupRepository();
             this.loadBackupsPaths();
             this.fetchBackupRepositoryChecks();
+            this.fetchBackupRepositorySnapshots();
         },
 
         getBackupRepository() {
@@ -323,6 +360,27 @@ Component.register('muwa-backup-repository-detail', {
         },
 
         createBackupRepositoryChecksCriteria() {
+
+            const criteria = new Criteria();
+            criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
+            criteria.setLimit(10);
+            return criteria;
+        },
+
+        fetchBackupRepositorySnapshots() {
+
+            const criteria = this.createBackupRepositorySnapshotsCriteria();
+
+            this.isLoading = true;
+            return this.backupRepositorySnapshotsRepository.search(criteria, Context.api).then((collection) => {
+
+                this.backupRepositorySnapshots = collection;
+                this.isLoading = false;
+                return this.backupRepositorySnapshots;
+            });
+        },
+
+        createBackupRepositorySnapshotsCriteria() {
 
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));

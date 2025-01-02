@@ -84,8 +84,7 @@ class ManageSnapshots extends Command
         if($this->pluginSettings->isEnabled() && $inputBackupRepositoryId) {
 
             $snapshot = $this->manageService->getSnapshots($inputBackupRepositoryId, false);
-
-            $snapshot2 = json_decode($this->manageService->getSnapshots($inputBackupRepositoryId));
+            $this->manageService->saveSnapshots($inputBackupRepositoryId);
             $output->writeln($snapshot);
         }
 

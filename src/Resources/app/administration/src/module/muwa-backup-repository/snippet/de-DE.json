@@ -16,7 +16,7 @@
       "repositoryList": "Backup Repository Konfiguration",
       "config": "Configuration",
       "checks": "Checks",
-      "Snapshots": "Snapshots"
+      "snapshots": "Snapshots"
     },
     "list": {
       "header": {
@@ -42,7 +42,7 @@
     "detail": {
       "mappingLabel": "Zuweisungen (sprachabhängig)",
       "settingsLabel": "Einstellungen (sprachabhängig)",
-      "generalLabel": "Backup Konfiguration",
+      "generalLabel": "Allgemein",
       "activeLabel": "Aktiv",
       "nameLabel": "Technischer Name",
       "repositoryPathLabel": "Repository Pfad",
@@ -64,7 +64,11 @@
       "pathEmptyState": "Keine Backup Pfade vorhanden",
       "startBackup": "Backup starten",
       "checkCreatedAtLabel": "Erstellt am",
-      "checkStatusLabel": "Status"
+      "checkStatusLabel": "Status",
+      "snapshotShortIdStatusLabel": "Snapshot ID",
+      "createdAtLabel": "Erstellt am",
+      "pathsLabel": "Pfad",
+      "sizeLabel": "Größe"
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten",
@@ -74,17 +78,6 @@
     },
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"
-    },
-    "settingList": {
-      "settingKey": "Schlüssel",
-      "settingValue": "Wert",
-      "deleteSettingLabel": "Einstellung entfernen"
-    },
-    "serverInfo": {
-      "keyLabel": "Name",
-      "valueLabel": "Wert",
-      "generalLabel": "Allgemein",
-      "versionLabel": "Version"
     }
   }
 }

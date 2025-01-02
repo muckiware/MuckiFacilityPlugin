@@ -55,7 +55,7 @@
                                     :active-tab="active"
                                     :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositorySnapshots' } }"
                             >
-                                {{ $tc('muwa-backup-repository.tabs.Snapshots') }}
+                                {{ $tc('muwa-backup-repository.tabs.snapshots') }}
                             </sw-tabs-item>
                         </template>
                     </sw-tabs>
@@ -346,7 +346,7 @@
 
                     </sw-card>
 
-                    {# checks tab #}
+                    {# Tab Checks #}
                     <sw-entity-listing
                         v-if="backupRepository && tab === 'backupRepositoryChecks'"
                         :isLoading="isLoading"
@@ -362,6 +362,39 @@
                         <template #column-checkStatus="{item}">
                             <div v-if="item.checkStatus" :title="item.checkStatus">
                                 {{ item.checkStatus }}
+                            </div>
+                        </template>
+                        <template #column-createdAt="{ item }">
+                            {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
+                        </template>
+                    </sw-entity-listing>
+
+                    {# Tab Snapshots #}
+                    <sw-entity-listing
+                            v-if="backupRepository && tab === 'backupRepositorySnapshots'"
+                            :isLoading="isLoading"
+                            :items="backupRepositorySnapshots"
+                            :repository="backupRepositorySnapshotsRepository"
+                            :columns="backupSnapshotsColumns"
+                            :showActions="false"
+                            :showSelection="false"
+                            :showSettings="false"
+                            :sort-by="sortBy"
+                            :sort-direction="sortDirection"
+                    >
+                        <template #column-snapshot-id="{item}">
+                            <div v-if="item.snapshotShortId" :title="item.snapshotShortId">
+                                {{ item.snapshotShortId }}
+                            </div>
+                        </template>
+                        <template #column-snapshot-paths="{item}">
+                            <div v-if="item.paths" :title="item.paths">
+                                {{ item.paths }}
+                            </div>
+                        </template>
+                        <template #column-snapshot-size="{item}">
+                            <div v-if="item.size" :title="item.size">
+                                {{ item.size }}
                             </div>
                         </template>
                         <template #column-createdAt="{ item }">

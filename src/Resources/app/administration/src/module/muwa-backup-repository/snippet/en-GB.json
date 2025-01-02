@@ -15,7 +15,8 @@
     "tabs": {
       "repositoryList": "Backup Repository Configuration",
       "config": "Configuration",
-      "checks": "Checks"
+      "checks": "Checks",
+      "snapshots": "Snapshots"
     },
     "list": {
       "header": {
@@ -41,7 +42,7 @@
     "detail": {
       "mappingLabel": "Mappings (language-dependent)",
       "settingsLabel": "Settings (language-dependent)",
-      "generalLabel": "General (global)",
+      "generalLabel": "General",
       "activeLabel": "Active",
       "nameLabel": "Technical name",
       "repositoryPathLabel": "Repository Path",
@@ -60,32 +61,16 @@
       "startBackup": "Start backup",
       "checkCreatedAtLabel": "Created at",
       "checkStatusLabel": "Status",
-      "Snapshots": "Snapshots"
+      "snapshotShortIdStatusLabel": "Snapshot ID",
+      "createdAtLabel": "Created at",
+      "pathsLabel": "Path",
+      "sizeLabel": "Size"
     },
     "create": {
       "errorTitle": "Storage problem occurred",
       "createButtonLabel": "Create new Repository",
       "error-message": "An error has occurred",
       "success-title": "Backup repository saved"
-    },
-    "mappingList": {
-      "inputDataTypeLabel": "Data type",
-      "inputHighlightingLabel": "Highlighting",
-      "defaultValue": "Default Value",
-      "entityLabel": "Database item",
-      "deleteMappingLabel": "Remove mapping",
-      "highlightingLabel": "Active"
-    },
-    "settingList": {
-      "settingKey": "Key",
-      "settingValue": "Value",
-      "deleteSettingLabel": "Remove setting"
-    },
-    "serverInfo": {
-      "keyLabel": "Name",
-      "valueLabel": "Value",
-      "generalLabel": "General",
-      "versionLabel": "Version"
     }
   }
 }
