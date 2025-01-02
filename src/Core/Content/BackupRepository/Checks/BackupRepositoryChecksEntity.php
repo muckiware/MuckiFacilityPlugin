@@ -18,6 +18,8 @@ class BackupRepositoryChecksEntity extends Entity
 {
     use EntityIdTrait;
 
+    protected string $entity;
+
     /**
      * @return string
      */

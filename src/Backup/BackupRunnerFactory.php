@@ -23,13 +23,15 @@ use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Backup\Files\FilesRunner;
 use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 class BackupRunnerFactory
 {
     public function __construct(
         protected LoggerInterface $logger,
         protected SettingsInterface $settings,
-        protected CoreDatabase $database
+        protected CoreDatabase $database,
+        protected ServicesCliOutput $servicesCliOutput
     ) {}
 
     /**
@@ -47,7 +49,12 @@ class BackupRunnerFactory
                 $runner = new CompleteFilesRunner($this->logger, $this->settings, $this->database);
                 break;
             case BackupTypes::FILES->value:
-                $runner = new FilesRunner($this->logger, $this->settings, $createBackup);
+                $runner = new FilesRunner(
+                    $this->logger,
+                    $this->settings,
+                    $createBackup,
+                    $this->servicesCliOutput
+                );
                 break;
 
             default:

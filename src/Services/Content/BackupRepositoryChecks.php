@@ -1,23 +1,25 @@
-<?php
-
+<?php declare(strict_types=1);
+/**
+ * MuckiFacilityPlugin
+ *
+ * @category   SW6 Plugin
+ * @package    MuckiFacility
+ * @copyright  Copyright (c) 2024 by Muckiware
+ * @license    MIT
+ * @author     Muckiware
+ *
+ */
 namespace MuckiFacilityPlugin\Services\Content;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
-use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenContainerEvent;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
-use Shopware\Core\Framework\DataAbstractionLayer\Write\WriteException;
 use Shopware\Core\Framework\Uuid\Uuid;
 
-use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
 class BackupRepositoryChecks
 {
@@ -36,6 +38,8 @@ class BackupRepositoryChecks
             'checkStatus' => $checkStatus,
             'created_at' => new \DateTime()
         ];
+
+        $this->logger->debug('saveNewCheck '. print_r($data, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         $this->backupRepositoryChecks->create([$data], Context::createDefaultContext());
     }
 }

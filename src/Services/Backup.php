@@ -27,6 +27,8 @@ use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
+use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 class Backup
 {
@@ -38,7 +40,9 @@ class Backup
         protected BackupRepository $backupRepository,
         protected BackupRepositoryChecks $backupRepositoryChecks,
         protected PluginSettings $pluginSettings,
-        protected PluginHelper $pluginHelper
+        protected PluginHelper $pluginHelper,
+        protected ManageService $manageService,
+        protected ServicesCliOutput $servicesCliOutput
     )
     {}
 
@@ -77,6 +81,9 @@ class Backup
         }
 
         $this->createCheckItem($createBackup);
+
+        $this->servicesCliOutput->printCliOutputNewline('Checkup backup data...');
+        $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
     }
 
     public function createDump(CreateBackupEntity $createBackup): void
@@ -86,6 +93,10 @@ class Backup
 
     public function runDatabaseBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
     {
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('run backup database...');
+        }
+
         $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
 
         $backupPath = new BackupPathEntity();
@@ -108,6 +119,10 @@ class Backup
 
     public function runFilesBackup(CreateBackupEntity $createBackup, $cachePaths, bool $isJsonOutput=true): void
     {
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('run backup files...');
+        }
+
         $createBackup->setBackupType(BackupTypes::FILES->value);
         $createBackup->setBackupPaths($cachePaths);
 
@@ -146,6 +161,7 @@ class Backup
 
     public function createCheckItem(CreateBackupEntity $createBackup): void
     {
+        $this->servicesCliOutput->printCliOutputNewline('Checkup backup data...');
         $this->checkBackup($createBackup);
 
         /** @var ResultEntity $result */
@@ -173,9 +189,12 @@ class Backup
         return $preparedBackupPaths;
     }
 
-    public function prepareCreateBackup(string $backupRepositoryId, OutputInterface $output): CreateBackupEntity
+    public function prepareCreateBackup(string $backupRepositoryId): CreateBackupEntity
     {
-        $output->writeln('Prepare backup');
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('Prepare backup');
+        }
+
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
         $createBackup = new CreateBackupEntity();
 
