@@ -44,4 +44,9 @@ class Migration1735644494 extends MigrationStep
         ';
         $connection->executeStatement($query);
     }
+
+    public function updateDestructive(Connection $connection): void
+    {
+        // implement update destructive
+    }
 }
