@@ -25,12 +25,13 @@ class BackupFileSnapshotsRepository
 {
     public function __construct(
         protected LoggerInterface $logger,
+        protected Connection $connection,
         protected PluginSettings $pluginSettings,
         protected EntityRepository $backupFileSnapshotsRepository
     )
     {}
 
-    public function saveSnapshots(string $backupRepositoryId, array $snapshots): void
+    public function createNewSnapshots(string $backupRepositoryId, array $snapshots): void
     {
         $data = array();
         foreach ($snapshots as $snapshot) {
@@ -56,6 +57,29 @@ class BackupFileSnapshotsRepository
 
             $this->logger->debug('saveSnapshots '. print_r($data, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
             $this->backupFileSnapshotsRepository->create($data, Context::createDefaultContext());
+        }
+    }
+
+    public function removeOldSnapshots(string $backupRepositoryId): void
+    {
+        $sql = '
+            DELETE FROM 
+                `muwa_backup_repository_snapshots` 
+            WHERE 
+                `backup_repository_id` = :backupRepositoryId;
+        ';
+
+        try {
+
+            $this->logger->debug('removeOldSnapshots '. $backupRepositoryId, PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->logger->debug('remove statement '. $sql, PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->connection->executeStatement(
+                $sql,
+                ['backupRepositoryId' => Uuid::fromHexToBytes($backupRepositoryId)]
+            );
+        } catch (Exception $e) {
+            $this->logger->error('Problem to delete snapshots', PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
     }
 }

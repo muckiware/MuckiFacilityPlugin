@@ -54,7 +54,9 @@ class ManageRepository
     public function saveSnapshots(string $backupRepositoryId): void
     {
         $fileSnapshots = json_decode($this->getSnapshots($backupRepositoryId), true);
-        $this->backupFileSnapshotsRepository->saveSnapshots($backupRepositoryId, $fileSnapshots);
+
+        $this->backupFileSnapshotsRepository->removeOldSnapshots($backupRepositoryId);
+        $this->backupFileSnapshotsRepository->createNewSnapshots($backupRepositoryId, $fileSnapshots);
     }
 
     public function removeSnapshotById(string $backupRepositoryId, string $snapshotId, bool $isJsonOutput=true): string
