@@ -35,7 +35,7 @@ class BackupRepositoryChecks
         $data = [
             'id' => Uuid::randomHex(),
             'backupRepositoryId' => $backupRepositoryId,
-            'checkStatus' => $checkStatus,
+            'checkStatus' => substr($checkStatus, 0, 254),
             'created_at' => new \DateTime()
         ];
 

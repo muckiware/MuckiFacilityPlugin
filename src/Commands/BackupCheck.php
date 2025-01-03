@@ -24,6 +24,7 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 #[AsCommand(
     name: 'muckiware:backup:check',
@@ -37,7 +38,8 @@ class BackupCheck extends Commands
         protected LoggerInterface $logger,
         protected PluginSettings $pluginSettings,
         protected BackupService $backupService,
-        protected PluginHelper $pluginHelper
+        protected PluginHelper $pluginHelper,
+        protected ServicesCliOutput $servicesCliOutput
     )
     {
         parent::__construct();
@@ -77,11 +79,14 @@ class BackupCheck extends Commands
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->servicesCliOutput->setOutput($output);
+        $this->servicesCliOutput->setIsCli(true);
+
         $output->writeln('Start to check backup');
         $backupRepositoryId = $this->checkInputForBackupRepositoryId($input);
         if($this->pluginSettings->isEnabled() && $backupRepositoryId) {
 
-            $createBackup = $this->backupService->prepareCheckBackup($backupRepositoryId, $output);
+            $createBackup = $this->backupService->prepareCheckBackup($backupRepositoryId);
             $this->backupService->checkBackup($createBackup);
 
             /** @var ResultEntity $result */

@@ -74,7 +74,9 @@
       "errorTitle": "Speicherproblem aufgetreten",
       "createButtonLabel": "Neues Repository erstellen",
       "error-message": "Ein Fehler ist aufgetreten",
-      "success-title": "Backup repository gespeichert"
+      "success-title": "Backup repository gespeichert",
+      "process-success-title": "Backup Prozess gestartet",
+      "process-success-message": "Der Backup Prozess wurde erfolgreich gestartet."
     },
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"

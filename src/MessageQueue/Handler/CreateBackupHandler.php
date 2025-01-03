@@ -17,25 +17,29 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 #[AsMessageHandler]
 class CreateBackupHandler
 {
     public function __construct(
         protected LoggerInterface $logger,
-        protected BackupService $backupService
+        protected BackupService $backupService,
+        protected ServicesCliOutput $servicesCliOutput
     )
     {}
     public function __invoke(CreateBackupMessage $message): void
     {
         $this->logger->debug(
-            'Backup process started'.$message->getBackupRepositoryId(),
+            'Backup process started. BackupRepositoryId: '.$message->getBackupRepositoryId(),
             PluginDefaults::DEFAULT_LOGGER_CONFIG
         );
+
+        $this->servicesCliOutput->setIsCli(false);
         $message->setBackupPaths($this->backupService->prepareBackupPaths($message->getBackupPaths()));
-        $this->backupService->createBackup($message);
+        $this->backupService->createBackup($message, false);
         $this->logger->debug(
-            'Backup process done'.$message->getBackupRepositoryId(),
+            'Backup process done. BackupRepositoryId: '.$message->getBackupRepositoryId(),
             PluginDefaults::DEFAULT_LOGGER_CONFIG
         );
     }

@@ -70,7 +70,12 @@
       "errorTitle": "Storage problem occurred",
       "createButtonLabel": "Create new Repository",
       "error-message": "An error has occurred",
-      "success-title": "Backup repository saved"
+      "success-title": "Backup repository saved",
+      "process-success-title": "Backup process started",
+      "process-success-message": "The backup process has been started successfully."
+    },
+    "backupPaths": {
+      "deletePathLabel": "Delete path"
     }
   }
 }

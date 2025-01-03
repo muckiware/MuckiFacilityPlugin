@@ -19,6 +19,8 @@ class BackupRepositoryChecksEntity extends Entity
     use EntityIdTrait;
 
     protected string $entity;
+    protected string $checkStatus;
+    protected string $backupRepositoryId;
 
     /**
      * @return string
@@ -34,5 +36,25 @@ class BackupRepositoryChecksEntity extends Entity
     public function setEntity(string $entity): void
     {
         $this->entity = $entity;
+    }
+
+    public function getCheckStatus(): string
+    {
+        return $this->checkStatus;
+    }
+
+    public function setCheckStatus(string $checkStatus): void
+    {
+        $this->checkStatus = $checkStatus;
+    }
+
+    public function getBackupRepositoryId(): string
+    {
+        return $this->backupRepositoryId;
+    }
+
+    public function setBackupRepositoryId(string $backupRepositoryId): void
+    {
+        $this->backupRepositoryId = $backupRepositoryId;
     }
 }

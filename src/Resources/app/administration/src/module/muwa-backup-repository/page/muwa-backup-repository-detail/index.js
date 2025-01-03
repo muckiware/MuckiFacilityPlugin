@@ -278,8 +278,8 @@ Component.register('muwa-backup-repository-detail', {
             this.httpClient.post(this.requestBackupProcess, this.backupRepository, { headers: this.getApiHeader() }).then(() => {
 
                 this.createNotificationSuccess({
-                    title: this.$t('muwa-backup-repository.create.success-title'),
-                    message: this.$t('muwa-backup-repository.create.success-message')
+                    title: this.$t('muwa-backup-repository.create.process-success-title'),
+                    message: this.$t('muwa-backup-repository.create.process-success-message')
                 });
 
                 this.isBackupProcessInProgress = false;

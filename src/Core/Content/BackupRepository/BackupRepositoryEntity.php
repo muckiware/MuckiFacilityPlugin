@@ -21,6 +21,8 @@ class BackupRepositoryEntity extends Entity
 {
     use EntityIdTrait;
 
+    protected string $entity;
+
     protected bool $active;
 
     /**

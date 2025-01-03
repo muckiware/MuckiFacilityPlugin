@@ -16,11 +16,11 @@ bin/console plugin:install -a MuckiFacilityPlugin
 | ```bin/console muckiware:backup:create <backupRepositoryId>```    | Creates a new backup by backup repository configuration       |
 | ```bin/console muckiware:backup:forget <backupRepositoryId>```    | Removes snapshots of a backup repository by forget parameters |
 | ```bin/console muckiware:backup:snapshots <backupRepositoryId>``` | Lets a list of snapshots in a backup repository id            |
-| ```bin/console muckiware:db:dump <backupRepositoryId>```          | Creates just a database dump by global plugin setups          |
+| ```bin/console muckiware:db:dump <Type of backup>```          | Creates just a database dump by global plugin setups          |
 ## Database dumps
 Backups via command line interface are possible with the following commands:
 ```shell
-bin/console bin/console muckiware:db:dump <backupType>
+bin/console muckiware:db:dump <backupType>
 ```
 | Option backup type                   | Desc                                                                                                                                                                                        |
 |:-------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

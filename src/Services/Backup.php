@@ -81,8 +81,6 @@ class Backup
         }
 
         $this->createCheckItem($createBackup);
-
-        $this->servicesCliOutput->printCliOutputNewline('Checkup backup data...');
         $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
     }
 
@@ -161,7 +159,9 @@ class Backup
 
     public function createCheckItem(CreateBackupEntity $createBackup): void
     {
-        $this->servicesCliOutput->printCliOutputNewline('Checkup backup data...');
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('Check backup...');
+        }
         $this->checkBackup($createBackup);
 
         /** @var ResultEntity $result */
@@ -205,16 +205,17 @@ class Backup
             $createBackup->setBackupPaths($this->prepareBackupPaths($backupRepository->getBackupPaths()));
             $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
             $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
-        } else {
-            $output->writeln('Prepare backup');
         }
 
         return $createBackup;
     }
 
-    public function prepareCheckBackup(string $backupRepositoryId, OutputInterface $output): CreateBackupEntity
+    public function prepareCheckBackup(string $backupRepositoryId): CreateBackupEntity
     {
-        $output->writeln('Prepare checkup');
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('Prepare checkup');
+        }
+
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
         $createBackup = new CreateBackupEntity();
 
@@ -224,7 +225,13 @@ class Backup
             $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
             $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
         } else {
-            $output->writeln('Missing backup repository for id: '.$backupRepositoryId);
+
+            if($this->servicesCliOutput->isCli()) {
+
+                $this->servicesCliOutput->printCliOutputNewline(
+                    'Missing backup repository for id: '.$backupRepositoryId
+                );
+            }
         }
 
         return $createBackup;
