@@ -12,6 +12,7 @@ use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 class BackupRunnerFactoryTest extends TestCase
 {
@@ -21,8 +22,9 @@ class BackupRunnerFactoryTest extends TestCase
         $logger->method('error');
         $settings = $this->createMock(SettingsInterface::class);
         $coreDatabase = $this->createMock(CoreDatabase::class);
+        $servicesCliOutput = $this->createMock(ServicesCliOutput::class);
 
-        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
+        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase, $servicesCliOutput);
         $createBackup = new CreateBackupEntity();
         $createBackup->setBackupType(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
         $runner = $backupFactory->createBackupRunner($createBackup);
@@ -39,8 +41,9 @@ class BackupRunnerFactoryTest extends TestCase
         $logger->method('error');
         $settings = $this->createMock(SettingsInterface::class);
         $coreDatabase = $this->createMock(CoreDatabase::class);
+        $servicesCliOutput = $this->createMock(ServicesCliOutput::class);
 
-        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
+        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase, $servicesCliOutput);
         $createBackup = new CreateBackupEntity();
         $createBackup->setBackupType(BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value);
         $runner = $backupFactory->createBackupRunner($createBackup);
@@ -60,8 +63,9 @@ class BackupRunnerFactoryTest extends TestCase
         $logger->method('error');
         $settings = $this->createMock(SettingsInterface::class);
         $coreDatabase = $this->createMock(CoreDatabase::class);
+        $servicesCliOutput = $this->createMock(ServicesCliOutput::class);
 
-        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase);
+        $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase, $servicesCliOutput);
         $createBackup = new CreateBackupEntity();
         $createBackup->setBackupType('test');
         $runner = $backupFactory->createBackupRunner($createBackup);
