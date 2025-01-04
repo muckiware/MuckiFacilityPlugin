@@ -37,7 +37,8 @@
       "replicasLabel": "Copies",
       "docsCountLabel": "Number of documents",
       "storageSizeLabel": "storage size",
-      "docsDeletedLabel": "Deleted documents"
+      "docsDeletedLabel": "Deleted documents",
+      "restoreLabel": "Restore Snapshot"
     },
     "detail": {
       "mappingLabel": "Mappings (language-dependent)",

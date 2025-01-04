@@ -163,13 +163,13 @@ Component.register('muwa-backup-repository-detail', {
                     property: 'paths',
                     label: 'muwa-backup-repository.detail.pathsLabel',
                     allowResize: true,
-                    width: '70%',
+                    width: '50%',
                 },
                 {
                     property: 'size',
                     label: 'muwa-backup-repository.detail.sizeLabel',
                     allowResize: true,
-                    width: '10%',
+                    width: '8%',
                 },
                 {
                     property: 'createdAt',
@@ -235,6 +235,12 @@ Component.register('muwa-backup-repository-detail', {
             }
 
             return false
+        },
+
+        onRefresh() {
+
+            this.fetchBackupRepositoryChecks();
+            this.fetchBackupRepositorySnapshots();
         },
 
         onClickSave() {
@@ -387,5 +393,10 @@ Component.register('muwa-backup-repository-detail', {
             criteria.setLimit(10);
             return criteria;
         },
+
+        restoreSnapshot(item) {
+
+            console.log('item.snapshot ID', item.snapshotId);
+        }
     }
 });

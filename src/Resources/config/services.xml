@@ -20,6 +20,12 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service id="MuckiFacilityPlugin\Controller\RestoreSnapshotController" public="true">
+            <argument type="service" id="messenger.bus.shopware"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
 
         <service id="MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition">
             <tag name="shopware.entity.definition" entity="muwa_backup_repository" />
@@ -90,6 +96,17 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service class="MuckiFacilityPlugin\Commands\RestoreSnapshot" id="muwa.command.backup.restore" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\RestoreSnapshot"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
 
         <service id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -123,20 +140,34 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\SettingsInterface" alias="MuckiLogPlugin\Services\Settings"/>
-
         <service id="MuckiFacilityPlugin\Services\Helper"/>
         <service id="MuckiFacilityPlugin\Services\CliOutput" />
+        <service id="MuckiFacilityPlugin\Services\RestoreSnapshot" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+        </service>
 
         <service id="MuckiFacilityPlugin\Core\Database\Database">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="Doctrine\DBAL\Connection"/>
         </service>
+
         <service id="MuckiFacilityPlugin\MessageQueue\Handler\CreateBackupHandler">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <tag name="messenger.message_handler"/>
         </service>
+        <service id="MuckiFacilityPlugin\MessageQueue\Handler\RestoreSnapshotHandler">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\RestoreSnapshot"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
         <service id="MuckiFacilityPlugin\Services\ManageRepository">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>

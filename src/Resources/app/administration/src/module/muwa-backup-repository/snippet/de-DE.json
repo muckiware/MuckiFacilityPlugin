@@ -37,7 +37,8 @@
       "replicasLabel": "Kopien",
       "docsCountLabel": "Anzahl Dokumente",
       "storageSizeLabel": "Speichergröße",
-      "docsDeletedLabel": "gelöschte Dokumente"
+      "docsDeletedLabel": "gelöschte Dokumente",
+      "restoreLabel": "Snapshot wiederherstellen"
     },
     "detail": {
       "mappingLabel": "Zuweisungen (sprachabhängig)",

@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -22,22 +22,22 @@ use MuckiRestic\Entity\Result\ResultEntity;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
-use MuckiFacilityPlugin\Services\Backup as BackupService;
+use MuckiFacilityPlugin\Services\RestoreSnapshot as RestoreSnapshotService;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 #[AsCommand(
-    name: 'muckiware:backup:create',
-    description: 'Create a backup into existing repository'
+    name: 'muckiware:backup:restore',
+    description: 'Restore a snapshot from an existing backup repository'
 )]
-class BackupCreate extends Commands
+class RestoreSnapshot extends Commands
 {
     protected ?ContainerInterface $container = null;
 
     public function __construct(
         protected LoggerInterface $logger,
         protected PluginSettings $pluginSettings,
-        protected BackupService $backupService,
+        protected RestoreSnapshotService $restoreSnapshotService,
         protected PluginHelper $pluginHelper,
         protected ServicesCliOutput $servicesCliOutput
     )
@@ -66,8 +66,8 @@ class BackupCreate extends Commands
      */
     public function configure(): void
     {
-        $this->setDescription('Id for the existing backup repository');
         $this->addArgument('backupRepositoryId',InputArgument::REQUIRED, 'Backup repository id');
+        $this->addArgument('snapshotId',InputArgument::REQUIRED, 'snapshot id of  a backup repository');
         parent::configure();
     }
 
@@ -82,20 +82,19 @@ class BackupCreate extends Commands
         $this->servicesCliOutput->setOutput($output);
         $this->servicesCliOutput->setIsCli(true);
 
-        $output->writeln('Start to run backup');
+        $output->writeln('Start to restore snapshot');
         $backupRepositoryId = $this->checkInputForBackupRepositoryId($input);
         if($this->pluginSettings->isEnabled() && $backupRepositoryId) {
 
-            $this->backupService->createBackup(
-                $this->backupService->prepareCreateBackup($backupRepositoryId), false
-            );
+            $restoreBackup = $this->restoreSnapshotService->prepareRestoreBackup($backupRepositoryId);
+            $restoreBackup->setSnapshotId($input->getArgument('snapshotId'));
+            $this->restoreSnapshotService->restoreSnapshot($restoreBackup, false);
 
             /** @var ResultEntity $result */
-            foreach ($this->backupService->getAllResults() as $result) {
+            foreach ($this->restoreSnapshotService->getAllResults() as $result) {
                 $output->writeln($result->getOutput());
             }
         }
-        $output->writeln('Backup is done');
 
         return 0;
     }

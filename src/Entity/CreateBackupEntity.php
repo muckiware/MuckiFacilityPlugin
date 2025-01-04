@@ -10,6 +10,8 @@ class CreateBackupEntity
     protected string $backupType;
     protected string $repositoryPassword;
     protected string $repositoryPath;
+    protected string $restoreTarget;
+    protected string $snapshotId;
 
     /**
      * @var BackupPathEntity<array> $backupPaths
@@ -64,5 +66,25 @@ class CreateBackupEntity
     public function setBackupType(string $backupType): void
     {
         $this->backupType = $backupType;
+    }
+
+    public function getRestoreTarget(): string
+    {
+        return $this->restoreTarget;
+    }
+
+    public function setRestoreTarget(string $restoreTarget): void
+    {
+        $this->restoreTarget = $restoreTarget;
+    }
+
+    public function getSnapshotId(): string
+    {
+        return $this->snapshotId;
+    }
+
+    public function setSnapshotId(string $snapshotId): void
+    {
+        $this->snapshotId = $snapshotId;
     }
 }
