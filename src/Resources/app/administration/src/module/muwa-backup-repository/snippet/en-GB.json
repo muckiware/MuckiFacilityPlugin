@@ -77,6 +77,12 @@
     },
     "backupPaths": {
       "deletePathLabel": "Delete path"
+    },
+    "restore": {
+      "errorTitle": "Storage problem occurred",
+      "error-message": "An error has occurred",
+      "process-success-title": "Restore process started",
+      "process-success-message": "The restore process has been started successfully."
     }
   }
 }

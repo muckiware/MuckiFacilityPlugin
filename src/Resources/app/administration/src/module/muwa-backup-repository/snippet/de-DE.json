@@ -76,11 +76,17 @@
       "createButtonLabel": "Neues Repository erstellen",
       "error-message": "Ein Fehler ist aufgetreten",
       "success-title": "Backup repository gespeichert",
-      "process-success-title": "Backup Prozess gestartet",
-      "process-success-message": "Der Backup Prozess wurde erfolgreich gestartet."
+      "process-success-title": "Backup-Prozess gestartet",
+      "process-success-message": "Der Backup-Prozess wurde erfolgreich gestartet."
     },
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"
+    },
+    "restore": {
+      "errorTitle": "Speicherproblem aufgetreten",
+      "error-message": "Ein Fehler ist aufgetreten",
+      "process-success-title": "Wiederherstellungsprozess gestartet",
+      "process-success-message": "Der Wiederherstellungsprozess wurde erfolgreich gestartet."
     }
   }
 }

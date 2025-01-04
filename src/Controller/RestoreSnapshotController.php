@@ -12,22 +12,17 @@
 namespace MuckiFacilityPlugin\Controller;
 
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\Write\WriteException;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
-use MuckiFacilityPlugin\Entity\RepositoryInitInputs;
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
-use MuckiFacilityPlugin\Entity\BackupPathEntity;
+use MuckiFacilityPlugin\Services\Content\BackupRepository;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
 #[Package('restore-snapshot-repository')]
@@ -37,7 +32,8 @@ class RestoreSnapshotController extends AbstractController
      * @internal
      */
     public function __construct(
-        private readonly MessageBusInterface $messageBus
+        private readonly MessageBusInterface $messageBus,
+        protected BackupRepository $backupRepository
     )
     {}
 
@@ -51,14 +47,21 @@ class RestoreSnapshotController extends AbstractController
     )]
     public function process(RequestDataBag $requestDataBag, Context $context): Response
     {
-        $message = new CreateBackupMessage();
-        $message->setBackupRepositoryId($requestDataBag->get('id'));
-        $message->setRepositoryPassword($requestDataBag->get('repositoryPassword'));
-        $message->setRepositoryPath($requestDataBag->get('repositoryPath'));
-        $message->setBackupType($requestDataBag->get('type'));
-        $message->setSnapshotId($requestDataBag->get('snapshotId'));
+        $backupRepository = $this->backupRepository->getBackupRepositoryById(
+            $requestDataBag->get('backupRepositoryId')
+        );
 
-        $this->messageBus->dispatch($message);
+        if($backupRepository) {
+
+            $message = new CreateBackupMessage();
+            $message->setBackupRepositoryId($requestDataBag->get('backupRepositoryId'));
+            $message->setRepositoryPassword($backupRepository->getRepositoryPassword());
+            $message->setRepositoryPath($backupRepository->getRepositoryPath());
+            $message->setRestoreTarget($backupRepository->getRestorePath());
+            $message->setSnapshotId($requestDataBag->get('snapshotId'));
+
+            $this->messageBus->dispatch($message);
+        }
 
         return new Response('', Response::HTTP_NO_CONTENT);
     }

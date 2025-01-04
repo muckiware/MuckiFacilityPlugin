@@ -55,6 +55,7 @@ Component.register('muwa-backup-repository-detail', {
             isBackupProcessInProgress: false,
             isBackupProcessSuccess: false,
             requestBackupProcess: '/_action/muwa/backup/process',
+            requestRestoreProcess: '/_action/muwa/restore/process',
             httpClient: null,
             backupRepositoryChecks: [],
             backupRepositorySnapshots: [],
@@ -156,28 +157,24 @@ Component.register('muwa-backup-repository-detail', {
                 {
                     property: 'snapshotShortId',
                     label: 'muwa-backup-repository.detail.snapshotShortIdStatusLabel',
-                    allowResize: true,
-                    width: '10%',
+                    allowResize: true
                 },
                 {
                     property: 'paths',
                     label: 'muwa-backup-repository.detail.pathsLabel',
-                    allowResize: true,
-                    width: '50%',
+                    allowResize: true
                 },
                 {
                     property: 'size',
                     label: 'muwa-backup-repository.detail.sizeLabel',
-                    allowResize: true,
-                    width: '8%',
+                    allowResize: true
                 },
                 {
                     property: 'createdAt',
                     label: 'muwa-backup-repository.detail.createdAtLabel',
                     allowResize: true,
                     dataIndex: 'createdAt',
-                    align: 'right',
-                    width: '10%',
+                    align: 'right'
                 }
             ];
         },
@@ -396,7 +393,30 @@ Component.register('muwa-backup-repository-detail', {
 
         restoreSnapshot(item) {
 
-            console.log('item.snapshot ID', item.snapshotId);
+            if (this.hasErrors()) {
+                return;
+            }
+
+            this.isBackupProcessInProgress = true;
+            this.isSaveSuccessful = false;
+
+            this.httpClient.post(this.requestRestoreProcess, item, { headers: this.getApiHeader() }).then(() => {
+
+                this.createNotificationSuccess({
+                    title: this.$t('muwa-backup-repository.restore.process-success-title'),
+                    message: this.$t('muwa-backup-repository.restore.process-success-message')
+                });
+
+                this.isBackupProcessInProgress = false;
+
+            }).catch((exception) => {
+
+                this.createNotificationError({
+                    title: this.$t('muwa-backup-repository.restore.error-message'),
+                    message: exception.response.data.errors[0].detail
+                });
+
+            });
         }
     }
 });
