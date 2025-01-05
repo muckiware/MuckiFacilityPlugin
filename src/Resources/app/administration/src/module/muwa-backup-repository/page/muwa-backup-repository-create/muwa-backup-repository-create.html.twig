@@ -1,6 +1,6 @@
-{% block muwa_search_structure_detail %}
+{% block muwa_backup_repository_create %}
     <sw-page class="muwa-backup-repository-tabs-detail">
-        {% block muwa_search_structure_detail_smart_bar_actions %}
+        {% block muwa_backup_repository_create_smart_bar_actions %}
             <template #smart-bar-actions>
                 <sw-button :routerLink="{ name: 'muwa.backup.repository.index'}">
                     {{ $tc('muwa-backup-repository.list.header.cancelButtonLabel') }}
@@ -20,7 +20,7 @@
         {% endblock %}
 
         <template #content>
-            {% block muwa_search_structure_detail_content %}
+            {% block muwa_backup_repository_content %}
                 <sw-card-view>
                     <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.generalLabel')">
                         <sw-switch-field
@@ -62,8 +62,7 @@
                                 required
                                 :disabled="false"
                                 type="select"
-                                :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
-                                :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                                :label="$tc('muwa-backup-repository.detail.databaseTypeLabel')"
                         >
                             <option slot="options"
                                     v-for="option in type"
@@ -80,8 +79,7 @@
                                 required
                                 :disabled="false"
                                 type="select"
-                                :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
-                                :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                                :label="$tc('muwa-backup-repository.detail.databaseTypeLabel')"
                         >
                             <option slot="options"
                                     v-for="option in type"
@@ -112,6 +110,12 @@
                                 :disabled="false"
                         >
                         </sw-text-field>
+                        {% block muwa_backup_repository_create_backup_repository_path_description %}
+                            <div
+                                v-html="$tc('muwa-backup-repository.detail.repositoryPathDescription')"
+                                class="muwa-backup-repository-detail-repository-path__description"
+                            ></div>
+                        {% endblock %}
 
                         <sw-container style="grid-template-columns: 1fr 1fr; gap: 0px 30px; place-items: stretch;">
                             <sw-password-field
@@ -155,6 +159,12 @@
                             >
                             </sw-password-field>
                         </sw-container>
+                        {% block muwa_backup_repository_create_backup_repository_password_description %}
+                            <div
+                                    v-html="$tc('muwa-backup-repository.detail.repositoryPasswordDescription')"
+                                    class="muwa-backup-repository-detail-repository-password__description"
+                            ></div>
+                        {% endblock %}
 
                         <sw-text-field
                                 v-if="isV6600"
@@ -190,7 +200,7 @@
                         >
                             {{ $tc('muwa-backup-repository.detail.addBackupPathLabel') }}
                         </sw-button>
-                        {% block muwa_search_structure_detail_backup_paths_description %}
+                        {% block muwa_backup_repository_create_backup_paths_description %}
                             <div
                                     v-html="$tc('muwa-backup-repository.detail.backupPathsDescription')"
                                     class="muwa-backup-repository-detail-backup-paths__description"
@@ -198,7 +208,7 @@
                         {% endblock %}
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                        {% block wuwa_search_structure_mapping_grid %}
+                        {% block muwa_backup_repository_create_paths_grid %}
                             <sw-data-grid
                                     v-if="backupPathExist"
                                     :data-source="getBackupPaths"
@@ -245,7 +255,7 @@
                                 {% endblock %}
 
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                                {% block wuwa_search_structure_mapping_grid_context_menu_delete %}
+                                {% block muwa_backup_repository_create_grid_context_menu_delete %}
                                     <template #actions="{ item }">
                                         <sw-context-menu-item
                                                 variant="danger"
@@ -261,11 +271,11 @@
                         {% endblock %}
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                        {% block wuwa_search_structure_mapping_empty_state %}
+                        {% block muwa_backup_repository_create_paths_empty_state %}
                             <sw-empty-state
                                     v-else
                                     class="sw-import-export-edit-profile-modal-mapping__empty-state"
-                                    :title="$tc('muwa-backup-repository.detail.mappingEmptyState')"
+                                    :title="$tc('muwa-backup-repository.detail.pathEmptyState')"
                                     :absolute="false"
                                     icon="regular-file"
                             />
@@ -273,7 +283,7 @@
                     </sw-card>
 
                     <sw-card positionIdentifier="muwaBackupRepositoryForget" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.forget')">
-                        {% block muwa_search_structure_detail_forget_description %}
+                        {% block muwa_backup_repository_create_forget_description %}
                             <div
                                     v-html="$tc('muwa-backup-repository.detail.forgetDescription')"
                                     class="muwa-backup-repository-detail-forget__description"
@@ -282,7 +292,7 @@
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                         {% block wuwa_backup_repository_forget_list %}
-                            {% block wuwa_backup_repository_backup_paths_list_forget_daily_column %}
+                            {% block wuwa_backup_repository_backup_list_forget_daily_column %}
                                 <sw-number-field
                                         v-if="isV6600"
                                         v-model:value="backupRepository.forgetDaily"
@@ -298,7 +308,7 @@
                                         :disabled="false"
                                 />
                             {% endblock %}
-                            {% block wuwa_backup_repository_backup_paths_list_forget_weekly_column %}
+                            {% block wuwa_backup_repository_backup_list_forget_weekly_column %}
                                 <sw-number-field
                                         v-if="isV6600"
                                         v-model:value="backupRepository.forgetWeekly"
@@ -314,7 +324,7 @@
                                         :disabled="false"
                                 />
                             {% endblock %}
-                            {% block wuwa_backup_repository_backup_paths_list_forget_monthly_column %}
+                            {% block wuwa_backup_repository_backup_list_forget_monthly_column %}
                                 <sw-number-field
                                         v-if="isV6600"
                                         v-model:value="backupRepository.forgetMonthly"
@@ -330,7 +340,7 @@
                                         :disabled="false"
                                 />
                             {% endblock %}
-                            {% block wuwa_backup_repository_backup_paths_list_forget_yearly_column %}
+                            {% block wuwa_backup_repository_backup_list_forget_yearly_column %}
                                 <sw-number-field
                                         v-if="isV6600"
                                         v-model:value="backupRepository.forgetYearly"

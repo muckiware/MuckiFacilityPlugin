@@ -54,6 +54,7 @@ Component.register('muwa-backup-repository-detail', {
             ],
             isBackupProcessInProgress: false,
             isBackupProcessSuccess: false,
+            isBackupProcessDisabled: true,
             requestBackupProcess: '/_action/muwa/backup/process',
             requestRestoreProcess: '/_action/muwa/restore/process',
             httpClient: null,
@@ -214,6 +215,7 @@ Component.register('muwa-backup-repository-detail', {
                 this.backupRepository = entity;
                 this.isLoading = false;
                 this.isBackupProcessInProgress = false;
+                this.isBackupProcessDisabled = false;
             });
         },
 

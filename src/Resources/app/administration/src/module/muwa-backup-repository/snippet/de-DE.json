@@ -69,7 +69,10 @@
       "snapshotShortIdStatusLabel": "Snapshot ID",
       "createdAtLabel": "Erstellt am",
       "pathsLabel": "Pfad",
-      "sizeLabel": "Größe"
+      "sizeLabel": "Größe",
+      "databaseTypeLabel": "Datenbank dump Typ",
+      "repositoryPathDescription": "Der Pfad zum Sicherungs-Repository. Gebe hier den absoluten Pfad zum Backup-Repository an. Beachte, dass dieser Pfad nach der Erstellung nicht mehr geändert werden kann!",
+      "repositoryPasswordDescription": "Es ist sehr wichtig, sich dieses Passwort zu merken! Wenn Du es verlieren, kannst Du außerhalb der Shop-Funktionalität nicht mehr auf die im Repository gespeicherten Daten zugreifen. Beachte, dass dieser Pfad nach der Erstellung nicht mehr geändert werden kann!"
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten",

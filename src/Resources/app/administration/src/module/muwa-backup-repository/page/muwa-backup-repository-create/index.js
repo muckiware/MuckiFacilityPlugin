@@ -29,7 +29,7 @@ Component.extend('muwa-backup-repository-create', 'muwa-backup-repository-detail
 
             // set default values
             this.backupRepository.active = true;
-            this.backupRepository.name = '';
+            this.backupRepository.name = 'Backup';
             this.backupRepository.forgetDaily = 7;
             this.backupRepository.forgetWeekly = 5;
             this.backupRepository.forgetMonthly = 12;
@@ -73,6 +73,8 @@ Component.extend('muwa-backup-repository-create', 'muwa-backup-repository-detail
 
                 }).catch((exception) => {
 
+                    console.error('Not possible to save the backup repository');
+                    console.error(exception);
                     this.isLoading = false;
                     this.createNotificationError({
                         title: this.$t('muwa.backup.repository.create.error-message'),

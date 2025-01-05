@@ -20,7 +20,7 @@
     },
     "list": {
       "header": {
-        "createButtonLabel": "Add",
+        "createButtonLabel": "Add Repository",
         "cancelButtonLabel": "Cancel",
         "saveButtonLabel": "Save",
         "createStructureLabel" : "Add structure"
@@ -65,7 +65,14 @@
       "snapshotShortIdStatusLabel": "Snapshot ID",
       "createdAtLabel": "Created at",
       "pathsLabel": "Path",
-      "sizeLabel": "Size"
+      "sizeLabel": "Size",
+      "databaseTypeLabel": "Database dump type",
+      "forgetDailyLabel": "Delete daily backups",
+      "forgetWeeklyLabel": "Delete weekly backups",
+      "forgetMonthlyLabel": "Delete monthly backups",
+      "forgetYearlyLabel": "Delete yearly backups",
+      "repositoryPathDescription": "The path to the backup repository. Enter here the absolute path to the backup repository. Note that this path cannot be changed after creation!",
+      "repositoryPasswordDescription": "Remembering this password is very important! If you lose it, you won’t be able to get access to the data stored in the repository outside of the shop functionality. Note that this path cannot be changed after creation!"
     },
     "create": {
       "errorTitle": "Storage problem occurred",

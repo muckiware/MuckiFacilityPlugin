@@ -1,6 +1,6 @@
-{% block muwa_backup_repository_detail %}
+{% block muwa_search_structure_detail %}
     <sw-page class="muwa-backup-repository-tabs-detail">
-        {% block muwa_backup_repository_detail_smart_bar_actions %}
+        {% block muwa_search_structure_detail_smart_bar_actions %}
             <template #smart-bar-actions>
                 <sw-button :routerLink="{ name: 'muwa.backup.repository.index'}">
                     {{ $tc('muwa-backup-repository.list.header.cancelButtonLabel') }}
@@ -20,7 +20,7 @@
                         variant="ghost"
                         class="sw-settings-search__search-index-rebuild-button"
                         :is-loading="isBackupProcessInProgress"
-                        :disabled="isBackupProcessInProgress || !acl.can('backup_repository.editor')"
+                        :disabled="isBackupProcessDisabled"
                         :process-success="isBackupProcessSuccess"
                         @update:process-success="createFinish"
                         @click="onBackupProcess"
@@ -31,9 +31,9 @@
         {% endblock %}
 
         <template #content>
-            {% block muwa_backup_repository_detail_content %}
+            {% block muwa_backup_repository_content %}
 
-                {% block muwa_backup_repository_content_tabs %}
+                {% block muwa_search_structure_content_tabs %}
                     <sw-tabs default-item="repositoryList" class="muwa-backup-repository-content-tabs" position-identifier="muwa-backup-repository-content-tabs">
                         <template #default="{ active }">
                             <sw-tabs-item
@@ -96,13 +96,12 @@
                         </sw-text-field>
 
                         <sw-select-field
-                            v-if="backupRepository&& isV6600"
+                            v-if="backupRepository && isV6600"
                             v-model:value="backupRepository.type"
                             validation="required"
                             required
                             :disabled="false"
                             type="select"
-                            :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
                             :label="$tc('lightson-pseudo-product.detail.card-base.type')"
                         >
                             <option slot="options"
@@ -120,8 +119,7 @@
                             required
                             :disabled="true"
                             type="select"
-                            :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
-                            :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                            :label="$tc('muwa-backup-repository.detail.databaseTypeLabel')"
                         >
                             <option slot="options"
                                 v-for="option in type"
@@ -194,7 +192,7 @@
                         {% endblock %}
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                        {% block muwa_backup_repository_path_grid %}
+                        {% block wuwa_search_structure_mapping_grid %}
                             <sw-data-grid
                                 v-if="backupPathExist"
                                 :data-source="getBackupPaths"
@@ -202,7 +200,7 @@
                                 :show-selection="false"
                                 :columns="backupPathsColumns"
                                 plain-appearance
-                                class="muwa-backup-repository-path__grid"
+                                class="sw-import-export-edit-profile-modal-mapping__grid"
                             >
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                 {% block wuwa_backup_repository_backup_paths_grid_data_type_column %}
@@ -257,7 +255,7 @@
                         {% endblock %}
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                        {% block muwa_backup_repository_path_empty_state %}
+                        {% block wuwa_search_structure_mapping_empty_state %}
                             <sw-empty-state
                                 v-else
                                 class="sw-import-export-edit-profile-modal-mapping__empty-state"
@@ -269,7 +267,7 @@
                     </sw-card>
 
                     <sw-card positionIdentifier="muwaBackupRepositoryForget" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.forget')">
-                        {% block muwa_backup_repository_detail_forget_description %}
+                        {% block muwa_search_structure_detail_forget_description %}
                             <div
                                 v-html="$tc('muwa-backup-repository.detail.forgetDescription')"
                                 class="muwa-backup-repository-detail-forget__description"
@@ -376,7 +374,7 @@
                             :items="backupRepositorySnapshots"
                             :repository="backupRepositorySnapshotsRepository"
                             :columns="backupSnapshotsColumns"
-                            :showActions="true"
+                            :showActions="false"
                             :showSelection="false"
                             :showSettings="false"
                             :sort-by="sortBy"
@@ -400,9 +398,7 @@
                         <template #column-createdAt="{ item }">
                             {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
                         </template>
-                        <template
-                                #actions="{ item }"
-                        >
+                        <template #actions="{ item }">
                             <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                             {% block wuwa_backup_repository_list_content_listing_actions %}
                                 <sw-context-menu-item @click="restoreSnapshot(item)">
@@ -418,7 +414,6 @@
                 </sw-card-view>
             {% endblock %}
         </template>
-
         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
         {% block muwa_backup_repository_list_sidebar %}
             <template #sidebar>
@@ -426,9 +421,9 @@
                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                     {% block muwa_backup_repository_list_sidebar_refresh %}
                         <sw-sidebar-item
-                            icon="regular-undo"
-                            :title="$tc('muwa-backup-repository.list.titleSidebarItemRefresh')"
-                            @click="onRefresh"
+                                icon="regular-undo"
+                                :title="$tc('muwa-backup-repository.list.titleSidebarItemRefresh')"
+                                @click="onRefresh"
                         />
                     {% endblock %}
                 </sw-sidebar>
