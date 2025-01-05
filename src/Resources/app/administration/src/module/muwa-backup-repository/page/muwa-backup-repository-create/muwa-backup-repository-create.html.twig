@@ -20,7 +20,7 @@
         {% endblock %}
 
         <template #content>
-            {% block muwa_backup_repository_content %}
+            {% block muwa_backup_repository_create_content %}
                 <sw-card-view>
                     <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.generalLabel')">
                         <sw-switch-field
@@ -56,7 +56,7 @@
                         </sw-text-field>
 
                         <sw-select-field
-                                v-if="backupRepository&& isV6600"
+                                v-if="backupRepository && isV6600"
                                 v-model:value="backupRepository.type"
                                 validation="required"
                                 required
@@ -187,16 +187,16 @@
 
                     </sw-card>
 
-                    <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.backupPaths')">
+                    <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository" :title="$tc('muwa-backup-repository.create.backupPaths')">
                         <sw-button
-                                v-tooltip="{
+                            v-tooltip="{
                                 message: $tc('sw-import-export.profile.addMappingTooltipText'),
                                 showOnDisabledElements: true
                             }"
-                                class="sw-import-export-edit-profile-modal-mapping__add-action"
-                                variant="ghost"
-                                size="small"
-                                @click="onAddBackupPath"
+                            class="sw-import-export-edit-profile-modal-mapping__add-action"
+                            variant="ghost"
+                            size="small"
+                            @click="onAddBackupPath"
                         >
                             {{ $tc('muwa-backup-repository.detail.addBackupPathLabel') }}
                         </sw-button>

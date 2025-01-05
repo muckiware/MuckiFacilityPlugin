@@ -203,7 +203,6 @@ Component.register('muwa-backup-repository-detail', {
             this.isLoading = true;
             this.isBackupProcessInProgress = true;
             this.getBackupRepository();
-            this.loadBackupsPaths();
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
         },
@@ -302,18 +301,6 @@ Component.register('muwa-backup-repository-detail', {
         saveFinish() {
         },
 
-        loadBackupsPaths() {
-
-            // if(this.backupRepository && this.backupRepository.backupPaths) {
-            //
-            //     this.backupRepository.backupPaths.forEach((backupPath) => {
-            //         if (!backupPath.id) {
-            //             backupPath.id = createId();
-            //         }
-            //     });
-            // }
-        },
-
         onAddBackupPath() {
 
             if(this.backupRepository.backupPaths.length !== undefined && this.backupRepository.backupPaths.length >= 1) {
@@ -329,8 +316,6 @@ Component.register('muwa-backup-repository-detail', {
                 compress: false,
                 position: 0
             });
-
-            this.loadBackupsPaths();
         },
 
         onDeleteBackupPath(id) {
@@ -338,8 +323,6 @@ Component.register('muwa-backup-repository-detail', {
             this.backupRepository.backupPaths = this.backupRepository.backupPaths.filter((backupPath) => {
                 return backupPath.id !== id;
             });
-
-            this.loadBackupsPaths();
         },
 
         getApiHeader() {
