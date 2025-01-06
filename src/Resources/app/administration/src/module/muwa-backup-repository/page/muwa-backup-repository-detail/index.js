@@ -351,6 +351,7 @@ Component.register('muwa-backup-repository-detail', {
 
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
+            criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
             criteria.setLimit(10);
             return criteria;
         },
@@ -372,6 +373,7 @@ Component.register('muwa-backup-repository-detail', {
 
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
+            criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
             criteria.setLimit(10);
             return criteria;
         },
