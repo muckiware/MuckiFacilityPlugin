@@ -39,7 +39,15 @@ Module.register('muwa-backup-repository', {
         },
         detail: {
             component: 'muwa-backup-repository-detail',
-            path: 'detail/:id',
+            path: 'detail/:id/:tab?',
+            props: {
+                default(route) {
+                    return {
+                        id: route.params.id,
+                        tab: 'backupRepositoryConfig',
+                    };
+                },
+            },
             meta: {
                 parentPath: 'muwa.backup.repository.index'
             }

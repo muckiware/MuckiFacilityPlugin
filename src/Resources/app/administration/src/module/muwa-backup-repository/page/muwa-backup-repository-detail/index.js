@@ -15,6 +15,18 @@ Component.register('muwa-backup-repository-detail', {
         'acl'
     ],
 
+    props: {
+        check: {
+            type: Object,
+            required: true,
+        },
+
+        versionContext: {
+            type: Object,
+            required: true,
+        },
+    },
+
     mixins: [
         Mixin.getByName('placeholder'),
         Mixin.getByName('notification')
@@ -42,8 +54,12 @@ Component.register('muwa-backup-repository-detail', {
             ],
             isBackupProcessInProgress: false,
             isBackupProcessSuccess: false,
+            isBackupProcessDisabled: true,
             requestBackupProcess: '/_action/muwa/backup/process',
+            requestRestoreProcess: '/_action/muwa/restore/process',
             httpClient: null,
+            backupRepositoryChecks: [],
+            backupRepositorySnapshots: [],
         };
     },
 
@@ -57,16 +73,12 @@ Component.register('muwa-backup-repository-detail', {
             this.V6_5_0_0 = true;
         }
 
+        if(this.$route.params.tab === undefined) {
+            this.$router.push({ name: 'muwa.backup.repository.detail', params: { tab: 'backupRepositoryConfig' } });
+        }
+
         this.httpClient = Shopware.Application.getContainer('init').httpClient;
         this.createdComponent();
-    },
-
-    watch: {
-        'backupRepository.surchargeType'(value) {
-            if (value === 'percental') {
-                this.backupRepository.multiplierProductStatus = false;
-            }
-        },
     },
 
     computed: {
@@ -75,8 +87,17 @@ Component.register('muwa-backup-repository-detail', {
             return this.repositoryFactory.create('muwa_backup_repository');
         },
 
+        backupRepositoryChecksRepository() {
+            return this.repositoryFactory.create('muwa_backup_repository_checks');
+        },
+
+        backupRepositorySnapshotsRepository() {
+            return this.repositoryFactory.create('muwa_backup_repository_snapshots');
+        },
+
         criteria() {
             const criteria = new Criteria();
+            criteria.addAssociation('backupRepositoryChecks');
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             return criteria;
         },
@@ -111,12 +132,68 @@ Component.register('muwa-backup-repository-detail', {
             ];
         },
 
+        backupChecksColumns() {
+
+            return [
+                {
+                    property: 'checkStatus',
+                    label: 'muwa-backup-repository.detail.checkStatusLabel',
+                    allowResize: true,
+                    width: '80%',
+                },
+                {
+                    property: 'createdAt',
+                    label: 'muwa-backup-repository.detail.checkCreatedAtLabel',
+                    allowResize: true,
+                    dataIndex: 'createdAt',
+                    align: 'right',
+                    width: '10%',
+                }
+            ];
+        },
+
+        backupSnapshotsColumns() {
+
+            return [
+                {
+                    property: 'snapshotShortId',
+                    label: 'muwa-backup-repository.detail.snapshotShortIdStatusLabel',
+                    allowResize: true
+                },
+                {
+                    property: 'paths',
+                    label: 'muwa-backup-repository.detail.pathsLabel',
+                    allowResize: true
+                },
+                {
+                    property: 'size',
+                    label: 'muwa-backup-repository.detail.sizeLabel',
+                    allowResize: true
+                },
+                {
+                    property: 'createdAt',
+                    label: 'muwa-backup-repository.detail.createdAtLabel',
+                    allowResize: true,
+                    dataIndex: 'createdAt',
+                    align: 'right'
+                }
+            ];
+        },
+
         isV6600() {
             return this.V6_6_0_0;
         },
         isV6500() {
             return this.V6_5_0_0;
-        }
+        },
+
+        tab() {
+            return this.$route.params.tab || 'backupRepositoryConfig';
+        },
+
+        dateFilter() {
+            return Shopware.Filter.getByName('date');
+        },
     },
 
     methods: {
@@ -126,19 +203,19 @@ Component.register('muwa-backup-repository-detail', {
             this.isLoading = true;
             this.isBackupProcessInProgress = true;
             this.getBackupRepository();
-            this.loadBackupsPaths();
+            this.fetchBackupRepositoryChecks();
+            this.fetchBackupRepositorySnapshots();
         },
 
         getBackupRepository() {
 
-            this.repository
-                .get(this.$route.params.id, Shopware.Context.api, this.criteria)
-                .then((entity) => {
+            this.repository.get(this.$route.params.id, Shopware.Context.api, this.criteria).then((entity) => {
 
-                    this.backupRepository = entity;
-                    this.isLoading = false;
-                    this.isBackupProcessInProgress = false;
-                });
+                this.backupRepository = entity;
+                this.isLoading = false;
+                this.isBackupProcessInProgress = false;
+                this.isBackupProcessDisabled = false;
+            });
         },
 
         castValues() {
@@ -156,6 +233,12 @@ Component.register('muwa-backup-repository-detail', {
             }
 
             return false
+        },
+
+        onRefresh() {
+
+            this.fetchBackupRepositoryChecks();
+            this.fetchBackupRepositorySnapshots();
         },
 
         onClickSave() {
@@ -199,8 +282,8 @@ Component.register('muwa-backup-repository-detail', {
             this.httpClient.post(this.requestBackupProcess, this.backupRepository, { headers: this.getApiHeader() }).then(() => {
 
                 this.createNotificationSuccess({
-                    title: this.$t('muwa-backup-repository.create.success-title'),
-                    message: this.$t('muwa-backup-repository.create.success-message')
+                    title: this.$t('muwa-backup-repository.create.process-success-title'),
+                    message: this.$t('muwa-backup-repository.create.process-success-message')
                 });
 
                 this.isBackupProcessInProgress = false;
@@ -218,18 +301,6 @@ Component.register('muwa-backup-repository-detail', {
         saveFinish() {
         },
 
-        loadBackupsPaths() {
-
-            // if(this.backupRepository && this.backupRepository.backupPaths) {
-            //
-            //     this.backupRepository.backupPaths.forEach((backupPath) => {
-            //         if (!backupPath.id) {
-            //             backupPath.id = createId();
-            //         }
-            //     });
-            // }
-        },
-
         onAddBackupPath() {
 
             if(this.backupRepository.backupPaths.length !== undefined && this.backupRepository.backupPaths.length >= 1) {
@@ -245,8 +316,6 @@ Component.register('muwa-backup-repository-detail', {
                 compress: false,
                 position: 0
             });
-
-            this.loadBackupsPaths();
         },
 
         onDeleteBackupPath(id) {
@@ -254,8 +323,6 @@ Component.register('muwa-backup-repository-detail', {
             this.backupRepository.backupPaths = this.backupRepository.backupPaths.filter((backupPath) => {
                 return backupPath.id !== id;
             });
-
-            this.loadBackupsPaths();
         },
 
         getApiHeader() {
@@ -265,6 +332,78 @@ Component.register('muwa-backup-repository-detail', {
                 Authorization: `Bearer ${ Shopware.Context.api.authToken.access }`,
                 'Content-Type': 'application/json'
             }
+        },
+
+        fetchBackupRepositoryChecks() {
+
+            const criteria = this.createBackupRepositoryChecksCriteria();
+
+            this.isLoading = true;
+            return this.backupRepositoryChecksRepository.search(criteria, Context.api).then((collection) => {
+
+                this.backupRepositoryChecks = collection;
+                this.isLoading = false;
+                return this.backupRepositoryChecks;
+            });
+        },
+
+        createBackupRepositoryChecksCriteria() {
+
+            const criteria = new Criteria();
+            criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
+            criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
+            criteria.setLimit(10);
+            return criteria;
+        },
+
+        fetchBackupRepositorySnapshots() {
+
+            const criteria = this.createBackupRepositorySnapshotsCriteria();
+
+            this.isLoading = true;
+            return this.backupRepositorySnapshotsRepository.search(criteria, Context.api).then((collection) => {
+
+                this.backupRepositorySnapshots = collection;
+                this.isLoading = false;
+                return this.backupRepositorySnapshots;
+            });
+        },
+
+        createBackupRepositorySnapshotsCriteria() {
+
+            const criteria = new Criteria();
+            criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
+            criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
+            criteria.setLimit(10);
+            return criteria;
+        },
+
+        restoreSnapshot(item) {
+
+            if (this.hasErrors()) {
+                return;
+            }
+
+            this.isBackupProcessInProgress = true;
+            this.isSaveSuccessful = false;
+
+            this.httpClient.post(this.requestRestoreProcess, item, { headers: this.getApiHeader() }).then(() => {
+
+                this.createNotificationSuccess({
+                    title: this.$t('muwa-backup-repository.restore.process-success-title'),
+                    message: this.$t('muwa-backup-repository.restore.process-success-message')
+                });
+
+                this.isBackupProcessInProgress = false;
+
+            }).catch((exception) => {
+
+                this.createNotificationError({
+                    title: this.$t('muwa-backup-repository.restore.error-message'),
+                    message: exception.response.data.errors[0].detail
+                });
+
+            });
         }
     }
 });

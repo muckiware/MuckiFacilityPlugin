@@ -12,6 +12,8 @@
 namespace MuckiFacilityPlugin\Backup\Files;
 
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Content\ImportExport\Struct\Progress;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 use MuckiRestic\Library\Backup;
 use MuckiRestic\Entity\Result\ResultEntity;
@@ -22,6 +24,7 @@ use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiRestic\Exception\InvalidConfigurationException;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 class FilesRunner implements BackupInterface
 {
@@ -32,7 +35,8 @@ class FilesRunner implements BackupInterface
     public function __construct(
         protected LoggerInterface $logger,
         protected PluginSettings $pluginSettings,
-        protected CreateBackupEntity $createBackup
+        protected CreateBackupEntity $createBackup,
+        protected ServicesCliOutput $servicesCliOutput
     ) {}
 
     public function getBackupResults(): array
@@ -50,19 +54,49 @@ class FilesRunner implements BackupInterface
      */
     public function createBackupData(bool $isJsonOutput=true): void
     {
+        $progress = null;
+        $progressBar = null;
+
         $backupClient = $this->prepareBackupClient($isJsonOutput);
 
-        /** @var BackupPathEntity $backupPath */
-        foreach ($this->createBackup->getBackupPaths() as $backupPath) {
+        if(!empty($this->createBackup->getBackupPaths())) {
 
-            $backupClient->setBackupPath($backupPath->getBackupPath());
-            if($backupPath->isCompress()) {
-                $backupClient->setCompress(true);
+            $totalCounter = count($this->createBackup->getBackupPaths());
+
+            if($this->servicesCliOutput->isCli()) {
+
+                $progress = $this->servicesCliOutput->prepareProgress($totalCounter);
+                $progressBar = $this->servicesCliOutput->prepareProgressBar($progress, $totalCounter);
+                $this->servicesCliOutput->setProgressMessage('Paths');
             }
 
-            $createBackup = $backupClient->createBackup();
-            $this->addBackupResult($createBackup);
-            $this->logger->info($createBackup->getOutput(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            /** @var BackupPathEntity $backupPath */
+            foreach ($this->createBackup->getBackupPaths() as $backupPath) {
+
+                $this->setProgressStatus($progress, $progressBar, $backupPath->getBackupPath());
+
+                $backupClient->setBackupPath($backupPath->getBackupPath());
+                if($backupPath->isCompress()) {
+                    $backupClient->setCompress(true);
+                }
+
+                $createBackup = $backupClient->createBackup();
+                $this->addBackupResult($createBackup);
+                $this->logger->info($createBackup->getOutput(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            }
+        }
+    }
+
+    public function setProgressStatus(?Progress $progress, ?ProgressBar $progressBar)
+    {
+        if ($this->servicesCliOutput->isCli() && $progress && $progressBar) {
+
+            if ($progress->getOffset() >= $progress->getTotal()) {
+                $progressBar->setProgress($progress->getTotal());
+            } else {
+                $progressBar->advance();
+                $progressBar->display();
+            }
         }
     }
 

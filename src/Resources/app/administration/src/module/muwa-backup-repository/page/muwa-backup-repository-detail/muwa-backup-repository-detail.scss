@@ -2,3 +2,17 @@ div.muwa-backup-repository-detail-forget__description,
 div.muwa-backup-repository-detail-backup-paths__description {
   margin: 15px 0;
 }
+
+.muwa-backup-repository-content-tabs div.sw-tabs__custom-content {
+  padding: 0;
+}
+
+div.muwa-backup-repository-detail-repository-password__description,
+div.muwa-backup-repository-detail-repository-path__description {
+  margin-bottom: 60px;
+  margin-top: -18px;
+  padding: 10px 8px;
+  background-color: #ffe0c0;
+  border: #ff992f 1px solid;
+  border-radius: 4px;
+}

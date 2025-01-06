@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -16,15 +16,15 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
-use MuckiFacilityPlugin\Services\Backup as BackupService;
+use MuckiFacilityPlugin\Services\RestoreSnapshot as RestoreSnapshotServices;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 #[AsMessageHandler]
-class CreateBackupHandler
+class RestoreSnapshotHandler
 {
     public function __construct(
         protected LoggerInterface $logger,
-        protected BackupService $backupService,
+        protected RestoreSnapshotServices $restoreSnapshotServices,
         protected ServicesCliOutput $servicesCliOutput
     )
     {}
@@ -36,8 +36,8 @@ class CreateBackupHandler
         );
 
         $this->servicesCliOutput->setIsCli(false);
-        $message->setBackupPaths($this->backupService->prepareBackupPaths($message->getBackupPaths()));
-        $this->backupService->createBackup($message, false);
+        $this->restoreSnapshotServices->restoreSnapshot($message, false);
+
         $this->logger->debug(
             'Backup process done. BackupRepositoryId: '.$message->getBackupRepositoryId(),
             PluginDefaults::DEFAULT_LOGGER_CONFIG

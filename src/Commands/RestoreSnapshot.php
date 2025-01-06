@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -12,35 +12,34 @@
 namespace MuckiFacilityPlugin\Commands;
 
 use Psr\Log\LoggerInterface;
-use Shopware\Core\Framework\Uuid\Uuid;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Shopware\Core\Framework\Context;
+
+use MuckiRestic\Entity\Result\ResultEntity;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
-use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
+use MuckiFacilityPlugin\Services\RestoreSnapshot as RestoreSnapshotService;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 #[AsCommand(
-    name: 'muckiware:backup:snapshots',
-    description: 'Get a list of snapshots of a backup repository'
+    name: 'muckiware:backup:restore',
+    description: 'Restore a snapshot from an existing backup repository'
 )]
-class ManageSnapshots extends Command
+class RestoreSnapshot extends Commands
 {
     protected ?ContainerInterface $container = null;
 
     public function __construct(
         protected LoggerInterface $logger,
         protected PluginSettings $pluginSettings,
-        protected ManageService $manageService,
-        protected PluginHelper $pluginHelper
+        protected RestoreSnapshotService $restoreSnapshotService,
+        protected PluginHelper $pluginHelper,
+        protected ServicesCliOutput $servicesCliOutput
     )
     {
         parent::__construct();
@@ -67,8 +66,8 @@ class ManageSnapshots extends Command
      */
     public function configure(): void
     {
-        $this->setDescription('Id for the existing backup repository');
         $this->addArgument('backupRepositoryId',InputArgument::REQUIRED, 'Backup repository id');
+        $this->addArgument('snapshotId',InputArgument::REQUIRED, 'snapshot id of  a backup repository');
         parent::configure();
     }
 
@@ -80,28 +79,23 @@ class ManageSnapshots extends Command
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $inputBackupRepositoryId = $this->checkInputForBackupRepositoryId($input);
-        if($this->pluginSettings->isEnabled() && $inputBackupRepositoryId) {
+        $this->servicesCliOutput->setOutput($output);
+        $this->servicesCliOutput->setIsCli(true);
 
-            $snapshot = $this->manageService->getSnapshots($inputBackupRepositoryId, false);
-            $this->manageService->saveSnapshots($inputBackupRepositoryId);
-            $output->writeln($snapshot);
+        $output->writeln('Start to restore snapshot');
+        $backupRepositoryId = $this->checkInputForBackupRepositoryId($input);
+        if($this->pluginSettings->isEnabled() && $backupRepositoryId) {
+
+            $restoreBackup = $this->restoreSnapshotService->prepareRestoreBackup($backupRepositoryId);
+            $restoreBackup->setSnapshotId($input->getArgument('snapshotId'));
+            $this->restoreSnapshotService->restoreSnapshot($restoreBackup, false);
+
+            /** @var ResultEntity $result */
+            foreach ($this->restoreSnapshotService->getAllResults() as $result) {
+                $output->writeln($result->getOutput());
+            }
         }
 
         return 0;
-    }
-
-    protected function checkInputForBackupRepositoryId(InputInterface $input): string
-    {
-        $backupRepositoryId = $input->getArgument('backupRepositoryId');
-        if(
-            $backupRepositoryId &&
-            $backupRepositoryId !== '' &&
-            Uuid::isValid($backupRepositoryId)
-        ) {
-            return $backupRepositoryId;
-        }
-
-        throw new \InvalidArgumentException('Invalid or missing backup repository id');
     }
 }

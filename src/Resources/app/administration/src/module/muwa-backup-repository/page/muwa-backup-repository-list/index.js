@@ -5,6 +5,7 @@ const { Component, Mixin } = Shopware;
 const { Criteria } = Shopware.Data;
 
 Component.register('muwa-backup-repository-list', {
+
     template,
 
     inject: [
@@ -107,13 +108,13 @@ Component.register('muwa-backup-repository-list', {
             that.repository.delete(item.id, Shopware.Context.api).then(() => {
                 this.getList();
             });
-        },
+        }
     },
 
     created() {
 
         if(this.$route.params.tab === undefined) {
-            this.$router.push({ name: 'muwa.search.structure.index', params: { tab: 'repositoryList' } });
+            this.$router.push({ name: 'muwa.backup.repository.index', params: { tab: 'repositoryList' } });
         }
     }
 });

@@ -13,13 +13,16 @@
       }
     },
     "tabs": {
-      "repositoryList": "Backup Repository Konfiguration"
+      "repositoryList": "Backup Repository Konfiguration",
+      "config": "Configuration",
+      "checks": "Checks",
+      "snapshots": "Snapshots"
     },
     "list": {
       "header": {
         "createButtonLabel": "Hinzufügen",
         "cancelButtonLabel": "Abbrechen",
-        "saveButtonLabel": "speichern",
+        "saveButtonLabel": "Konfiguration speichern",
         "createStructureLabel" : "Struktur hinzufügen"
       },
       "emptyListText": "Keine Such-Index Struktur Einträge vorhanden.",
@@ -34,12 +37,13 @@
       "replicasLabel": "Kopien",
       "docsCountLabel": "Anzahl Dokumente",
       "storageSizeLabel": "Speichergröße",
-      "docsDeletedLabel": "gelöschte Dokumente"
+      "docsDeletedLabel": "gelöschte Dokumente",
+      "restoreLabel": "Snapshot wiederherstellen"
     },
     "detail": {
       "mappingLabel": "Zuweisungen (sprachabhängig)",
       "settingsLabel": "Einstellungen (sprachabhängig)",
-      "generalLabel": "Backup Konfiguration",
+      "generalLabel": "Allgemein",
       "activeLabel": "Aktiv",
       "nameLabel": "Technischer Name",
       "repositoryPathLabel": "Repository Pfad",
@@ -59,27 +63,34 @@
       "forget": "Löschen von Snapshots",
       "forgetDescription": "Lege hier das Löschen von Snapshots fest, die älter sind als die angegebene Anzahl von Tagen, Wochen, etc.",
       "pathEmptyState": "Keine Backup Pfade vorhanden",
-      "startBackup": "Backup starten"
+      "startBackup": "Backup starten",
+      "checkCreatedAtLabel": "Erstellt am",
+      "checkStatusLabel": "Status",
+      "snapshotShortIdStatusLabel": "Snapshot ID",
+      "createdAtLabel": "Erstellt am",
+      "pathsLabel": "Pfad",
+      "sizeLabel": "Größe",
+      "databaseTypeLabel": "Datenbank dump Typ",
+      "repositoryPathDescription": "Der Pfad zum Sicherungs-Repository. Gebe hier den absoluten Pfad zum Backup-Repository an. Beachte, dass dieser Pfad nach der Erstellung nicht mehr geändert werden kann!",
+      "repositoryPasswordDescription": "Es ist sehr wichtig, sich dieses Passwort zu merken! Wenn Du es verlieren, kannst Du außerhalb der Shop-Funktionalität nicht mehr auf die im Repository gespeicherten Daten zugreifen. Beachte, dass dieser Pfad nach der Erstellung nicht mehr geändert werden kann!"
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten",
       "createButtonLabel": "Neues Repository erstellen",
       "error-message": "Ein Fehler ist aufgetreten",
-      "success-title": "Backup repository gespeichert"
+      "success-title": "Backup repository gespeichert",
+      "process-success-title": "Backup-Prozess gestartet",
+      "process-success-message": "Der Backup-Prozess wurde erfolgreich gestartet.",
+      "backupPaths": "Backup Pfade"
     },
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"
     },
-    "settingList": {
-      "settingKey": "Schlüssel",
-      "settingValue": "Wert",
-      "deleteSettingLabel": "Einstellung entfernen"
-    },
-    "serverInfo": {
-      "keyLabel": "Name",
-      "valueLabel": "Wert",
-      "generalLabel": "Allgemein",
-      "versionLabel": "Version"
+    "restore": {
+      "errorTitle": "Speicherproblem aufgetreten",
+      "error-message": "Ein Fehler ist aufgetreten",
+      "process-success-title": "Wiederherstellungsprozess gestartet",
+      "process-success-message": "Der Wiederherstellungsprozess wurde erfolgreich gestartet."
     }
   }
 }

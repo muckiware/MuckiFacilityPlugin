@@ -20,7 +20,7 @@
                         variant="ghost"
                         class="sw-settings-search__search-index-rebuild-button"
                         :is-loading="isBackupProcessInProgress"
-                        :disabled="isBackupProcessInProgress || !acl.can('backup_repository.editor')"
+                        :disabled="isBackupProcessDisabled"
                         :process-success="isBackupProcessSuccess"
                         @update:process-success="createFinish"
                         @click="onBackupProcess"
@@ -31,9 +31,38 @@
         {% endblock %}
 
         <template #content>
-            {% block muwa_search_structure_detail_content %}
+            {% block muwa_backup_repository_detail_content %}
+
+                {% block muwa_search_structure_content_tabs %}
+                    <sw-tabs default-item="repositoryList" class="muwa-backup-repository-content-tabs" position-identifier="muwa-backup-repository-content-tabs">
+                        <template #default="{ active }">
+                            <sw-tabs-item
+                                key="backupRepositoryConfig"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryConfig' } }"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.config') }}
+                            </sw-tabs-item>
+                            <sw-tabs-item
+                                key="backupRepositoryChecks"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryChecks' } }"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.checks') }}
+                            </sw-tabs-item>
+                            <sw-tabs-item
+                                    key="backupRepositorySnapshots"
+                                    :active-tab="active"
+                                    :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositorySnapshots' } }"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.snapshots') }}
+                            </sw-tabs-item>
+                        </template>
+                    </sw-tabs>
+                {% endblock %}
+
                 <sw-card-view>
-                    <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.generalLabel')">
+                    <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.generalLabel')">
                         <sw-switch-field
                             v-if="isV6600"
                             :label="$tc('muwa-backup-repository.detail.activeLabel')"
@@ -67,13 +96,12 @@
                         </sw-text-field>
 
                         <sw-select-field
-                            v-if="backupRepository&& isV6600"
+                            v-if="backupRepository && isV6600"
                             v-model:value="backupRepository.type"
                             validation="required"
                             required
                             :disabled="false"
                             type="select"
-                            :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
                             :label="$tc('lightson-pseudo-product.detail.card-base.type')"
                         >
                             <option slot="options"
@@ -91,8 +119,7 @@
                             required
                             :disabled="true"
                             type="select"
-                            :helpText="$tc('lightson-pseudo-product.detail.card-base.type-help')"
-                            :label="$tc('lightson-pseudo-product.detail.card-base.type')"
+                            :label="$tc('muwa-backup-repository.detail.databaseTypeLabel')"
                         >
                             <option slot="options"
                                 v-for="option in type"
@@ -144,8 +171,7 @@
                         </sw-text-field>
 
                     </sw-card>
-
-                    <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.backupPaths')">
+                    <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.backupPaths')">
                         <sw-button
                             v-tooltip="{
                                 message: $tc('sw-import-export.profile.addMappingTooltipText'),
@@ -240,7 +266,7 @@
                         {% endblock %}
                     </sw-card>
 
-                    <sw-card positionIdentifier="muwaBackupRepositoryForget" v-if="backupRepository" :title="$tc('muwa-backup-repository.detail.forget')">
+                    <sw-card positionIdentifier="muwaBackupRepositoryForget" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.forget')">
                         {% block muwa_search_structure_detail_forget_description %}
                             <div
                                 v-html="$tc('muwa-backup-repository.detail.forgetDescription')"
@@ -317,8 +343,91 @@
                         {% endblock %}
 
                     </sw-card>
+
+                    {# Tab Checks #}
+                    <sw-entity-listing
+                        v-if="backupRepository && tab === 'backupRepositoryChecks'"
+                        :isLoading="isLoading"
+                        :items="backupRepositoryChecks"
+                        :repository="backupRepositoryChecksRepository"
+                        :columns="backupChecksColumns"
+                        :showActions="false"
+                        :showSelection="false"
+                        :showSettings="false"
+                        :sort-by="sortBy"
+                        :sort-direction="sortDirection"
+                    >
+                        <template #column-checkStatus="{item}">
+                            <div v-if="item.checkStatus" :title="item.checkStatus">
+                                {{ item.checkStatus }}
+                            </div>
+                        </template>
+                        <template #column-createdAt="{ item }">
+                            {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
+                        </template>
+                    </sw-entity-listing>
+
+                    {# Tab Snapshots #}
+                    <sw-entity-listing
+                            v-if="backupRepository && tab === 'backupRepositorySnapshots'"
+                            :isLoading="isLoading"
+                            :items="backupRepositorySnapshots"
+                            :repository="backupRepositorySnapshotsRepository"
+                            :columns="backupSnapshotsColumns"
+                            :showActions="true"
+                            :showSelection="false"
+                            :showSettings="false"
+                            :sort-by="sortBy"
+                            :sort-direction="sortDirection"
+                    >
+                        <template #column-snapshot-id="{item}">
+                            <div v-if="item.snapshotShortId" :title="item.snapshotShortId">
+                                {{ item.snapshotShortId }}
+                            </div>
+                        </template>
+                        <template #column-snapshot-paths="{item}">
+                            <div v-if="item.paths" :title="item.paths">
+                                {{ item.paths }}
+                            </div>
+                        </template>
+                        <template #column-snapshot-size="{item}">
+                            <div v-if="item.size" :title="item.size">
+                                {{ item.size }}
+                            </div>
+                        </template>
+                        <template #column-createdAt="{ item }">
+                            {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
+                        </template>
+                        <template #actions="{ item }">
+                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                            {% block wuwa_backup_repository_list_content_listing_actions %}
+                                <sw-context-menu-item @click="restoreSnapshot(item)">
+                                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                    {% block wuwa_backup_repository_list_content_listing_action_show_label %}
+                                        {{ $tc('muwa-backup-repository.list.restoreLabel') }}
+                                    {% endblock %}
+                                </sw-context-menu-item>
+                            {% endblock %}
+                        </template>
+                    </sw-entity-listing>
+
                 </sw-card-view>
             {% endblock %}
         </template>
+        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+        {% block muwa_backup_repository_list_sidebar %}
+            <template #sidebar>
+                <sw-sidebar class="muwa-backup-repository-list__sidebar" v-if="tab === 'backupRepositoryChecks' || tab === 'backupRepositorySnapshots'">
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block muwa_backup_repository_list_sidebar_refresh %}
+                        <sw-sidebar-item
+                                icon="regular-undo"
+                                :title="$tc('muwa-backup-repository.list.titleSidebarItemRefresh')"
+                                @click="onRefresh"
+                        />
+                    {% endblock %}
+                </sw-sidebar>
+            </template>
+        {% endblock %}
     </sw-page>
 {% endblock %}

@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
+use MuckiRestic\Entity\Result\ResultEntity;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -23,8 +24,11 @@ use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
+use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
+use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 class Backup
 {
@@ -34,8 +38,11 @@ class Backup
         protected LoggerInterface $logger,
         protected BackupRunnerFactory $backupRunnerFactory,
         protected BackupRepository $backupRepository,
+        protected BackupRepositoryChecks $backupRepositoryChecks,
         protected PluginSettings $pluginSettings,
-        protected PluginHelper $pluginHelper
+        protected PluginHelper $pluginHelper,
+        protected ManageService $manageService,
+        protected ServicesCliOutput $servicesCliOutput
     )
     {}
 
@@ -72,6 +79,9 @@ class Backup
         if(!empty($createBackup->getBackupPaths())) {
             $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
         }
+
+        $this->createCheckItem($createBackup);
+        $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
     }
 
     public function createDump(CreateBackupEntity $createBackup): void
@@ -81,6 +91,12 @@ class Backup
 
     public function runDatabaseBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
     {
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('run backup database...');
+        }
+
+        $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
+
         $backupPath = new BackupPathEntity();
         $backupPath->setBackupPath($this->pluginSettings->getBackupPath());
         $backupPath->setPosition(0);
@@ -101,6 +117,10 @@ class Backup
 
     public function runFilesBackup(CreateBackupEntity $createBackup, $cachePaths, bool $isJsonOutput=true): void
     {
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('run backup files...');
+        }
+
         $createBackup->setBackupType(BackupTypes::FILES->value);
         $createBackup->setBackupPaths($cachePaths);
 
@@ -109,6 +129,8 @@ class Backup
 
     public function checkBackup(CreateBackupEntity $createBackup): void
     {
+        $createBackup = clone $createBackup;
+        $createBackup->setBackupType(BackupTypes::FILES->value);
         try {
             $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
             $backupRunner->checkBackupData();
@@ -135,6 +157,21 @@ class Backup
         }
     }
 
+    public function createCheckItem(CreateBackupEntity $createBackup): void
+    {
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('Check backup...');
+        }
+        $this->checkBackup($createBackup);
+
+        /** @var ResultEntity $result */
+        foreach ($this->getAllResults() as $result) {
+
+            $checkResults = $this->pluginHelper->getCheckResults($result->getOutput());
+            $this->backupRepositoryChecks->saveNewCheck($createBackup->getBackupRepositoryId(), end($checkResults));
+        }
+    }
+
     public function prepareBackupPaths(array $backupPaths): array
     {
         $preparedBackupPaths = [];
@@ -152,28 +189,33 @@ class Backup
         return $preparedBackupPaths;
     }
 
-    public function prepareCreateBackup(string $backupRepositoryId, OutputInterface $output): CreateBackupEntity
+    public function prepareCreateBackup(string $backupRepositoryId): CreateBackupEntity
     {
-        $output->writeln('Prepare backup');
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('Prepare backup');
+        }
+
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
         $createBackup = new CreateBackupEntity();
 
         if($backupRepository) {
 
+            $createBackup->setBackupRepositoryId($backupRepositoryId);
             $createBackup->setBackupType($backupRepository->getType());
             $createBackup->setBackupPaths($this->prepareBackupPaths($backupRepository->getBackupPaths()));
             $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
             $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
-        } else {
-            $output->writeln('Prepare backup');
         }
 
         return $createBackup;
     }
 
-    public function prepareCheckBackup(string $backupRepositoryId, OutputInterface $output): CreateBackupEntity
+    public function prepareCheckBackup(string $backupRepositoryId): CreateBackupEntity
     {
-        $output->writeln('Prepare checkup');
+        if($this->servicesCliOutput->isCli()) {
+            $this->servicesCliOutput->printCliOutputNewline('Prepare checkup');
+        }
+
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
         $createBackup = new CreateBackupEntity();
 
@@ -183,7 +225,13 @@ class Backup
             $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
             $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
         } else {
-            $output->writeln('Missing backup repository for id: '.$backupRepositoryId);
+
+            if($this->servicesCliOutput->isCli()) {
+
+                $this->servicesCliOutput->printCliOutputNewline(
+                    'Missing backup repository for id: '.$backupRepositoryId
+                );
+            }
         }
 
         return $createBackup;

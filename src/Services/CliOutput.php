@@ -11,26 +11,53 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
-use Psr\Log\LoggerInterface;
 use Shopware\Core\Content\ImportExport\Struct\Progress;
 use Shopware\Core\Framework\Uuid\Uuid;
-use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CliOutput
 {
+    protected OutputInterface $output;
+
+    protected bool $isCli = false;
     final const PROGRESS_BAR_OFFSET = 0;
 
-    public function __construct(
-        protected SystemConfigService $_config,
-        protected LoggerInterface $logger
-    ){}
+    protected string $progressMessage = '';
 
-    public function prepareSendProgressBar(
+    public function getOutput(): OutputInterface
+    {
+        return $this->output;
+    }
+
+    public function setOutput(OutputInterface $output): void
+    {
+        $this->output = $output;
+    }
+
+    public function isCli(): bool
+    {
+        return $this->isCli;
+    }
+
+    public function setIsCli(bool $isCli): void
+    {
+        $this->isCli = $isCli;
+    }
+
+    public function getProgressMessage(): string
+    {
+        return $this->progressMessage;
+    }
+
+    public function setProgressMessage(string $progressMessage): void
+    {
+        $this->progressMessage = $progressMessage;
+    }
+
+    public function prepareProgressBar(
         Progress $progress,
-        int $totalCounter,
-        OutputInterface $cliOutput
+        int $totalCounter
     ): ProgressBar
     {
         if(!$progress->getTotal()) {
@@ -38,15 +65,15 @@ class CliOutput
         } else {
             $progressTotal = $progress->getTotal();
         }
-        $progressBar = new ProgressBar($cliOutput, $totalCounter);
+        $progressBar = new ProgressBar($this->output, $totalCounter);
         $progressBar->setMaxSteps($progressTotal);
-        $progressBar->setFormat('[%bar%] %current%/%max% send mail notification '."\n");
+        $progressBar->setFormat('[%bar%] %current%/%max% '.$this->progressMessage."\n");
         $progressBar->start();
 
         return $progressBar;
     }
 
-    public function prepareSendProgress(int $totalCounter): Progress
+    public function prepareProgress(int $totalCounter): Progress
     {
         $progress = new Progress(Uuid::randomHex(), Progress::STATE_PROGRESS, self::PROGRESS_BAR_OFFSET);
         $progress->setTotal($totalCounter);
@@ -55,17 +82,17 @@ class CliOutput
         return $progress;
     }
 
-    public function printCliOutput(OutputInterface $cliOutput = null, string $message = ''): void
+    public function printCliOutput(string $message = ''): void
     {
         if($message !== '') {
-            $cliOutput?->writeln($message);
+            $this->output?->writeln($message);
         }
     }
 
-    public function printCliOutputNewline(OutputInterface $cliOutput = null, ?string $message = ''): void
+    public function printCliOutputNewline(?string $message = ''): void
     {
         if($message && $message !== '') {
-            $cliOutput?->write($message, true);
+            $this->output?->write($message, true);
         }
     }
 }

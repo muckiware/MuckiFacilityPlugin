@@ -13,13 +13,16 @@
       }
     },
     "tabs": {
-      "repositoryList": "Backup Repository Configuration"
+      "repositoryList": "Backup Repository Configuration",
+      "config": "Configuration",
+      "checks": "Checks",
+      "snapshots": "Snapshots"
     },
     "list": {
       "header": {
-        "createButtonLabel": "Add",
+        "createButtonLabel": "Add Repository",
         "cancelButtonLabel": "Cancel",
-        "saveButtonLabel": "Save",
+        "saveButtonLabel": "Save Configuration",
         "createStructureLabel" : "Add structure"
       },
       "emptyListText": "No search index structure entries available.",
@@ -34,12 +37,13 @@
       "replicasLabel": "Copies",
       "docsCountLabel": "Number of documents",
       "storageSizeLabel": "storage size",
-      "docsDeletedLabel": "Deleted documents"
+      "docsDeletedLabel": "Deleted documents",
+      "restoreLabel": "Restore Snapshot"
     },
     "detail": {
       "mappingLabel": "Mappings (language-dependent)",
       "settingsLabel": "Settings (language-dependent)",
-      "generalLabel": "General (global)",
+      "generalLabel": "General",
       "activeLabel": "Active",
       "nameLabel": "Technical name",
       "repositoryPathLabel": "Repository Path",
@@ -55,32 +59,38 @@
       "forget": "Delete of snapshots",
       "forgetDescription": "Specify here the deletion of snapshots that are older than the specified number of days.",
       "pathEmptyState": "No backup paths exists",
-      "startBackup": "Start backup"
+      "startBackup": "Start backup",
+      "checkCreatedAtLabel": "Created at",
+      "checkStatusLabel": "Status",
+      "snapshotShortIdStatusLabel": "Snapshot ID",
+      "createdAtLabel": "Created at",
+      "pathsLabel": "Path",
+      "sizeLabel": "Size",
+      "databaseTypeLabel": "Database dump type",
+      "forgetDailyLabel": "Delete daily backups",
+      "forgetWeeklyLabel": "Delete weekly backups",
+      "forgetMonthlyLabel": "Delete monthly backups",
+      "forgetYearlyLabel": "Delete yearly backups",
+      "repositoryPathDescription": "The path to the backup repository. Enter here the absolute path to the backup repository. Note that this path cannot be changed after creation!",
+      "repositoryPasswordDescription": "Remembering this password is very important! If you lose it, you won’t be able to get access to the data stored in the repository outside of the shop functionality. Note that this path cannot be changed after creation!"
     },
     "create": {
       "errorTitle": "Storage problem occurred",
       "createButtonLabel": "Create new Repository",
       "error-message": "An error has occurred",
-      "success-title": "Backup repository saved"
+      "success-title": "Backup repository saved",
+      "process-success-title": "Backup process started",
+      "process-success-message": "The backup process has been started successfully.",
+      "backupPaths": "Backup paths"
     },
-    "mappingList": {
-      "inputDataTypeLabel": "Data type",
-      "inputHighlightingLabel": "Highlighting",
-      "defaultValue": "Default Value",
-      "entityLabel": "Database item",
-      "deleteMappingLabel": "Remove mapping",
-      "highlightingLabel": "Active"
+    "backupPaths": {
+      "deletePathLabel": "Delete path"
     },
-    "settingList": {
-      "settingKey": "Key",
-      "settingValue": "Value",
-      "deleteSettingLabel": "Remove setting"
-    },
-    "serverInfo": {
-      "keyLabel": "Name",
-      "valueLabel": "Value",
-      "generalLabel": "General",
-      "versionLabel": "Version"
+    "restore": {
+      "errorTitle": "Storage problem occurred",
+      "error-message": "An error has occurred",
+      "process-success-title": "Restore process started",
+      "process-success-message": "The restore process has been started successfully."
     }
   }
 }

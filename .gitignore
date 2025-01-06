@@ -4,3 +4,4 @@ var/cache/*
 /composer.lock
 /.phpunit.result.cache
 /vendor/
+/src/Resources/public/

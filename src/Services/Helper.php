@@ -13,6 +13,9 @@ namespace MuckiFacilityPlugin\Services;
 
 use Psr\Log\LoggerInterface;
 
+use MuckiRestic\ResultParser\CheckResultParser;
+use MuckiRestic\Entity\Result\ResultEntity;
+
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
 class Helper
@@ -64,5 +67,10 @@ class Helper
             }
             rmdir($dirPath);
         }
+    }
+
+    public function getCheckResults(string $checkResults): array
+    {
+        return CheckResultParser::textParserResult($checkResults)->getProcessed();
     }
 }
