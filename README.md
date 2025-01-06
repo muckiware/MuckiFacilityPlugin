@@ -39,15 +39,38 @@ First you will need a repository configuration for the backup. The repository co
 | Restore Path      | Enter here the absolute path for the target of the restored data.                                                                                                                                                                                                                        |
 
 ### Backup Paths
-Use the button __Add backup path__ for to define the files and folders which should be backup. 
+Use the __Add backup path__-button for to define the files and folders which should be backup. You can choose a complete folder, or a single file.<br>
+![backup_paths_config.png](img%2Fbackup_paths_config.png)<br>
+You can define for each path item a compress option. If the compress option is active, the backup data will be compressed by gzip. For folders which containing mainly compressed image files, additional compression during backup would make less sense.
+
 ### Delete of snapshots
-You can remove old snapshots of a repository with the command 
+You can remove old snapshots of a repository with the command.
 ```shell
 bin/console muckiware:backup:snapshots <backupRepositoryId>
 ```
 This setup defines the daily, weekly, month or yearly values for this remove process. More details about the keep-parameters you can find in the restic documentation https://restic.readthedocs.io/en/latest/060_forget.html#removing-snapshots-according-to-a-policy
 
-Finally, click on the __save__-button, for to create the repository configuration.
+### Initial Backup
+Finally, click on the __Create new Repository__-button, for to create a new backup repository. This action creates then a configuration item in the shop database. And it creates the backup repository folder which is defined in the __Repository Path__ field.
+
+like this:<br>
+![backup-rep-folder.png](img%2Fbackup-rep-folder.png)
+
+## Create Backup
+### cli
+You can create a backup by the command line interface with the following command:
+```shell
+bin/console muckiware:backup:create <backupRepositoryId>
+```
+### Administration panel
+You can also create a backup in the administration panel. 
+- Go into the list of backup configurations under Settings -> Extensions -> Backup Repositories
+- Select the backup repository
+- Click on the __Start backup__-button<br>
+  ![start_backup_progess.png](img%2Fstart_backup_progess.png)<br>
+
+This action does not start the backup process immediately, it will be started as a background process. After a short while, you can see under the __checks__-tab the status of the backup checks, as well as the snapshots of each database and path item in the __Snapshots__-tab<br>
+
 
 ## Command Line Interface
 | Command                                                                      | Desc                                                          |
@@ -58,6 +81,14 @@ Finally, click on the __save__-button, for to create the repository configuratio
 | ```bin/console muckiware:backup:snapshots <backupRepositoryId>```            | Gets a list of snapshots in a backup repository id            |
 | ```bin/console muckiware:backup:restore <backupRepositoryId> <snapshotId>``` | Restore data by backup repository id and snapshot id          |
 | ```bin/console muckiware:db:dump <Type of backup>```                         | Creates just a database dump by global plugin setups          |
+### Cronjob
+You can create a cronjob for to create a backup automatically. This should be the usual configuration for creating backups. The cronjob should be executed by the user which is running the shopware instance. The following command is an example for the cronjob configuration:
+```shell
+* 3 * * * php /var/www/html/bin/console muckiware:backup:create <backupRepositoryId>
+30 5 * * * php /var/www/html/bin/console muckiware:backup:forget <backupRepositoryId>
+```
+The first row creates a backup every day at 3:00 am. The second row removes old snapshots every day at 5:30 am.
+
 ## Database dumps
 Backups via command line interface are possible with the following commands:
 ```shell
