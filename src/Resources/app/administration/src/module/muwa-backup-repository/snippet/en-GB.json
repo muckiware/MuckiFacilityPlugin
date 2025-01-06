@@ -22,7 +22,7 @@
       "header": {
         "createButtonLabel": "Add Repository",
         "cancelButtonLabel": "Cancel",
-        "saveButtonLabel": "Save",
+        "saveButtonLabel": "Save Configuration",
         "createStructureLabel" : "Add structure"
       },
       "emptyListText": "No search index structure entries available.",
@@ -80,7 +80,8 @@
       "error-message": "An error has occurred",
       "success-title": "Backup repository saved",
       "process-success-title": "Backup process started",
-      "process-success-message": "The backup process has been started successfully."
+      "process-success-message": "The backup process has been started successfully.",
+      "backupPaths": "Backup paths"
     },
     "backupPaths": {
       "deletePathLabel": "Delete path"

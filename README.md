@@ -4,6 +4,10 @@ Muckiware Facility Plugin for Shopware 6 Web shops for to maintenance and backup
 - Creates a backup of folders and files by an individual configuration into repository database. The plugin use the restic backup tool for to create the backups. https://restic.readthedocs.io/
 - The backups will be encrypted by a password.
 
+## Requirements
+- Shopware 6.6.x
+- PHP 8.2.x
+- restic 0.14.x or greater
 
 ## Installation
 ```shell
@@ -13,13 +17,13 @@ bin/console plugin:install -a MuckiFacilityPlugin
 ## General Configuration
 Plugin configuration under:<br>Settings -> Extensions -> My extensions -> MuckiFacilityPlugin -> Configure
 
-| Option                                                  | Desc                                                                                                                                                                                 |
-|:--------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Global settings - Active                                | Turn plugin on/off global                                                                                                                                                            |
-| Global backup settings -> Active database backup        | Turn backup database on/off global, for cli command ```bin/console muckiware:db:dump <Type of backup>```                                                                             |
-| Global backup settings -> Compress database backup file | Turn on/off compressen for db dump, for cli command ```bin/console muckiware:db:dump <Type of backup>```                                                                             |
-| Global backup settings -> Use own restic path           | Turn on/off own restic, for cli command ```bin/console muckiware:db:dump <Type of backup>```                                                                                         |
-| Global backup settings -> Own path to binary of restic                              | Enter the absolut path to binary file of restic, for cli command ```bin/console muckiware:db:dump <Type of backup>``` Example input: ```/var/www/html/bin/restic_0.17.3_linux_386``` |
+| Option                                                  | Desc                                                                                                            |
+|:--------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------|
+| Global settings - Active                                | Turn plugin on/off global                                                                                       |
+| Global backup settings -> Active database backup        | Turn backup database on/off global, for cli command ```bin/console muckiware:db:dump <Type of backup>```        |
+| Global backup settings -> Compress database backup file | Turn on/off compressen for db dump, for cli command ```bin/console muckiware:db:dump <Type of backup>```        |
+| Global backup settings -> Use own restic path           | Turn on/off own restic                                                                                          |
+| Global backup settings -> Own path to binary of restic                              | Enter the absolut path to binary file of restic. Example input: ```/var/www/html/bin/restic_0.17.3_linux_386``` |
 
 ## Respoitory Configuration
 First you will need a repository configuration for the backup. The repository configuration is the base for the backup process. The repository configuration contains the backup source and the backup target. The backup source is the path to the folder or file which should be backuped. The backup target is the path to the repository where the backup data should be restored.<br>

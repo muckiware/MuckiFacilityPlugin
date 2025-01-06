@@ -22,7 +22,7 @@
       "header": {
         "createButtonLabel": "Hinzufügen",
         "cancelButtonLabel": "Abbrechen",
-        "saveButtonLabel": "speichern",
+        "saveButtonLabel": "Konfiguration speichern",
         "createStructureLabel" : "Struktur hinzufügen"
       },
       "emptyListText": "Keine Such-Index Struktur Einträge vorhanden.",
@@ -80,7 +80,8 @@
       "error-message": "Ein Fehler ist aufgetreten",
       "success-title": "Backup repository gespeichert",
       "process-success-title": "Backup-Prozess gestartet",
-      "process-success-message": "Der Backup-Prozess wurde erfolgreich gestartet."
+      "process-success-message": "Der Backup-Prozess wurde erfolgreich gestartet.",
+      "backupPaths": "Backup Pfade"
     },
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"

@@ -12,7 +12,7 @@
                         :processSuccess="processSuccess"
                         variant="primary"
                         @process-finish="saveFinish"
-                        @click="onClickSave"
+                        @click="onClickInit"
                 >
                     {{ $tc('muwa-backup-repository.create.createButtonLabel') }}
                 </sw-button-process>
@@ -208,7 +208,7 @@
                         {% endblock %}
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                        {% block muwa_backup_repository_create_paths_grid %}
+                        {% block muwa_backup_repository_create_backup_paths_grid %}
                             <sw-data-grid
                                     v-if="backupPathExist"
                                     :data-source="getBackupPaths"
@@ -255,7 +255,7 @@
                                 {% endblock %}
 
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                                {% block muwa_backup_repository_create_grid_context_menu_delete %}
+                                {% block wuwa_search_structure_mapping_grid_context_menu_delete %}
                                     <template #actions="{ item }">
                                         <sw-context-menu-item
                                                 variant="danger"

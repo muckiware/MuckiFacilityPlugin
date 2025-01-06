@@ -84,9 +84,15 @@ Component.register('muwa-backup-repository-create', {
         },
 
         getBackupPaths() {
-
-            console.log('getBackupPaths in computed', this.backupRepository);
             return this.backupRepository.backupPaths;
+        },
+
+        backupPathExist() {
+
+            if(this.backupRepository.backupPaths) {
+                return this.backupRepository.backupPaths.length > 0;
+            }
+            return false;
         },
     },
 
@@ -97,7 +103,6 @@ Component.register('muwa-backup-repository-create', {
             this.isLoading = true;
             this.isBackupProcessInProgress = true;
             this.getBackupRepository();
-            // this.loadBackupsPaths();
         },
 
         getBackupRepository() {
@@ -113,11 +118,9 @@ Component.register('muwa-backup-repository-create', {
             this.backupRepository.forgetMonthly = 12;
             this.backupRepository.forgetYearly = 35;
             this.backupRepository.backupPaths= [];
-
-            console.log('this.backupRepository', this.backupRepository);
         },
 
-        onClickSave() {
+        onClickInit() {
 
             this.castValues();
 
@@ -136,6 +139,8 @@ Component.register('muwa-backup-repository-create', {
 
             }).catch((exception) => {
 
+                console.error('Not possible to init the backup repository');
+                console.error(exception);
                 this.createNotificationError({
                     title: this.$t('muwa-backup-repository.create.error-message'),
                     message: exception.response.data.errors[0].detail
@@ -146,7 +151,7 @@ Component.register('muwa-backup-repository-create', {
                 this.repository.save(this.backupRepository, Shopware.Context.api).then(() => {
 
                     this.isLoadingInit = false;
-                    // this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
+                    this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
                     this.createNotificationSuccess({
                         title: this.$t('muwa.backup.repository.create.success-title'),
                         message: this.$t('muwa.backup.repository.create.success-message')
@@ -165,9 +170,29 @@ Component.register('muwa-backup-repository-create', {
             });
         },
 
-        onAddBackupPath() {
+        castValues() {
+            this.backupRepository.active = Boolean(this.backupRepository.active);
+        },
 
-            console.log('onAddBackupPath');
+        hasErrors() {
+
+            if (
+                !this.backupRepository.repositoryPassword ||
+                this.backupRepository.repositoryPassword === '' ||
+                !this.backupRepository.repositoryRepeatPassword ||
+                this.backupRepository.repositoryRepeatPassword === ''
+            ) {
+                this.createNotificationError({
+                    title: this.$t('lightson-pseudo-product.detail.error-message-internal-name-required-title'),
+                    message: this.$t('lightson-pseudo-product.detail.error-message-internal-name-required-message')
+                });
+                return true;
+            }
+
+            return false
+        },
+
+        onAddBackupPath() {
 
             if(this.backupRepository.backupPaths.length !== undefined && this.backupRepository.backupPaths.length >= 1) {
                 this.backupRepository.backupPaths.forEach(currentBackupPath => { currentBackupPath.position += 1; });
@@ -182,10 +207,6 @@ Component.register('muwa-backup-repository-create', {
                 compress: false,
                 position: 0
             });
-
-            console.log('this.backupRepository.backupPaths', this.backupRepository.backupPaths);
-
-            // this.loadBackupsPaths();
         },
 
         onDeleteBackupPath(id) {
@@ -208,17 +229,7 @@ Component.register('muwa-backup-repository-create', {
         },
 
         getBackupPaths() {
-
-            console.log('getBackupPaths', this.backupRepository);
             return this.backupRepository.backupPaths;
-        },
-
-        backupPathExist() {
-
-            if(this.backupRepository.backupPaths) {
-                return this.backupRepository.backupPaths.length > 0;
-            }
-            return false;
         },
 
         getApiHeader() {

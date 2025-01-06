@@ -114,7 +114,7 @@ Component.register('muwa-backup-repository-list', {
     created() {
 
         if(this.$route.params.tab === undefined) {
-            this.$router.push({ name: 'muwa-backup-repository-index', params: { tab: 'repositoryList' } });
+            this.$router.push({ name: 'muwa.backup.repository.index', params: { tab: 'repositoryList' } });
         }
     }
 });
