@@ -11,7 +11,7 @@ use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 class BackupRunnerFactoryTest extends TestCase
@@ -25,7 +25,7 @@ class BackupRunnerFactoryTest extends TestCase
         $servicesCliOutput = $this->createMock(ServicesCliOutput::class);
 
         $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase, $servicesCliOutput);
-        $createBackup = new CreateBackupEntity();
+        $createBackup = new BackupRepositorySettings();
         $createBackup->setBackupType(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
         $runner = $backupFactory->createBackupRunner($createBackup);
         $this->assertInstanceOf(
@@ -44,7 +44,7 @@ class BackupRunnerFactoryTest extends TestCase
         $servicesCliOutput = $this->createMock(ServicesCliOutput::class);
 
         $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase, $servicesCliOutput);
-        $createBackup = new CreateBackupEntity();
+        $createBackup = new BackupRepositorySettings();
         $createBackup->setBackupType(BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value);
         $runner = $backupFactory->createBackupRunner($createBackup);
         $this->assertInstanceOf(
@@ -66,7 +66,7 @@ class BackupRunnerFactoryTest extends TestCase
         $servicesCliOutput = $this->createMock(ServicesCliOutput::class);
 
         $backupFactory = new BackupRunnerFactory($logger, $settings, $coreDatabase, $servicesCliOutput);
-        $createBackup = new CreateBackupEntity();
+        $createBackup = new BackupRepositorySettings();
         $createBackup->setBackupType('test');
         $runner = $backupFactory->createBackupRunner($createBackup);
     }

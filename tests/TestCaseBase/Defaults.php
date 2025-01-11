@@ -15,6 +15,10 @@ namespace MuckiFacilityPlugin\tests\TestCaseBase;
  */
 final class Defaults
 {
+    public const DEFAULT_TEST_REPOSITORY_PATH = 'var/repository';
+    public const DEFAULT_TEST_RESTORE_PATH = 'var/restore';
+    public const MUCKIWARE_RESTIC_BINARY_PATH = 'bin/restic_0.17.3_linux_386';
+    public const DEFAULT_TEST_REPOSITORY_PASSWORD = '123456';
     public const DEFAULT_TEST_BACKUP_PATHS = array(
         array(
             'id' => '123123',
@@ -30,4 +34,13 @@ final class Defaults
         )
     );
 
+    public static function getPluginPath(): string
+    {
+        return str_replace('/tests','', dirname(__DIR__));
+    }
+
+    public static function getResticPath(): string
+    {
+        return self::getPluginPath() . '/' . self::MUCKIWARE_RESTIC_BINARY_PATH;
+    }
 }

@@ -20,7 +20,7 @@ use MuckiRestic\Entity\Result\ResultEntity;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiRestic\Exception\InvalidConfigurationException;
@@ -35,7 +35,7 @@ class FilesRunner implements BackupInterface
     public function __construct(
         protected LoggerInterface $logger,
         protected PluginSettings $pluginSettings,
-        protected CreateBackupEntity $createBackup,
+        protected BackupRepositorySettings $createBackup,
         protected ServicesCliOutput $servicesCliOutput
     ) {}
 

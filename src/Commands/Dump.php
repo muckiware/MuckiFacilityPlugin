@@ -24,7 +24,7 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 
 #[AsCommand(
     name: 'muckiware:db:dump',
@@ -84,7 +84,7 @@ class Dump extends Commands
         $inputBackupType = $this->checkInputForBackupType($input);
         if($this->pluginSettings->isEnabled() && $inputBackupType) {
 
-            $createBackup = new CreateBackupEntity();
+            $createBackup = new BackupRepositorySettings();
             $createBackup->setBackupType($inputBackupType);
 
             $this->backupService->createDump($createBackup);

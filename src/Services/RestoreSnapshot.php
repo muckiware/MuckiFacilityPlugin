@@ -23,7 +23,7 @@ use MuckiFacilityPlugin\Core\ConfigPath;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
@@ -54,7 +54,7 @@ class RestoreSnapshot
         $this->allResults = array_merge($this->allResults, $allResults);
     }
 
-    public function restoreSnapshot(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
+    public function restoreSnapshot(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
         $restoreClient = $this->prepareRestoreClient(
             $createBackup->getSnapshotId(),
@@ -68,7 +68,7 @@ class RestoreSnapshot
 
     public function prepareRestoreClient(
         string $snapshotId,
-        CreateBackupEntity $createBackup,
+        BackupRepositorySettings $createBackup,
         bool $isJsonOutput=true
     ): Restore
     {
@@ -86,20 +86,20 @@ class RestoreSnapshot
         return $restoreClient;
     }
 
-    public function prepareRestoreBackup(string $backupRepositoryId): CreateBackupEntity
+    public function prepareRestoreBackup(string $backupRepositoryId): BackupRepositorySettings
     {
         if($this->servicesCliOutput->isCli()) {
             $this->servicesCliOutput->printCliOutputNewline('Prepare restore...');
         }
 
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
-        $createBackup = new CreateBackupEntity();
+        $createBackup = new BackupRepositorySettings();
 
         if($backupRepository) {
 
             $createBackup->setBackupRepositoryId($backupRepositoryId);
             $createBackup->setBackupType($backupRepository->getType());
-            $createBackup->setRestoreTarget($backupRepository->getRestorePath());
+            $createBackup->setRestorePath($backupRepository->getRestorePath());
             $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
             $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
         }

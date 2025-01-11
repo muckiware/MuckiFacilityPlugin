@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
-use MuckiFacilityPlugin\Entity\RepositoryInitInputs;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
 #[Package('init-backup-repository')]
@@ -80,9 +80,9 @@ class InitBackupRepositoryController extends AbstractController
         return true;
     }
 
-    public function createRepositoryInitInputs(RequestDataBag $requestDataBag): RepositoryInitInputs
+    public function createRepositoryInitInputs(RequestDataBag $requestDataBag): BackupRepositorySettings
     {
-        $repositoryInitInputs = new RepositoryInitInputs();
+        $repositoryInitInputs = new BackupRepositorySettings();
         if($requestDataBag->has('active')) {
             $repositoryInitInputs->setActive($requestDataBag->get('active'));
         }
@@ -102,7 +102,7 @@ class InitBackupRepositoryController extends AbstractController
             $repositoryInitInputs->setForgetYearly($requestDataBag->get('forgetYearly'));
         }
         if ($requestDataBag->has('type')) {
-            $repositoryInitInputs->setType($requestDataBag->get('type'));
+            $repositoryInitInputs->setBackupType($requestDataBag->get('type'));
         }
         if ($requestDataBag->has('repositoryPath')) {
             $repositoryInitInputs->setRepositoryPath($requestDataBag->get('repositoryPath'));

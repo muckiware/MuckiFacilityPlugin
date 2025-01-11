@@ -12,9 +12,9 @@
 namespace MuckiFacilityPlugin\MessageQueue\Message;
 
 use Shopware\Core\Framework\MessageQueue\AsyncMessageInterface;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 
-class CreateBackupMessage extends CreateBackupEntity implements AsyncMessageInterface
+class CreateBackupMessage extends BackupRepositorySettings implements AsyncMessageInterface
 {
 
 }

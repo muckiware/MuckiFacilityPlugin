@@ -1,5 +1,14 @@
 <?php declare(strict_types=1);
-
+/**
+ * MuckiFacilityPlugin
+ *
+ * @category   SW6 Plugin
+ * @package    MuckiFacility
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @license    MIT
+ * @author     Muckiware
+ *
+ */
 namespace MuckiFacilityPlugin\Controller;
 
 use Shopware\Core\Framework\Context;
@@ -16,7 +25,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
-use MuckiFacilityPlugin\Entity\RepositoryInitInputs;
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 

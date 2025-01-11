@@ -32,6 +32,28 @@ class HelperTest extends TestCase
         static::assertFalse($isValidEmailResultsNoValid, 'isValidEmailResult should be false. E-Mail not valid');
     }
 
+    public static function deleteDirectory(string $dir): bool
+    {
+        if (!is_dir($dir)) {
+            return false;
+        }
+
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($items as $item) {
+            if ($item->isDir()) {
+                rmdir($item->getRealPath());
+            } else {
+                unlink($item->getRealPath());
+            }
+        }
+
+        return true;
+    }
+
 //    public function testCheckBackupType()
 //    {
 //        $helperClass = new Helper();

@@ -22,7 +22,7 @@ use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Backup\Files\FilesRunner;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 class BackupRunnerFactory
@@ -37,7 +37,7 @@ class BackupRunnerFactory
     /**
      * @throws InvalidBackupTypeException
      */
-    public function createBackupRunner(CreateBackupEntity $createBackup): BackupInterface
+    public function createBackupRunner(BackupRepositorySettings $createBackup): BackupInterface
     {
         switch ($createBackup->getBackupType()) {
 

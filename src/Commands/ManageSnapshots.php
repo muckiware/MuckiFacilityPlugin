@@ -26,7 +26,6 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
 
 #[AsCommand(
     name: 'muckiware:backup:snapshots',

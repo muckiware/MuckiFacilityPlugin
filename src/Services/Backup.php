@@ -21,7 +21,7 @@ use MuckiFacilityPlugin\Core\ConfigPath;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
-use MuckiFacilityPlugin\Entity\CreateBackupEntity;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
@@ -66,7 +66,7 @@ class Backup
         $this->allResults = array_merge($this->allResults, $allResults);
     }
 
-    public function createBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
+    public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
         $cachePaths = $createBackup->getBackupPaths();
 
@@ -84,12 +84,12 @@ class Backup
         $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
     }
 
-    public function createDump(CreateBackupEntity $createBackup): void
+    public function createDump(BackupRepositorySettings $createBackup): void
     {
         $this->startBackupRunner($createBackup, false);
     }
 
-    public function runDatabaseBackup(CreateBackupEntity $createBackup, bool $isJsonOutput=true): void
+    public function runDatabaseBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
         if($this->servicesCliOutput->isCli()) {
             $this->servicesCliOutput->printCliOutputNewline('run backup database...');
@@ -115,7 +115,7 @@ class Backup
         $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
     }
 
-    public function runFilesBackup(CreateBackupEntity $createBackup, $cachePaths, bool $isJsonOutput=true): void
+    public function runFilesBackup(BackupRepositorySettings $createBackup, $cachePaths, bool $isJsonOutput=true): void
     {
         if($this->servicesCliOutput->isCli()) {
             $this->servicesCliOutput->printCliOutputNewline('run backup files...');
@@ -127,7 +127,7 @@ class Backup
         $this->startBackupRunner($createBackup, $isJsonOutput);
     }
 
-    public function checkBackup(CreateBackupEntity $createBackup): void
+    public function checkBackup(BackupRepositorySettings $createBackup): void
     {
         $createBackup = clone $createBackup;
         $createBackup->setBackupType(BackupTypes::FILES->value);
@@ -143,7 +143,7 @@ class Backup
         }
     }
 
-    public function startBackupRunner(CreateBackupEntity $createBackup, bool $isJsonOutput): void
+    public function startBackupRunner(BackupRepositorySettings $createBackup, bool $isJsonOutput): void
     {
         try {
             $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
@@ -157,7 +157,7 @@ class Backup
         }
     }
 
-    public function createCheckItem(CreateBackupEntity $createBackup): void
+    public function createCheckItem(BackupRepositorySettings $createBackup): void
     {
         if($this->servicesCliOutput->isCli()) {
             $this->servicesCliOutput->printCliOutputNewline('Check backup...');
@@ -189,14 +189,14 @@ class Backup
         return $preparedBackupPaths;
     }
 
-    public function prepareCreateBackup(string $backupRepositoryId): CreateBackupEntity
+    public function prepareCreateBackup(string $backupRepositoryId): BackupRepositorySettings
     {
         if($this->servicesCliOutput->isCli()) {
             $this->servicesCliOutput->printCliOutputNewline('Prepare backup');
         }
 
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
-        $createBackup = new CreateBackupEntity();
+        $createBackup = new BackupRepositorySettings();
 
         if($backupRepository) {
 
@@ -210,14 +210,14 @@ class Backup
         return $createBackup;
     }
 
-    public function prepareCheckBackup(string $backupRepositoryId): CreateBackupEntity
+    public function prepareCheckBackup(string $backupRepositoryId): BackupRepositorySettings
     {
         if($this->servicesCliOutput->isCli()) {
             $this->servicesCliOutput->printCliOutputNewline('Prepare checkup');
         }
 
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
-        $createBackup = new CreateBackupEntity();
+        $createBackup = new BackupRepositorySettings();
 
         if($backupRepository) {
 
