@@ -5,3 +5,4 @@ var/cache/*
 /.phpunit.result.cache
 /vendor/
 /src/Resources/public/
+/var/

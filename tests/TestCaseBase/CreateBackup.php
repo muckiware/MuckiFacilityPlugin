@@ -7,6 +7,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use MuckiFacilityPlugin\tests\TestCaseBase\Defaults as TestCaseBaseDefaults;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
+use MuckiFacilityPlugin\Entity\BackupPathEntity;
 
 class CreateBackup
 {
@@ -16,16 +17,18 @@ class CreateBackup
     ): BackupRepositorySettings
     {
         $createBackupEntity = new BackupRepositorySettings();
-        $createBackupEntity->setBackupPaths(TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATHS);
+        $createBackupEntity->setBackupPaths(array(self::getBackupPathEntity()));
         $createBackupEntity->setBackupType($backupType);
+
         if($backupRepositoryId) {
             $createBackupEntity->setBackupRepositoryId($backupRepositoryId);
         } else {
             $createBackupEntity->setBackupRepositoryId(Uuid::randomHex());
         }
         $createBackupEntity->setRepositoryPassword(TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PASSWORD);
-        $createBackupEntity->setRepositoryPath(TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH);
-        $createBackupEntity->setRestorePath(TestCaseBaseDefaults::DEFAULT_TEST_RESTORE_PATH);
+        $createBackupEntity->setRepositoryPath(
+            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH
+        );
 
         return $createBackupEntity;
     }
@@ -49,4 +52,16 @@ class CreateBackup
         return $backupRepositoryEntity;
     }
 
+    static public function getBackupPathEntity(): BackupPathEntity
+    {
+        $backupPathEntity = new BackupPathEntity();
+        $backupPathEntity->setId(Uuid::randomHex());
+        $backupPathEntity->setBackupPath(
+            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH
+        );
+        $backupPathEntity->setCompress(true);
+        $backupPathEntity->setPosition(0);
+
+        return $backupPathEntity;
+    }
 }

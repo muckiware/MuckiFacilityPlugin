@@ -17,6 +17,7 @@ final class Defaults
 {
     public const DEFAULT_TEST_REPOSITORY_PATH = 'var/repository';
     public const DEFAULT_TEST_RESTORE_PATH = 'var/restore';
+    public const DEFAULT_TEST_BACKUP_PATH = 'var/backup';
     public const MUCKIWARE_RESTIC_BINARY_PATH = 'bin/restic_0.17.3_linux_386';
     public const DEFAULT_TEST_REPOSITORY_PASSWORD = '123456';
     public const DEFAULT_TEST_BACKUP_PATHS = array(
@@ -33,6 +34,21 @@ final class Defaults
             'position' => 0,
         )
     );
+
+    public const BACKUP_TEST_FILES = [
+        'TEST file content 1',
+        'TEST file content 2',
+        'TEST file content 3'
+    ];
+
+    public const NEXT_BACKUP_TEST_FILES = [
+        'TEST file content 4',
+        'TEST file content 5',
+        'TEST file content 6',
+        'TEST file content 7',
+        'TEST file content 8',
+        'TEST file content 9'
+    ];
 
     public static function getPluginPath(): string
     {
