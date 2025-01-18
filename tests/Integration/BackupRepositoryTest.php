@@ -100,6 +100,9 @@ class BackupRepositoryTest extends TestCase
             TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH,
             TestCaseBaseDefaults::BACKUP_TEST_FILES
         );
+        print 'files '.print_r($this->getFilesFromDirectory(
+            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH
+        ), true)."\n";
 
         $pluginHelperMock = $this->createMock(PluginHelper::class);
         $pluginHelperMock->method('getCheckResults')
@@ -172,5 +175,24 @@ class BackupRepositoryTest extends TestCase
         );
 
         $manageService->getSnapshots($backupRepositoryId);
+    }
+
+    private function getFilesFromDirectory(string $directory): array
+    {
+        $files = [];
+
+        if (is_dir($directory)) {
+            $dirHandle = opendir($directory);
+            if ($dirHandle) {
+                while (($file = readdir($dirHandle)) !== false) {
+                    if ($file !== '.' && $file !== '..' && is_file($directory . '/' . $file)) {
+                        $files[] = $file;
+                    }
+                }
+                closedir($dirHandle);
+            }
+        }
+
+        return $files;
     }
 }
