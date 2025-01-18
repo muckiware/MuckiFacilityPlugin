@@ -13,6 +13,7 @@ namespace MuckiFacilityPlugin\Entity;
 
 class BackupRepositorySettings
 {
+    protected string $resticPath = 'restic';
     protected string $backupRepositoryId;
     protected bool $active;
     protected string $name;
@@ -160,5 +161,15 @@ class BackupRepositorySettings
     public function setForgetYearly(int $forgetYearly): void
     {
         $this->forgetYearly = $forgetYearly;
+    }
+
+    public function getResticPath(): string
+    {
+        return $this->resticPath;
+    }
+
+    public function setResticPath(string $resticPath): void
+    {
+        $this->resticPath = $resticPath;
     }
 }

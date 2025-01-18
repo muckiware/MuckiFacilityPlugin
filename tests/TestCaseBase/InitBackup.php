@@ -27,6 +27,7 @@ class InitBackup
         $repositoryInitInputs->setRestorePath(
             TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_RESTORE_PATH
         );
+        $repositoryInitInputs->setResticPath(TestCaseBaseDefaults::getResticPath());
 
         return $repositoryInitInputs;
     }

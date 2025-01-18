@@ -133,7 +133,6 @@ class FilesRunner implements BackupInterface
         if($this->pluginSettings->hasOwnResticBinaryPath()) {
             $backupClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
         }
-
         $backupClient->setRepositoryPassword($this->createBackup->getRepositoryPassword());
         $backupClient->setRepositoryPath($this->createBackup->getRepositoryPath());
         $backupClient->setJsonOutput($isJsonOutput);

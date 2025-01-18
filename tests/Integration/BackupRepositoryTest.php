@@ -55,8 +55,10 @@ class BackupRepositoryTest extends TestCase
     public function CheckInitRepository(): void
     {
         $pluginSettingsMock = $this->createMock(PluginSettings::class);
-        $pluginSettingsMock->method('getOwnResticBinaryPath')
-            ->willReturn(TestCaseBaseDefaults::getResticPath());
+        $pluginSettingsMock->method('hasOwnResticBinaryPath')->willReturn(true);
+        $pluginSettingsMock->method('getOwnResticBinaryPath')->willReturn(
+            TestCaseBaseDefaults::getResticPath()
+        );
         $backupRepository = new BackupRepository(
             $this->createMock(LoggerInterface::class),
             $pluginSettingsMock,
@@ -93,26 +95,24 @@ class BackupRepositoryTest extends TestCase
             BackupTypes::NONE_DATABASE->value,
             $backupRepositoryId
         );
-        print '$backupRepositorySettings '.print_r($backupRepositorySettings, true)."\n";
 
-        print 'createTextFiles in '.TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH."\n";
         HelperTest::createTextFiles(
             TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH,
             TestCaseBaseDefaults::BACKUP_TEST_FILES
         );
-        print 'files '.print_r($this->getFilesFromDirectory(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH
-        ), true)."\n";
 
         $pluginHelperMock = $this->createMock(PluginHelper::class);
-        $pluginHelperMock->method('getCheckResults')
-            ->willReturn(array('check1', 'no errors were found'));
+        $pluginHelperMock->method('getCheckResults')->willReturn(
+            array('check1', 'no errors were found')
+        );
 
         $servicesCliOutputMock = $this->createMock(ServicesCliOutput::class);
         $loggerInterfaceMock = $this->createMock(LoggerInterface::class);
         $pluginSettingsMock = $this->createMock(PluginSettings::class);
-        $pluginSettingsMock->method('getOwnResticBinaryPath')
-            ->willReturn(TestCaseBaseDefaults::getResticPath());
+        $pluginSettingsMock->method('hasOwnResticBinaryPath')->willReturn(true);
+        $pluginSettingsMock->method('getOwnResticBinaryPath')->willReturn(
+            TestCaseBaseDefaults::getResticPath()
+        );
 
         $runner = new FilesRunner(
             $loggerInterfaceMock,
@@ -139,7 +139,7 @@ class BackupRepositoryTest extends TestCase
         $servicesBackup->createBackup($backupRepositorySettings);
         $createBackupResults = $servicesBackup->getAllResults();
 
-        print "servicesBackup BackupException: ".print_r($servicesBackup->getBackupException(), true)."\n";
+//        print "servicesBackup BackupException: ".print_r($servicesBackup->getBackupException(), true)."\n";
 
         $processed = end($createBackupResults)->getProcessed();
 

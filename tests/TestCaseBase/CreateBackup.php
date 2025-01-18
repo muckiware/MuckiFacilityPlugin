@@ -29,6 +29,7 @@ class CreateBackup
         $createBackupEntity->setRepositoryPath(
             TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH
         );
+        $createBackupEntity->setResticPath(TestCaseBaseDefaults::getResticPath());
 
         return $createBackupEntity;
     }
