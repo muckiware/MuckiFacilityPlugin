@@ -33,6 +33,7 @@ use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 class Backup
 {
     protected array $allResults = [];
+    protected \Exception $backupException;
     protected BackupInterface $backup;
     public function __construct(
         protected LoggerInterface $logger,
@@ -44,7 +45,9 @@ class Backup
         protected ManageService $manageService,
         protected ServicesCliOutput $servicesCliOutput
     )
-    {}
+    {
+        $this->backupException = new \Exception();
+    }
 
     public function getBackup(): BackupInterface
     {
@@ -59,6 +62,16 @@ class Backup
     public function getAllResults(): array
     {
         return $this->allResults;
+    }
+
+    public function getBackupException(): \Exception
+    {
+        return $this->backupException;
+    }
+
+    public function setBackupException(\Exception $backupException): void
+    {
+        $this->backupException = $backupException;
     }
 
     public function addAllResult(array $allResults): void
@@ -153,6 +166,8 @@ class Backup
             $this->setBackup($backupRunner);
 
         } catch (\Exception $e) {
+
+            $this->setBackupException($e);
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
     }
