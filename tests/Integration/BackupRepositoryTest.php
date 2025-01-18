@@ -93,6 +93,9 @@ class BackupRepositoryTest extends TestCase
             BackupTypes::NONE_DATABASE->value,
             $backupRepositoryId
         );
+        print '$backupRepositorySettings '.print_r($backupRepositorySettings, true)."\n";
+
+        print 'createTextFiles in '.TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH."\n";
         HelperTest::createTextFiles(
             TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH,
             TestCaseBaseDefaults::BACKUP_TEST_FILES
@@ -132,6 +135,8 @@ class BackupRepositoryTest extends TestCase
 
         $servicesBackup->createBackup($backupRepositorySettings);
         $createBackupResults = $servicesBackup->getAllResults();
+
+        print "createBackupResults: ".print_r($servicesBackup->getAllResults(), true)."\n";
 
         $processed = end($createBackupResults)->getProcessed();
 
