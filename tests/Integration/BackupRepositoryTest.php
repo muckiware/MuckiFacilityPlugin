@@ -139,7 +139,7 @@ class BackupRepositoryTest extends TestCase
         $servicesBackup->createBackup($backupRepositorySettings);
         $createBackupResults = $servicesBackup->getAllResults();
 
-        print "createBackupResults: ".print_r($servicesBackup->getAllResults(), true)."\n";
+        print "servicesBackup: ".print_r($servicesBackup, true)."\n";
 
         $processed = end($createBackupResults)->getProcessed();
 
