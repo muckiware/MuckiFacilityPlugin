@@ -33,6 +33,8 @@ use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 use MuckiFacilityPlugin\Backup\Files\FilesRunner;
 use MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
+use MuckiFacilityPlugin\Services\RestoreSnapshot;
+use MuckiFacilityPlugin\tests\TestCaseBase\RestoreBackup;
 
 class BackupRepositoryTest extends TestCase
 {
@@ -47,9 +49,14 @@ class BackupRepositoryTest extends TestCase
         $helper->deleteDirectory(
             TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH
         );
+        $helper->deleteDirectory(
+            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_RESTORE_PATH
+        );
 
         $this->CheckInitRepository();
         $this->CreateBackup($backupRepositoryId);
+        $snapshotId = $this->checkGetSnapshots($backupRepositoryId);
+        $this->checkRestoreBySnapshotId($snapshotId);
     }
 
     public function CheckInitRepository(): void
@@ -137,21 +144,19 @@ class BackupRepositoryTest extends TestCase
         );
 
         $servicesBackup->createBackup($backupRepositorySettings);
-        $createBackupResults = $servicesBackup->getAllResults();
 
-//        print "servicesBackup BackupException: ".print_r($servicesBackup->getBackupException(), true)."\n";
+        $createBackupResults = $servicesBackup->getAllResults();
+        static::assertCount(3, $createBackupResults, 'createBackup should return 3 results');
 
         $processed = end($createBackupResults)->getProcessed();
-
-        static::assertCount(3, $createBackupResults, 'createBackup should return 3 results');
         static::assertEquals(
             'no errors were found',
             end($processed),
-            'createBackup should return correct message no erroes were found'
+            'createBackup should return correct message: no errors were found'
         );
     }
 
-    public function checkGetSnapshots(string $backupRepositoryId): void
+    public function checkGetSnapshots(string $backupRepositoryId): string
     {
         $backupRepositoryEntity = new BackupRepositoryEntity();
         $backupRepositoryEntity->setRepositoryPath(
@@ -160,12 +165,11 @@ class BackupRepositoryTest extends TestCase
         $backupRepositoryEntity->setRepositoryPassword(TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PASSWORD);
 
         $backupRepositoryMock = $this->createMock(BackupRepository::class);
-        $backupRepositoryMock->method('getBackupRepositoryById')
-            ->willReturn($backupRepositoryEntity);
+        $backupRepositoryMock->method('getBackupRepositoryById')->willReturn($backupRepositoryEntity);
 
         $pluginSettingsMock = $this->createMock(PluginSettings::class);
-        $pluginSettingsMock->method('getOwnResticBinaryPath')
-            ->willReturn(TestCaseBaseDefaults::getResticPath());
+        $pluginSettingsMock->method('hasOwnResticBinaryPath')->willReturn(true);
+        $pluginSettingsMock->method('getOwnResticBinaryPath')->willReturn(TestCaseBaseDefaults::getResticPath());
 
         $manageService = new ManageService(
             $this->createMock(LoggerInterface::class),
@@ -174,7 +178,45 @@ class BackupRepositoryTest extends TestCase
             $pluginSettingsMock,
         );
 
-        $manageService->getSnapshots($backupRepositoryId);
+        $snapshots = json_decode($manageService->getSnapshots($backupRepositoryId), true);
+
+        static::assertCount(1, $snapshots, 'getSnapshots should return 1 snapshot');
+        static::assertIsString($snapshots[0]['id'], 'getSnapshots should return snapshot with id');
+        static::assertCount(1, $snapshots[0]['paths'], 'getSnapshots should return snapshot with paths');
+        static::assertEquals(
+            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH,
+            $snapshots[0]['paths'][0],
+            'getSnapshots path should return the test backup path'
+        );
+
+        return $snapshots[0]['id'];
+    }
+
+    public function checkRestoreBySnapshotId(string $snapshotId): void
+    {
+        $pluginSettingsMock = $this->createMock(PluginSettings::class);
+        $pluginSettingsMock->method('hasOwnResticBinaryPath')->willReturn(true);
+        $pluginSettingsMock->method('getOwnResticBinaryPath')->willReturn(TestCaseBaseDefaults::getResticPath());
+
+        $restoreSnapshot = new RestoreSnapshot(
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(BackupRepository::class),
+            $pluginSettingsMock,
+            $this->createMock(PluginHelper::class),
+            $this->createMock(ServicesCliOutput::class)
+        );
+
+        $restoreSnapshot->restoreSnapshot(RestoreBackup::getRestoreBackupEntity($snapshotId));
+        $allResults = $restoreSnapshot->getAllResults();
+
+        static::assertCount(1, $allResults, 'restoreSnapshot should return 1 result');
+        $restoreFolder = TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_RESTORE_PATH.TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH;
+        $restoreFiles = $this->getFilesFromDirectory($restoreFolder);
+        static::assertCount(
+            count(TestCaseBaseDefaults::BACKUP_TEST_FILES),
+            $restoreFiles,
+            'restoreSnapshot should restore 3 files'
+        );
     }
 
     private function getFilesFromDirectory(string $directory): array

@@ -79,7 +79,7 @@ class RestoreSnapshot
 
         $restoreClient->setRepositoryPassword($createBackup->getRepositoryPassword());
         $restoreClient->setRepositoryPath($createBackup->getRepositoryPath());
-        $restoreClient->setRestoreTarget($createBackup->getRestoreTarget());
+        $restoreClient->setRestoreTarget($createBackup->getRestorePath());
         $restoreClient->setRestoreItem($snapshotId);
         $restoreClient->setJsonOutput($isJsonOutput);
 
