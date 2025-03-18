@@ -52,17 +52,17 @@ class BackupRepositoryDefinition extends EntityDefinition
     {
         return new FieldCollection([
             (new idField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
-            (new BoolField('active', 'active'))->addFlags(new ApiAware(), new Inherited()),
-            (new StringField('name', 'name'))->addFlags(new Required(), new ApiAware()),
-            (new StringField('type', 'type'))->addFlags(new ApiAware()),
-            (new StringField('repository_path', 'repositoryPath'))->addFlags(new Required(), new ApiAware()),
-            (new StringField('repository_password', 'repositoryPassword'))->addFlags(new Required(), new ApiAware()),
-            (new StringField('restore_path', 'restorePath'))->addFlags(new ApiAware()),
-            (new JsonField('backup_paths', 'backupPaths', [], []))->addFlags(new ApiAware()),
-            (new IntField('forget_daily', 'forgetDaily'))->addFlags(new ApiAware()),
-            (new IntField('forget_weekly', 'forgetWeekly'))->addFlags(new ApiAware()),
-            (new IntField('forget_monthly', 'forgetMonthly'))->addFlags(new ApiAware()),
-            (new IntField('forget_yearly', 'forgetYearly'))->addFlags(new ApiAware()),
+            (new BoolField('active', 'active'))->addFlags(new Inherited()),
+            (new StringField('name', 'name'))->addFlags(new Required()),
+            (new StringField('type', 'type')),
+            (new StringField('repository_path', 'repositoryPath'))->addFlags(new Required()),
+            (new StringField('repository_password', 'repositoryPassword'))->removeFlag(ApiAware::class),
+            (new StringField('restore_path', 'restorePath')),
+            (new JsonField('backup_paths', 'backupPaths', [], [])),
+            (new IntField('forget_daily', 'forgetDaily')),
+            (new IntField('forget_weekly', 'forgetWeekly')),
+            (new IntField('forget_monthly', 'forgetMonthly')),
+            (new IntField('forget_yearly', 'forgetYearly')),
 
             (new OneToManyAssociationField(
                 'backupRepositoryChecks',
