@@ -44,6 +44,11 @@
             <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
         </service>
+        <service id="MuckiFacilityPlugin\Database\TableCleanupRunnerFactory">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+        </service>
 
         <service class="MuckiFacilityPlugin\Commands\BackupCheck" id="muwa.command.backup.check" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -108,6 +113,14 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service class="MuckiFacilityPlugin\Commands\DbTableCleanup" id="muwa.command.table.cleanup" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\DbTableCleanup"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
 
         <service id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -143,6 +156,11 @@
         <service id="MuckiFacilityPlugin\Services\SettingsInterface" alias="MuckiLogPlugin\Services\Settings"/>
         <service id="MuckiFacilityPlugin\Services\Helper"/>
         <service id="MuckiFacilityPlugin\Services\CliOutput" />
+        <service id="MuckiFacilityPlugin\Services\DbTableCleanup" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+        </service>
         <service id="MuckiFacilityPlugin\Services\RestoreSnapshot" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
