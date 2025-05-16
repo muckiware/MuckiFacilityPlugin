@@ -63,6 +63,8 @@ class DbTableCleanup extends Commands
     public function configure()
     {
         $this->setDescription('Cleanup old database table items');
+        $this->addArgument('tableName',InputArgument::REQUIRED, 'Name of the table to cleanup');
+        parent::configure();
     }
 
     /**
@@ -78,7 +80,10 @@ class DbTableCleanup extends Commands
         $output->writeln( 'Starting executing cleanup table');
         $this->logger->info('Starting executing cleanup table', PluginDefaults::DEFAULT_LOGGER_CONFIG);
 
-        $this->servicesDbTableCleanup->cleanupTable($output);
+        $tableName = $this->checkInputForTableCleanupType($input);
+        if($tableName) {
+            $this->servicesDbTableCleanup->cleanupTable($tableName, $output);
+        }
 
         $executionTime = microtime(true) - $executionStart;
 

@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -17,5 +17,4 @@ enum CleanupTables: string
 {
     case CART = 'cart';
     case LOG_ENTRY = LogEntryDefinition::ENTITY_NAME;
-
 }

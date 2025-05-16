@@ -12,6 +12,7 @@
 namespace MuckiFacilityPlugin\Database\TableRunner;
 
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 use MuckiFacilityPlugin\Database\TableCleanupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
@@ -23,47 +24,47 @@ class CartCleanupRunner implements TableCleanupInterface
         protected SettingsInterface $pluginSettings
     ) {}
 
-    public function getCreateTableStatement(): string
+    public function getCreateTableStatement(OutputInterface $cliOutput): string
     {
         return '';
     }
 
-    public function checkOldTempTable(): void
+    public function checkOldTempTable(OutputInterface $cliOutput): void
     {
         // TODO: Implement checkOldTempTable() method.
     }
 
-    public function removeOldTableItems(): void
+    public function removeOldTableItems(OutputInterface $cliOutput): void
     {
         // TODO: Implement removeOldTableItems() method.
     }
 
-    public function createTempTable(): bool
+    public function createTempTable(string $sqlCreateStatement, OutputInterface $cliOutput): bool
     {
         return false;
     }
 
-    public function copyTableItemsIntoTempTable(): void
+    public function copyTableItemsIntoTempTable(OutputInterface $cliOutput): void
     {
         // TODO: Implement copyTableItemsIntoTempTable() method.
     }
 
-    public function countTableItemsInTempTable(): ?int
+    public function countTableItemsInTempTable(OutputInterface $cliOutput): ?int
     {
         return null;
     }
 
-    public function removeTableByName(): void
+    public function removeTableByName(string $tableName, OutputInterface $cliOutput): void
     {
         // TODO: Implement removeTableByName() method.
     }
 
-    public function createNewTable(): void
+    public function createNewTable(string $sqlCreateStatement, OutputInterface $cliOutput): void
     {
         // TODO: Implement createNewTable() method.
     }
 
-    public function insertCartItemsFromTempTable(): void
+    public function insertCartItemsFromTempTable(OutputInterface $cliOutput): void
     {
         // TODO: Implement insertCartItemsFromTempTable() method.
     }

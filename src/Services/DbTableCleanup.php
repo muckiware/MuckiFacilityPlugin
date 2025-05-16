@@ -18,6 +18,7 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\Settings as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Database\TableCleanupRunnerFactory;
+use MuckiFacilityPlugin\Database\TableCleanupInterface;
 
 class DbTableCleanup
 {
@@ -28,15 +29,42 @@ class DbTableCleanup
         protected TableCleanupRunnerFactory $tableCleanupRunnerFactory
     ) {}
 
-    public function cleanupTable(OutputInterface $cliOutput = null): void
+    public function cleanupTable(string $tableName, OutputInterface $cliOutput = null): void
+    {
+        $runner = $this->getCleanupRunner($tableName);
+
+        $sqlCreateStatement = $runner->getCreateTableStatement($cliOutput);
+        $runner->checkOldTempTable($cliOutput);
+        $runner->removeOldTableItems($cliOutput);
+
+        if($runner->createTempTable($sqlCreateStatement, $cliOutput)) {
+
+            $runner->copyTableItemsIntoTempTable($cliOutput);
+
+            if($runner->countTableItemsInTempTable($cliOutput) >= 1) {
+                $runner->removeTableByName($tableName, $cliOutput);
+                $runner->createNewTable($sqlCreateStatement, $cliOutput);
+                $runner->insertCartItemsFromTempTable($cliOutput);
+            } else {
+                $this->logger->info('Found no items', PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            }
+
+            $runner->removeTableByName($tableName, $cliOutput);
+
+        } else {
+            $this->logger->error('Cancel cleanup', PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+    }
+
+    public function getCleanupRunner(string $cleanupTableName): ?TableCleanupInterface
     {
         try {
-            $cleanupRunner = $this->tableCleanupRunnerFactory->createTableCleanupRunner(
-                ''
-            );
+            return $this->tableCleanupRunnerFactory->createTableCleanupRunner($cleanupTableName);
+
         } catch (\Exception $e) {
-            $this->logger->error('Error during table cleanup: ' . $e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            return;
+            $this->logger->error('Error during table cleanup: '.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
+
+        return null;
     }
 }

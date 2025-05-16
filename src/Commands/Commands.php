@@ -18,6 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
 
 use MuckiFacilityPlugin\Core\BackupTypes;
+use MuckiFacilityPlugin\Core\CleanupTables;
 
 class Commands extends Command
 {
@@ -41,7 +42,7 @@ class Commands extends Command
         if(
             $backupTypeInput &&
             $backupTypeInput !== '' &&
-            $this->checkBackupTypByInput($backupTypeInput)
+            $this->checkExistingEnumTypes(BackupTypes::cases(), $backupTypeInput)
         ) {
             return $backupTypeInput;
         } else {
@@ -51,11 +52,24 @@ class Commands extends Command
         }
     }
 
-    public function checkBackupTypByInput(string $backupTypeInput): bool
+    protected function checkInputForTableCleanupType(InputInterface $input): ?string
     {
-        $backupTypes = BackupTypes::cases();
-        foreach ($backupTypes as $backupType) {
-            if ($backupType->value === $backupTypeInput) {
+        $tableNameInput = $input->getArgument('tableName');
+        if(
+            $tableNameInput &&
+            $tableNameInput !== '' &&
+            $this->checkExistingEnumTypes(CleanupTables::cases(), $tableNameInput)
+        ) {
+            return $tableNameInput;
+        }
+
+        return null;
+    }
+
+    public function checkExistingEnumTypes(array $checkTypes, string $typeInput): bool
+    {
+        foreach ($checkTypes as $backupType) {
+            if ($backupType->value === $typeInput) {
                 return true;
             }
         }

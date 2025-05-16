@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -17,5 +17,5 @@ class Defaults
     const BACKUP_FOLDER_PERMISSION = 0777;
     const CURRENT_DATETIME_STR_FORMAT = 'Y-m-d_H-i-s';
     const CURRENT_DATE_STR_FORMAT = 'Y-m-d';
-    const DEFAULT_LOGGER_CONFIG = array('wuwa', 'facility');
+    const DEFAULT_LOGGER_CONFIG = array('muwa', 'facility');
 }

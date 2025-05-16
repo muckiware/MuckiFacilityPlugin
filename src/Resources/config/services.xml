@@ -160,6 +160,7 @@
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <argument type="service" id="MuckiFacilityPlugin\Database\TableCleanupRunnerFactory"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\RestoreSnapshot" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>

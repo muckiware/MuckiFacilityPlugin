@@ -11,15 +11,17 @@
  */
 namespace MuckiFacilityPlugin\Database;
 
+use Symfony\Component\Console\Output\OutputInterface;
+
 interface TableCleanupInterface
 {
-    public function getCreateTableStatement(): string;
-    public function checkOldTempTable(): void;
-    public function removeOldTableItems(): void;
-    public function createTempTable(): bool;
-    public function copyTableItemsIntoTempTable(): void;
-    public function countTableItemsInTempTable(): ?int;
-    public function removeTableByName(): void;
-    public function createNewTable(): void;
-    public function insertCartItemsFromTempTable(): void;
+    public function getCreateTableStatement(OutputInterface $cliOutput): string;
+    public function checkOldTempTable(OutputInterface $cliOutput): void;
+    public function removeOldTableItems(OutputInterface $cliOutput): void;
+    public function createTempTable(string $sqlCreateStatement, OutputInterface $cliOutput): bool;
+    public function copyTableItemsIntoTempTable(OutputInterface $cliOutput): void;
+    public function countTableItemsInTempTable(OutputInterface $cliOutput): ?int;
+    public function removeTableByName(string $tableName, OutputInterface $cliOutput): void;
+    public function createNewTable(string $sqlCreateStatement, OutputInterface $cliOutput): void;
+    public function insertCartItemsFromTempTable(OutputInterface $cliOutput): void;
 }
