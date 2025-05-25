@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -30,11 +30,34 @@ use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
+/**
+ *
+ */
 class Backup
 {
+    /**
+     * @var array<mixed>
+     */
     protected array $allResults = [];
+    /**
+     * @var \Exception
+     */
     protected \Exception $backupException;
+    /**
+     * @var BackupInterface
+     */
     protected BackupInterface $backup;
+
+    /**
+     * @param LoggerInterface $logger
+     * @param BackupRunnerFactory $backupRunnerFactory
+     * @param BackupRepository $backupRepository
+     * @param BackupRepositoryChecks $backupRepositoryChecks
+     * @param SettingsInterface $pluginSettings
+     * @param Helper $pluginHelper
+     * @param ManageRepository $manageService
+     * @param CliOutput $servicesCliOutput
+     */
     public function __construct(
         protected LoggerInterface $logger,
         protected BackupRunnerFactory $backupRunnerFactory,
@@ -49,36 +72,62 @@ class Backup
         $this->backupException = new \Exception();
     }
 
+    /**
+     * @return BackupInterface
+     */
     public function getBackup(): BackupInterface
     {
         return $this->backup;
     }
 
+    /**
+     * @param BackupInterface $backup
+     * @return void
+     */
     public function setBackup(BackupInterface $backup): void
     {
         $this->backup = $backup;
     }
 
+    /**
+     * @return array<ResultEntity>
+     */
     public function getAllResults(): array
     {
         return $this->allResults;
     }
 
+    /**
+     * @return \Exception
+     */
     public function getBackupException(): \Exception
     {
         return $this->backupException;
     }
 
+    /**
+     * @param \Exception $backupException
+     * @return void
+     */
     public function setBackupException(\Exception $backupException): void
     {
         $this->backupException = $backupException;
     }
 
+    /**
+     * @param array<ResultEntity> $allResults
+     * @return void
+     */
     public function addAllResult(array $allResults): void
     {
         $this->allResults = array_merge($this->allResults, $allResults);
     }
 
+    /**
+     * @param BackupRepositorySettings $createBackup
+     * @param bool $isJsonOutput
+     * @return void
+     */
     public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
         $cachePaths = $createBackup->getBackupPaths();
@@ -97,11 +146,20 @@ class Backup
         $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
     }
 
+    /**
+     * @param BackupRepositorySettings $createBackup
+     * @return void
+     */
     public function createDump(BackupRepositorySettings $createBackup): void
     {
         $this->startBackupRunner($createBackup, false);
     }
 
+    /**
+     * @param BackupRepositorySettings $createBackup
+     * @param bool $isJsonOutput
+     * @return void
+     */
     public function runDatabaseBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
         if($this->servicesCliOutput->isCli()) {
@@ -128,7 +186,13 @@ class Backup
         $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
     }
 
-    public function runFilesBackup(BackupRepositorySettings $createBackup, $cachePaths, bool $isJsonOutput=true): void
+    /**
+     * @param BackupRepositorySettings $createBackup
+     * @param array<mixed> $cachePaths
+     * @param bool $isJsonOutput
+     * @return void
+     */
+    public function runFilesBackup(BackupRepositorySettings $createBackup, array $cachePaths, bool $isJsonOutput=true): void
     {
         if($this->servicesCliOutput->isCli()) {
             $this->servicesCliOutput->printCliOutputNewline('run backup files...');
@@ -140,6 +204,10 @@ class Backup
         $this->startBackupRunner($createBackup, $isJsonOutput);
     }
 
+    /**
+     * @param BackupRepositorySettings $createBackup
+     * @return void
+     */
     public function checkBackup(BackupRepositorySettings $createBackup): void
     {
         $createBackup = clone $createBackup;
@@ -156,6 +224,11 @@ class Backup
         }
     }
 
+    /**
+     * @param BackupRepositorySettings $createBackup
+     * @param bool $isJsonOutput
+     * @return void
+     */
     public function startBackupRunner(BackupRepositorySettings $createBackup, bool $isJsonOutput): void
     {
         try {
@@ -172,6 +245,10 @@ class Backup
         }
     }
 
+    /**
+     * @param BackupRepositorySettings $createBackup
+     * @return void
+     */
     public function createCheckItem(BackupRepositorySettings $createBackup): void
     {
         if($this->servicesCliOutput->isCli()) {
@@ -187,6 +264,10 @@ class Backup
         }
     }
 
+    /**
+     * @param array<mixed> $backupPaths
+     * @return array<BackupPathEntity>
+     */
     public function prepareBackupPaths(array $backupPaths): array
     {
         $preparedBackupPaths = [];
@@ -204,6 +285,10 @@ class Backup
         return $preparedBackupPaths;
     }
 
+    /**
+     * @param string $backupRepositoryId
+     * @return BackupRepositorySettings
+     */
     public function prepareCreateBackup(string $backupRepositoryId): BackupRepositorySettings
     {
         if($this->servicesCliOutput->isCli()) {
@@ -225,6 +310,10 @@ class Backup
         return $createBackup;
     }
 
+    /**
+     * @param string $backupRepositoryId
+     * @return BackupRepositorySettings
+     */
     public function prepareCheckBackup(string $backupRepositoryId): BackupRepositorySettings
     {
         if($this->servicesCliOutput->isCli()) {
@@ -252,6 +341,11 @@ class Backup
         return $createBackup;
     }
 
+    /**
+     * @param string $databaseName
+     * @param bool $useSubFolder
+     * @return string
+     */
     public function prepareDbBackupFileName(string $databaseName, bool $useSubFolder=false): string
     {
         $backupPath = $this->pluginSettings->getBackupPath($useSubFolder);

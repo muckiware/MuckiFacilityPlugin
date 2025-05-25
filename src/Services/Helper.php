@@ -18,8 +18,15 @@ use MuckiRestic\Entity\Result\ResultEntity;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
+/**
+ *
+ */
 class Helper
 {
+    /**
+     * @param array<mixed>|string $data
+     * @return string
+     */
     public function getHashData(array|string $data): string
     {
         if(is_array($data)) {
@@ -28,6 +35,10 @@ class Helper
         return md5($data);
     }
 
+    /**
+     * @param string $email
+     * @return bool
+     */
     public function isValidEmail(string $email): bool
     {
         // assume it's valid if we can't validate it
@@ -38,6 +49,10 @@ class Helper
         return false !== filter_var($email, FILTER_VALIDATE_EMAIL);
     }
 
+    /**
+     * @param string $path
+     * @return void
+     */
     public function ensureDirectoryExists(string $path): void
     {
         if (!is_dir($path)) {
@@ -45,13 +60,21 @@ class Helper
         }
     }
 
+    /**
+     * @param string $dateTimeFormat
+     * @return string
+     */
     public function getCurrentDateTimeStr(string $dateTimeFormat): string
     {
         $date = new \DateTime();
         return $date->format($dateTimeFormat);
     }
 
-    public function deleteDirectory($dirPath): void
+    /**
+     * @param string $dirPath
+     * @return void
+     */
+    public function deleteDirectory(string $dirPath): void
     {
         if (is_dir($dirPath)) {
             $files = scandir($dirPath);
@@ -69,6 +92,10 @@ class Helper
         }
     }
 
+    /**
+     * @param string $checkResults
+     * @return array<mixed>
+     */
     public function getCheckResults(string $checkResults): array
     {
         return CheckResultParser::textParserResult($checkResults)->getProcessed();

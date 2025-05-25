@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -26,12 +26,22 @@ use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiRestic\Exception\InvalidConfigurationException;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
+/**
+ *
+ */
 class FilesRunner implements BackupInterface
 {
     /**
-     * @var array<ResultEntity> $backupResultsq
+     * @var array<ResultEntity>
      */
     protected array $backupResults;
+
+    /**
+     * @param LoggerInterface $logger
+     * @param PluginSettings $pluginSettings
+     * @param BackupRepositorySettings $createBackup
+     * @param ServicesCliOutput $servicesCliOutput
+     */
     public function __construct(
         protected LoggerInterface $logger,
         protected PluginSettings $pluginSettings,
@@ -39,11 +49,18 @@ class FilesRunner implements BackupInterface
         protected ServicesCliOutput $servicesCliOutput
     ) {}
 
+    /**
+     * @return ResultEntity[]
+     */
     public function getBackupResults(): array
     {
         return $this->backupResults;
     }
 
+    /**
+     * @param ResultEntity $backupResult
+     * @return void
+     */
     public function addBackupResult(ResultEntity $backupResult): void
     {
         $this->backupResults[] = $backupResult;
@@ -73,7 +90,7 @@ class FilesRunner implements BackupInterface
             /** @var BackupPathEntity $backupPath */
             foreach ($this->createBackup->getBackupPaths() as $backupPath) {
 
-                $this->setProgressStatus($progress, $progressBar, $backupPath->getBackupPath());
+                $this->setProgressStatus($progress, $progressBar);
 
                 $backupClient->setBackupPath($backupPath->getBackupPath());
                 if($backupPath->isCompress()) {
@@ -87,6 +104,11 @@ class FilesRunner implements BackupInterface
         }
     }
 
+    /**
+     * @param Progress|null $progress
+     * @param ProgressBar|null $progressBar
+     * @return void
+     */
     public function setProgressStatus(?Progress $progress, ?ProgressBar $progressBar)
     {
         if ($this->servicesCliOutput->isCli() && $progress && $progressBar) {
@@ -112,21 +134,35 @@ class FilesRunner implements BackupInterface
         $this->logger->info($checkBackup->getOutput(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
     }
 
+    /**
+     * @return mixed
+     */
     public function getBackupData(): mixed
     {
         return array();
     }
 
+    /**
+     * @param mixed $data
+     * @return void
+     */
     public function saveBackupData(mixed $data): void
     {
         // TODO: Implement saveBackupData() method.
     }
 
+    /**
+     * @return void
+     */
     public function removeBackupData(): void
     {
         // TODO: Implement removeBackupData() method.
     }
 
+    /**
+     * @param bool $isJsonOutput
+     * @return Backup
+     */
     public function prepareBackupClient(bool $isJsonOutput=true): Backup
     {
         $backupClient = Backup::create();

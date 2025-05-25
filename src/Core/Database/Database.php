@@ -1,5 +1,14 @@
-<?php
-
+<?php declare(strict_types=1);
+/**
+ * MuckiFacilityPlugin
+ *
+ * @category   SW6 Plugin
+ * @package    MuckiFacility
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @license    MIT
+ * @author     Muckiware
+ *
+ */
 namespace MuckiFacilityPlugin\Core\Database;
 
 use Doctrine\DBAL\Connection;
@@ -8,14 +17,24 @@ use Psr\Log\LoggerInterface;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
+/**
+ *
+ */
 class Database
 {
+    /**
+     * @param LoggerInterface $logger
+     * @param Connection $connection
+     */
     public function __construct(
         protected LoggerInterface $logger,
         protected Connection $connection
     )
     {}
 
+    /**
+     * @return array<string>|null
+     */
     public function getListOfAllTables(): ?array
     {
         $results = array();

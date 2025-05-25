@@ -85,14 +85,14 @@ class CliOutput
     public function printCliOutput(string $message = ''): void
     {
         if($message !== '') {
-            $this->output?->writeln($message);
+            $this->output->writeln($message);
         }
     }
 
-    public function printCliOutputNewline(?string $message = ''): void
+    public function printCliOutputNewline(string $message = ''): void
     {
-        if($message && $message !== '') {
-            $this->output?->write($message, true);
+        if($message !== '') {
+            $this->output->write($message, true);
         }
     }
 

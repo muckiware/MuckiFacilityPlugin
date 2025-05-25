@@ -15,7 +15,6 @@ use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositorySer
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
-#[Package('init-backup-repository')]
 class InitBackupRepositoryController extends AbstractController
 {
     /**

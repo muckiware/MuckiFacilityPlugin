@@ -25,7 +25,6 @@ use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
-#[Package('restore-snapshot-repository')]
 class RestoreSnapshotController extends AbstractController
 {
     /**
@@ -57,7 +56,7 @@ class RestoreSnapshotController extends AbstractController
             $message->setBackupRepositoryId($requestDataBag->get('backupRepositoryId'));
             $message->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $message->setRepositoryPath($backupRepository->getRepositoryPath());
-            $message->setRestoreTarget($backupRepository->getRestorePath());
+            $message->setRestorePath($backupRepository->getRestorePath());
             $message->setSnapshotId($requestDataBag->get('snapshotId'));
 
             $this->messageBus->dispatch($message);

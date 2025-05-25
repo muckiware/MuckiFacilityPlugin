@@ -46,7 +46,7 @@ You can define for each path item a compress option. If the compress option is a
 ### Delete of snapshots
 You can remove old snapshots of a repository with the command.
 ```shell
-bin/console muckiware:backup:snapshots <backupRepositoryId>
+bin/console muckiware:backup:snapshots --delete <backupRepositoryId>
 ```
 This setup defines the daily, weekly, month or yearly values for this remove process. More details about the keep-parameters you can find in the restic documentation https://restic.readthedocs.io/en/latest/060_forget.html#removing-snapshots-according-to-a-policy
 

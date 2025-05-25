@@ -25,7 +25,6 @@ use Symfony\Component\HttpFoundation\Response;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
-#[Package('manage-backup-repository')]
 class ManageController extends AbstractController
 {
     /**

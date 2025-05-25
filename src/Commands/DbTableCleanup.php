@@ -46,7 +46,7 @@ class DbTableCleanup extends Commands
     /**
      * @param ContainerInterface $container
      */
-    public function setContainer(ContainerInterface $container)
+    public function setContainer(ContainerInterface $container): void
     {
         $this->container = $container;
     }

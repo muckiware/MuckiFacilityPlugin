@@ -23,6 +23,7 @@ use MuckiRestic\Library\Backup;
 use MuckiRestic\Entity\Result\ResultEntity;
 use MuckiRestic\Exception\InvalidConfigurationException;
 
+use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryCollection;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
@@ -58,9 +59,12 @@ class BackupRepository
         $criteria->addAssociation('backupRepositoryChecks');
         $criteria->setLimit(1);
 
-        $backupRepository = $this->backupRepository->search($criteria, Context::createDefaultContext());
-        if ($backupRepository->count() === 1) {
-            return $backupRepository->first();
+        $backupRepositoryResults = $this->backupRepository->search($criteria, Context::createDefaultContext());
+        if ($backupRepositoryResults->count() === 1) {
+
+            /** @var BackupRepositoryEntity $backupRepository */
+            $backupRepository = $backupRepositoryResults->first();
+            return $backupRepository;
         }
 
         return null;

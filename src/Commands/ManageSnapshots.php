@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -93,11 +93,7 @@ class ManageSnapshots extends Command
     protected function checkInputForBackupRepositoryId(InputInterface $input): string
     {
         $backupRepositoryId = $input->getArgument('backupRepositoryId');
-        if(
-            $backupRepositoryId &&
-            $backupRepositoryId !== '' &&
-            Uuid::isValid($backupRepositoryId)
-        ) {
+        if($backupRepositoryId !== '' && Uuid::isValid($backupRepositoryId)) {
             return $backupRepositoryId;
         }
 

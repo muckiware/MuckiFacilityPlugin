@@ -21,8 +21,17 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
+/**
+ *
+ */
 class BackupFileSnapshotsRepository
 {
+    /**
+     * @param LoggerInterface $logger
+     * @param Connection $connection
+     * @param PluginSettings $pluginSettings
+     * @param EntityRepository $backupFileSnapshotsRepository
+     */
     public function __construct(
         protected LoggerInterface $logger,
         protected Connection $connection,
@@ -31,6 +40,11 @@ class BackupFileSnapshotsRepository
     )
     {}
 
+    /**
+     * @param string $backupRepositoryId
+     * @param array<mixed> $snapshots
+     * @return void
+     */
     public function createNewSnapshots(string $backupRepositoryId, array $snapshots): void
     {
         $data = array();
@@ -60,6 +74,10 @@ class BackupFileSnapshotsRepository
         }
     }
 
+    /**
+     * @param string $backupRepositoryId
+     * @return void
+     */
     public function removeOldSnapshots(string $backupRepositoryId): void
     {
         $sql = '

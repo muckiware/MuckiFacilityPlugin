@@ -11,15 +11,42 @@
  */
 namespace MuckiFacilityPlugin\Backup;
 
+use MuckiRestic\Entity\Result\ResultEntity;
+
+/**
+ *
+ */
 interface BackupInterface
 {
+    /**
+     * @return mixed
+     */
     public function getBackupData(): mixed;
 
+    /**
+     * @param mixed $data
+     * @return void
+     */
     public function saveBackupData(mixed $data): void;
 
+    /**
+     * @return void
+     */
     public function removeBackupData(): void;
 
+    /**
+     * @return void
+     */
     public function checkBackupData(): void;
 
+    /**
+     * @return array<ResultEntity>
+     */
     public function getBackupResults(): array;
+
+    /**
+     * @param bool $isJsonOutput
+     * @return void
+     */
+    public function createBackupData(bool $isJsonOutput=true): void;
 }

@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2025 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -32,9 +32,23 @@ use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
+/**
+ *
+ */
 class RestoreSnapshot
 {
+    /**
+     * @var array<ResultEntity>
+     */
     protected array $allResults = [];
+
+    /**
+     * @param LoggerInterface $logger
+     * @param BackupRepository $backupRepository
+     * @param SettingsInterface $pluginSettings
+     * @param Helper $pluginHelper
+     * @param CliOutput $servicesCliOutput
+     */
     public function __construct(
         protected LoggerInterface $logger,
         protected BackupRepository $backupRepository,
@@ -44,16 +58,29 @@ class RestoreSnapshot
     )
     {}
 
+    /**
+     * @return array<ResultEntity>
+     */
     public function getAllResults(): array
     {
         return $this->allResults;
     }
 
+    /**
+     * @param array<ResultEntity> $allResults
+     * @return void
+     */
     public function addAllResult(array $allResults): void
     {
         $this->allResults = array_merge($this->allResults, $allResults);
     }
 
+    /**
+     * @param BackupRepositorySettings $createBackup
+     * @param bool $isJsonOutput
+     * @return void
+     * @throws \MuckiRestic\Exception\InvalidConfigurationException
+     */
     public function restoreSnapshot(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
         $restoreClient = $this->prepareRestoreClient(
@@ -66,6 +93,12 @@ class RestoreSnapshot
         $this->addAllResult([$restore]);
     }
 
+    /**
+     * @param string $snapshotId
+     * @param BackupRepositorySettings $createBackup
+     * @param bool $isJsonOutput
+     * @return Restore
+     */
     public function prepareRestoreClient(
         string $snapshotId,
         BackupRepositorySettings $createBackup,
@@ -86,6 +119,10 @@ class RestoreSnapshot
         return $restoreClient;
     }
 
+    /**
+     * @param string $backupRepositoryId
+     * @return BackupRepositorySettings
+     */
     public function prepareRestoreBackup(string $backupRepositoryId): BackupRepositorySettings
     {
         if($this->servicesCliOutput->isCli()) {

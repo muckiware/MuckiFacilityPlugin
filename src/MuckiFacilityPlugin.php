@@ -59,9 +59,6 @@ class MuckiFacilityPlugin extends Plugin
         // Or remove previously created entities
     }
 
-    /**
-     * @throws \Exception
-     */
     public function update(UpdateContext $updateContext): void
     {
         // Update your plugin

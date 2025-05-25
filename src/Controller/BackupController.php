@@ -28,8 +28,10 @@ use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositorySer
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 
+/**
+ *
+ */
 #[Route(defaults: ['_routeScope' => ['api']])]
-#[Package('create-backup-repository')]
 class BackupController extends AbstractController
 {
     /**
@@ -62,6 +64,10 @@ class BackupController extends AbstractController
         return new Response('', Response::HTTP_NO_CONTENT);
     }
 
+    /**
+     * @param RequestDataBag $requestDataBag
+     * @return array<BackupPathEntity>
+     */
     protected function createBackupPaths(RequestDataBag $requestDataBag): array
     {
         $backupPaths = [];
