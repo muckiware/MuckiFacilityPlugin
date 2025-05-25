@@ -55,7 +55,7 @@ class LogEntryCleanupRunner implements TableCleanupInterface
         // TODO: Implement copyTableItemsIntoTempTable() method.
     }
 
-    public function countTableItemsInTempTable(): int
+    public function countTableItems(string $tableName): int
     {
         return 0;
     }

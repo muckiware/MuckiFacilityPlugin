@@ -166,13 +166,13 @@ class CartCleanupRunner implements TableCleanupInterface
     /**
      * @throws Exception
      */
-    public function countTableItemsInTempTable(): int
+    public function countTableItems(string $tableName): int
     {
         $counter = 0;
         $this->cliOutput->writeNewLineCliOutput('Check cart items in temp table');
 
         $sql = '
-            SELECT * FROM `' . $this::CART_TEMP_TABLE_NAME . '`;
+            SELECT * FROM `'.$tableName.'`;
         ';
 
         try {
