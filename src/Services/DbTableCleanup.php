@@ -12,7 +12,6 @@
 namespace MuckiFacilityPlugin\Services;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\Settings as PluginSettings;
@@ -29,31 +28,63 @@ class DbTableCleanup
         protected TableCleanupRunnerFactory $tableCleanupRunnerFactory
     ) {}
 
-    public function cleanupTable(string $tableName, OutputInterface $cliOutput = null): void
+    public function cleanupTable(string $tableName): bool
     {
         $runner = $this->getCleanupRunner($tableName);
+        $sqlCreateStatement = $this->prepareCleanup($runner);
 
-        $sqlCreateStatement = $runner->getCreateTableStatement($cliOutput);
-        $runner->checkOldTempTable($cliOutput);
-        $runner->removeOldTableItems($cliOutput);
+        if($sqlCreateStatement) {
 
-        if($runner->createTempTable($sqlCreateStatement, $cliOutput)) {
+            $this->performCleanup($runner, $sqlCreateStatement);
+            $runner->removeTableByName($tableName);
+        } else {
 
-            $runner->copyTableItemsIntoTempTable($cliOutput);
+            $this->logger->error('No SQL create statement found for table: '.$tableName, PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            return false;
+        }
 
-            if($runner->countTableItemsInTempTable($cliOutput) >= 1) {
-                $runner->removeTableByName($tableName, $cliOutput);
-                $runner->createNewTable($sqlCreateStatement, $cliOutput);
-                $runner->insertCartItemsFromTempTable($cliOutput);
+        return true;
+    }
+
+    public function prepareCleanup(TableCleanupInterface $runner): ?string
+    {
+        try {
+
+            $sqlCreateStatement = $runner->getCreateTableStatement();
+            $runner->checkOldTempTable();
+            $runner->removeOldTableItems();
+            $runner->createTempTable($sqlCreateStatement);
+
+        } catch (\Exception $e) {
+
+            $this->logger->error('Error during prepare cleanup: '.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            return null;
+        }
+
+        return $sqlCreateStatement;
+    }
+
+    public function performCleanup(TableCleanupInterface $runner, string $sqlCreateStatement): bool
+    {
+        try {
+
+            $runner->copyTableItemsIntoTempTable();
+
+            if($runner->countTableItemsInTempTable() >= 1) {
+                $runner->removeTableByName($runner->getTempTableName());
+                $runner->createNewTable($sqlCreateStatement);
+                $runner->insertCartItemsFromTempTable();
             } else {
                 $this->logger->info('Found no items', PluginDefaults::DEFAULT_LOGGER_CONFIG);
             }
 
-            $runner->removeTableByName($tableName, $cliOutput);
+        } catch (\Exception $e) {
 
-        } else {
-            $this->logger->error('Cancel cleanup', PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->logger->error('Error during prepare cleanup: '.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            return false;
         }
+
+        return true;
     }
 
     public function getCleanupRunner(string $cleanupTableName): ?TableCleanupInterface

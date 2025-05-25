@@ -18,4 +18,7 @@ enum ConfigPath: string
 
     case CONFIG_USE_OWN_PATH_RESTIC_BINARY = 'MuckiFacilityPlugin.config.useOwnResticPath';
     case CONFIG_OWN_PATH_RESTIC_BINARY = 'MuckiFacilityPlugin.config.ownPathResticBinary';
+
+    case CONFIG_PATH_NUMBER_OF_VALID_DAYS_IN_CART = 'LightsOn.Library.config.numberOfValidDaysInCart';
+    case CONFIG_PATH_NUMBER_OF_VALID_DAYS_IN_LOG_ENTRY = 'LightsOn.Library.config.numberOfValidDaysInLogEntry';
 }

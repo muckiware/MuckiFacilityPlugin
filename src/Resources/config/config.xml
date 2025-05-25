@@ -27,4 +27,21 @@
             <label>Own path to binary of restic</label>
         </input-field>
     </card>
+    <card>
+        <title>Cleanup settings</title>
+        <input-field type="int">
+            <name>numberOfValidDaysInCart</name>
+            <label>Number of valid days for the shopping cart cleanup, current day minus number of days set</label>
+            <label lang="de-DE">Anzahl der gültigen Tage für die Warenkorbbereinigung, aktueller Tag minus Anzahl eingesteller Tage</label>
+            <helpText>All shopping cart items older than the number of this tag setting will be deleted</helpText>
+            <helpText lang="de-DE">Alle Warenkorb Inhalte welche älter sind als die Anzahl dieser Tag Einstellung werden gelöscht</helpText>
+        </input-field>
+        <input-field type="int">
+            <name>numberOfValidDaysInLogEntry</name>
+            <label>Number of valid days for the log entries cleanup, current day minus number of days set</label>
+            <label lang="de-DE">Anzahl der gültigen Tage für die Log Einträge, aktueller Tag minus Anzahl eingesteller Tage</label>
+            <helpText>All Log entries which older than the number of this tag setting will be deleted</helpText>
+            <helpText lang="de-DE">Alle Log Einträge, welche älter sind als die Anzahl dieser Tag Einstellung werden gelöscht</helpText>
+        </input-field>
+    </card>
 </config>

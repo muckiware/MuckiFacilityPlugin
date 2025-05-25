@@ -46,6 +46,7 @@
         </service>
         <service id="MuckiFacilityPlugin\Database\TableCleanupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
         </service>
@@ -116,6 +117,7 @@
         <service class="MuckiFacilityPlugin\Commands\DbTableCleanup" id="muwa.command.table.cleanup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\DbTableCleanup"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <tag name="console.command"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>

@@ -25,4 +25,6 @@ interface SettingsInterface
     public function getDatestamp(): string;
     public function hasOwnResticBinaryPath(): bool;
     public function getOwnResticBinaryPath(): ?string;
+    public function getLastValidDateForCart(): string;
+    public function getLastValidDateForLogEntry(): string;
 }

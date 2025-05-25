@@ -24,6 +24,7 @@ use Shopware\Core\Framework\Context;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\DbTableCleanup as ServiceDbTableCleanup;
+use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 #[AsCommand(
     name: 'muckiware:table:cleanup',
@@ -35,7 +36,8 @@ class DbTableCleanup extends Commands
 
     public function __construct(
         protected LoggerInterface $logger,
-        protected ServiceDbTableCleanup $servicesDbTableCleanup
+        protected ServiceDbTableCleanup $servicesDbTableCleanup,
+        protected ServicesCliOutput $servicesCliOutput
     ) {
 
         parent::__construct();
@@ -77,12 +79,17 @@ class DbTableCleanup extends Commands
     {
         $executionStart = microtime(true);
 
+        $this->servicesCliOutput->setOutput($output);
         $output->writeln( 'Starting executing cleanup table');
         $this->logger->info('Starting executing cleanup table', PluginDefaults::DEFAULT_LOGGER_CONFIG);
 
         $tableName = $this->checkInputForTableCleanupType($input);
         if($tableName) {
-            $this->servicesDbTableCleanup->cleanupTable($tableName, $output);
+            $this->servicesDbTableCleanup->cleanupTable($tableName);
+        } else {
+            $output->writeln('Problem: No table name provided or invalid table name');
+            $this->logger->error('No table name provided or invalid table name', PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            return self::FAILURE;
         }
 
         $executionTime = microtime(true) - $executionStart;

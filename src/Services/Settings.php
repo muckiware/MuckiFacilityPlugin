@@ -93,4 +93,46 @@ class Settings implements SettingsInterface
         }
         return null;
     }
+
+    /**
+     * Method for to get the number of valid days for cleanup old cart items
+     * @return int
+     */
+    public function getNumberOfValidDaysInCart(): int
+    {
+        if ($this->config->getInt(ConfigPath::CONFIG_PATH_NUMBER_OF_VALID_DAYS_IN_CART->value)) {
+            return $this->config->getInt(ConfigPath::CONFIG_PATH_NUMBER_OF_VALID_DAYS_IN_CART->value);
+        }
+
+        return 30;
+    }
+
+    public function getNumberOfValidDaysInLogEntry(): int
+    {
+        if ($this->config->getInt(ConfigPath::CONFIG_PATH_NUMBER_OF_VALID_DAYS_IN_LOG_ENTRY->value)) {
+            return $this->config->getInt(ConfigPath::CONFIG_PATH_NUMBER_OF_VALID_DAYS_IN_LOG_ENTRY->value);
+        }
+
+        return 30;
+    }
+
+    public function getLastValidDateForCart(): string
+    {
+        $validDays = (string)$this->getNumberOfValidDaysInCart();
+
+        return date(
+            'Y-m-d',
+            strtotime('-'.$validDays.' days', strtotime(date('Y-m-d')))
+        );
+    }
+
+    public function getLastValidDateForLogEntry(): string
+    {
+        $validDays = (string)$this->getNumberOfValidDaysInCart();
+
+        return date(
+            'Y-m-d',
+            strtotime('-'.$validDays.' days', strtotime(date('Y-m-d')))
+        );
+    }
 }

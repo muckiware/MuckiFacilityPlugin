@@ -12,6 +12,7 @@
 namespace MuckiFacilityPlugin\Database;
 
 use Psr\Log\LoggerInterface;
+use Doctrine\DBAL\Connection;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Core\CleanupTables;
@@ -27,6 +28,7 @@ class TableCleanupRunnerFactory
 {
     public function __construct(
         protected LoggerInterface $logger,
+        protected Connection $connection,
         protected SettingsInterface $settings,
         protected ServicesCliOutput $servicesCliOutput
     ) {}
@@ -39,11 +41,21 @@ class TableCleanupRunnerFactory
         switch ($cleanupTableName) {
 
             case CleanupTables::CART->value:
-                $runner = new CartCleanupRunner($this->logger, $this->settings);
+                $runner = new CartCleanupRunner(
+                    $this->logger,
+                    $this->connection,
+                    $this->settings,
+                    $this->servicesCliOutput
+                );
                 break;
 
             case CleanupTables::LOG_ENTRY->value:
-                $runner = new LogEntryCleanupRunner($this->logger, $this->settings);
+                $runner = new LogEntryCleanupRunner(
+                    $this->logger,
+                    $this->connection,
+                    $this->settings,
+                    $this->servicesCliOutput
+                );
                 break;
 
             default:

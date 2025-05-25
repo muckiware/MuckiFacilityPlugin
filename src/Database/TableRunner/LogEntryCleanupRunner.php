@@ -13,59 +13,70 @@ namespace MuckiFacilityPlugin\Database\TableRunner;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Doctrine\DBAL\Connection;
 
 use MuckiFacilityPlugin\Database\TableCleanupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
+use MuckiFacilityPlugin\Services\CliOutput;
 
 class LogEntryCleanupRunner implements TableCleanupInterface
 {
+    const LOG_ENTRY_TEMP_TABLE_NAME = 'log_entry_temp';
+
     public function __construct(
         protected LoggerInterface $logger,
-        protected SettingsInterface $pluginSettings
+        protected Connection $connection,
+        protected SettingsInterface $pluginSettings,
+        protected CliOutput $cliOutput
     ) {}
 
-    public function getCreateTableStatement(OutputInterface $cliOutput): string
+    public function getCreateTableStatement(): string
     {
         return '';
     }
 
-    public function checkOldTempTable(OutputInterface $cliOutput): void
-    {
-        // TODO: Implement checkOldTempTable() method.
-    }
-
-    public function removeOldTableItems(OutputInterface $cliOutput): void
-    {
-        // TODO: Implement removeOldTableItems() method.
-    }
-
-    public function createTempTable(string $sqlCreateStatement, OutputInterface $cliOutput): bool
+    public function checkOldTempTable(): bool
     {
         return false;
     }
 
-    public function copyTableItemsIntoTempTable(OutputInterface $cliOutput): void
+    public function removeOldTableItems(): void
+    {
+        // TODO: Implement removeOldTableItems() method.
+    }
+
+    public function createTempTable(string $sqlCreateStatement): bool
+    {
+        return false;
+    }
+
+    public function copyTableItemsIntoTempTable(): void
     {
         // TODO: Implement copyTableItemsIntoTempTable() method.
     }
 
-    public function countTableItemsInTempTable(OutputInterface $cliOutput): ?int
+    public function countTableItemsInTempTable(): int
     {
-        return null;
+        return 0;
     }
 
-    public function removeTableByName(string $tableName, OutputInterface $cliOutput): void
+    public function removeTableByName(string $tableName): void
     {
         // TODO: Implement removeTableByName() method.
     }
 
-    public function createNewTable(string $sqlCreateStatement, OutputInterface $cliOutput): void
+    public function createNewTable(string $sqlCreateStatement): void
     {
         // TODO: Implement createNewTable() method.
     }
 
-    public function insertCartItemsFromTempTable(OutputInterface $cliOutput): void
+    public function insertCartItemsFromTempTable(): void
     {
         // TODO: Implement insertCartItemsFromTempTable() method.
+    }
+
+    public function getTempTableName(): string
+    {
+        return 'log_entry_temp';
     }
 }

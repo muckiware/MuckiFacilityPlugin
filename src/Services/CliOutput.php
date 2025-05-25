@@ -95,5 +95,22 @@ class CliOutput
             $this->output?->write($message, true);
         }
     }
-}
 
+    public function writeNewLineCliOutput(string $lineText, ?OutputInterface $cliOutput = null): void
+    {
+        if(!$cliOutput) {
+            $this->output->write($lineText);
+        } else {
+            $cliOutput->write($lineText);
+        }
+    }
+
+    public function writeSameLineCliOutput(string $lineText, ?OutputInterface $cliOutput = null): void
+    {
+        if(!$cliOutput) {
+            $this->output->write($lineText, true);
+        } else {
+            $cliOutput->write($lineText, true);
+        }
+    }
+}
