@@ -100,4 +100,16 @@ class Helper
     {
         return CheckResultParser::textParserResult($checkResults)->getProcessed();
     }
+
+    public function createDateTimeFromString(string $dateString): ?\DateTime
+    {
+        $dateString = preg_replace('/(\.\d+)(\+|\-)/', '.000$2', $dateString);
+        $dateTime = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
+
+        if (!$dateTime) {
+            $dateTime = \DateTime::createFromFormat('Y-m-d\TH:i:sP', $dateString);
+        }
+
+        return $dateTime ?: null;
+    }
 }

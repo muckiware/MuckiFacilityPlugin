@@ -20,6 +20,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 
 /**
  *
@@ -36,7 +37,8 @@ class BackupFileSnapshotsRepository
         protected LoggerInterface $logger,
         protected Connection $connection,
         protected PluginSettings $pluginSettings,
-        protected EntityRepository $backupFileSnapshotsRepository
+        protected EntityRepository $backupFileSnapshotsRepository,
+        protected PluginHelper $pluginHelper
     )
     {}
 
@@ -49,6 +51,7 @@ class BackupFileSnapshotsRepository
     {
         $data = array();
         foreach ($snapshots as $snapshot) {
+
             $data[] = [
                 'id' => Uuid::randomHex(),
                 'backupRepositoryId' => $backupRepositoryId,
@@ -56,14 +59,7 @@ class BackupFileSnapshotsRepository
                 'snapshotShortId' => $snapshot['short_id'],
                 'paths' => implode(',', $snapshot['paths']),
                 'size' => \ByteUnits\Binary::bytes($snapshot['summary']['total_bytes_processed'])->format(),
-                'createdAt' => \DateTime::createFromFormat(
-                    'Y-m-d\TH:i:s.uP',
-                    substr_replace($snapshot['time'],
-                        '',
-                        26,
-                        3
-                    )
-                )
+                'createdAt' => $this->pluginHelper->createDateTimeFromString($snapshot['time'])
             ];
         }
 

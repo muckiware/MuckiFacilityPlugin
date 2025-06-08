@@ -129,6 +129,7 @@
             <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="muwa_backup_repository_snapshots.repository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\Content\BackupRepository" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>

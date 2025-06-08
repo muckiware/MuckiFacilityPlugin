@@ -3,6 +3,7 @@ Muckiware Facility Plugin for Shopware 6 Web shops for to maintenance and backup
 - The plugin provides a backup functionality for the database.
 - Creates a backup of folders and files by an individual configuration into repository database. The plugin use the restic backup tool for to create the backups. https://restic.readthedocs.io/
 - The backups will be encrypted by a password.
+- Cleanups tables like cart, if the database table grow up in too large.
 
 ## Requirements
 - Shopware 6.6.x
@@ -119,6 +120,10 @@ restic -r /srv/restic-repo restore 79766175 --target /tmp/restore-workdir
 ```
 Checkout the description of the restic command for more information. https://restic.readthedocs.io/en/stable/050_restore.html#
 
+# Database cleanup
+```shell
+bin/console muckiware:table:cleanup cart 
+```
 # Testing
 ## phpstan
 ### Install
