@@ -112,4 +112,9 @@ class Helper
 
         return $dateTime ?: null;
     }
+
+    public function isValidShortId(string $input): bool
+    {
+        return preg_match('/^[a-zA-Z0-9]{8}$/', $input) === 1;
+    }
 }

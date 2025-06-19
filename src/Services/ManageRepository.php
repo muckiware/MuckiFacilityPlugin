@@ -59,6 +59,16 @@ class ManageRepository
         $this->backupFileSnapshotsRepository->createNewSnapshots($backupRepositoryId, $fileSnapshots);
     }
 
+    public function removeSnapshotByIds(string $backupRepositoryId, array $snapshotIds, bool $isJsonOutput=true): string
+    {
+        $result = [];
+        foreach ($snapshotIds as $snapshotId) {
+            $result[] = $this->removeSnapshotById($backupRepositoryId, $snapshotId, $isJsonOutput);
+        }
+
+        return implode("\n", $result);
+    }
+
     public function removeSnapshotById(string $backupRepositoryId, string $snapshotId, bool $isJsonOutput=true): string
     {
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
@@ -71,8 +81,9 @@ class ManageRepository
             $manageClient->setRepositoryPath($backupRepository->getRepositoryPath());
             $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $manageClient->setJsonOutput($isJsonOutput);
+            $manageClient->setSnapshotId($snapshotId);
 
-            return $manageClient->removeSnapshots()->getOutput();
+            return $manageClient->removeSnapshotById()->getOutput();
 
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);

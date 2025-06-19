@@ -17,9 +17,11 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\Console\Exception\InvalidOptionException;
 use Shopware\Core\Framework\Context;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
@@ -68,6 +70,7 @@ class ManageSnapshots extends Command
     {
         $this->setDescription('Id for the existing backup repository');
         $this->addArgument('backupRepositoryId',InputArgument::REQUIRED, 'Backup repository id');
+        $this->addOption('remove', 'r', InputOption::VALUE_OPTIONAL, 'Remove snapshot by ids of current repository id')->addArgument('snapshotIds',InputArgument::OPTIONAL, 'snapshot ids to remove, comma separated');
         parent::configure();
     }
 
@@ -82,9 +85,20 @@ class ManageSnapshots extends Command
         $inputBackupRepositoryId = $this->checkInputForBackupRepositoryId($input);
         if($this->pluginSettings->isEnabled() && $inputBackupRepositoryId) {
 
-            $snapshots = $this->manageService->getSnapshots($inputBackupRepositoryId, false);
+            $snapshotIds = $this->checkInputForRemoveSnapshotIds($input);
+            if(!empty($snapshotIds)) {
+
+                $outputExecution = $this->manageService->removeSnapshotByIds(
+                    $inputBackupRepositoryId,
+                    $snapshotIds,
+                    false
+                );
+            } else {
+                $outputExecution = $this->manageService->getSnapshots($inputBackupRepositoryId, false);
+            }
+
             $this->manageService->saveSnapshots($inputBackupRepositoryId);
-            $output->writeln($snapshots);
+            $output->writeln($outputExecution);
         }
 
         return 0;
@@ -98,5 +112,23 @@ class ManageSnapshots extends Command
         }
 
         throw new \InvalidArgumentException('Invalid or missing backup repository id');
+    }
+
+    protected function checkInputForRemoveSnapshotIds(InputInterface $input): array
+    {
+        $remove = $input->getOption('remove');
+        if(!$remove) {
+            return [];
+        }
+
+        $validSnapshotIds = [];
+        $snapshotIds = array_unique(explode(',', $remove), SORT_STRING);
+        foreach ($snapshotIds as $snapshotId) {
+            if($this->pluginHelper->isValidShortId($snapshotId)) {
+                $validSnapshotIds[] = $snapshotId;
+            }
+        }
+
+        return $validSnapshotIds;
     }
 }
