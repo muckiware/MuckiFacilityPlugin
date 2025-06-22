@@ -43,7 +43,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xdebug, curl, dom, fileinfo, gd, iconv, intl, json, xml, mbstring, pdo, phar, zip, sodium, pdo_mysql
-          tools: composer:2.8.6
+          tools: composer:2.7.7
 
       - name: "Check PHP Version"
         run: php -v
