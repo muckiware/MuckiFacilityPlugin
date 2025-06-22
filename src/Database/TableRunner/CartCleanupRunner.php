@@ -24,6 +24,7 @@ use MuckiFacilityPlugin\Services\CliOutput;
 class CartCleanupRunner implements TableCleanupInterface
 {
     public const CART_TEMP_TABLE_NAME = 'cart_temp';
+    protected string $cartTempTableName = self::CART_TEMP_TABLE_NAME;
 
     public function __construct(
         protected LoggerInterface $logger,
@@ -31,6 +32,16 @@ class CartCleanupRunner implements TableCleanupInterface
         protected SettingsInterface $pluginSettings,
         protected CliOutput $cliOutput
     ) {}
+
+    public function getCartTempTableName(): string
+    {
+        return $this->cartTempTableName;
+    }
+
+    public function setCartTempTableName(string $cartTempTableName): void
+    {
+        $this->cartTempTableName = $cartTempTableName;
+    }
 
     public function getTempTableName(): string
     {
@@ -66,19 +77,20 @@ class CartCleanupRunner implements TableCleanupInterface
     public function checkOldTempTable(): bool
     {
         $schemaManager = $this->connection->createSchemaManager();
+        $tableName = $this->getCartTempTableName();
 
         try {
 
-            if ($schemaManager->tablesExist($this::CART_TEMP_TABLE_NAME)) {
+            if ($schemaManager->tablesExist($tableName)) {
 
-                $this->cliOutput->writeNewLineCliOutput('Drop old '.$this::CART_TEMP_TABLE_NAME.' table');
-                $schemaManager->dropTable($this::CART_TEMP_TABLE_NAME);
+                $this->cliOutput->writeNewLineCliOutput('Drop old '.$tableName.' table');
+                $schemaManager->dropTable($tableName);
             }
 
         } catch (Exception $e) {
 
             $this->logger->error(print_r($e->getMessage(), true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to check old '.$this::CART_TEMP_TABLE_NAME.' table');
+            throw new Exception('Not possible to check old '.$tableName.' table');
         }
 
         $this->cliOutput->writeSameLineCliOutput('...done');
@@ -123,7 +135,7 @@ class CartCleanupRunner implements TableCleanupInterface
 
         $sql = str_replace(
             'cart',
-            $this::CART_TEMP_TABLE_NAME ,
+            $this::CART_TEMP_TABLE_NAME,
             $sqlCreateStatement
         );
 
@@ -168,7 +180,6 @@ class CartCleanupRunner implements TableCleanupInterface
      */
     public function countTableItems(string $tableName): int
     {
-        $counter = 0;
         $this->cliOutput->writeNewLineCliOutput('Check cart items in temp table');
 
         $sql = '
