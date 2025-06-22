@@ -27,7 +27,7 @@ jobs:
       matrix:
         php-versions: [ '8.2' ]
         mysql-versions: [ '8.0' ]
-        shopware-versions: [ 'v6.6.10.1' ]
+        shopware-versions: [ 'v6.6.9.0' ]
     services:
       mysql:
         image: mysql:${{ matrix.mysql-versions }}
