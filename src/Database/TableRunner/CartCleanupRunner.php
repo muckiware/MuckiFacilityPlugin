@@ -133,10 +133,16 @@ class CartCleanupRunner implements TableCleanupInterface
     {
         $this->cliOutput->writeNewLineCliOutput('Create temp cart table');
 
-        $sql = str_replace(
+        $sqlCart = str_replace(
             'cart',
             $this::CART_TEMP_TABLE_NAME,
             $sqlCreateStatement
+        );
+
+        $sql = str_replace(
+            'CREATE TABLE',
+            'CREATE TABLE IF NOT EXISTS',
+            $sqlCart
         );
 
         try {
@@ -150,29 +156,6 @@ class CartCleanupRunner implements TableCleanupInterface
         }
 
         return true;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function copyTableItemsIntoTempTable(): void
-    {
-        $this->cliOutput->writeNewLineCliOutput('Copy cart items into temp table');
-
-        $sql = '
-            INSERT INTO `' . $this::CART_TEMP_TABLE_NAME . '`
-            SELECT * FROM `cart`;
-        ';
-
-        try {
-            $this->connection->executeStatement($sql);
-        } catch (Exception $e) {
-
-            $this->logger->error(print_r($e, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('copy of cart items into temp table not possible');
-        }
-
-        $this->cliOutput->writeSameLineCliOutput('...done');
     }
 
     /**
@@ -237,25 +220,23 @@ class CartCleanupRunner implements TableCleanupInterface
         }
     }
 
-    /**
-     * @throws Exception
-     */
-    public function insertCartItemsFromTempTable(): void
+    public function copyTableItems(string $sourceTableName, string $targetTableName): void
     {
-        $this->cliOutput->writeNewLineCliOutput('Insert cart items from temp table');
+        $this->cliOutput->writeNewLineCliOutput('Copy cart items into temp table');
 
         $sql = '
-            INSERT INTO `cart`
-            SELECT * FROM `' . $this::CART_TEMP_TABLE_NAME . '`;
+            INSERT INTO `' . $targetTableName . '`
+            SELECT * FROM `' . $sourceTableName . '`;
         ';
 
         try {
             $this->connection->executeStatement($sql);
-            $this->cliOutput->writeSameLineCliOutput('...done');
         } catch (Exception $e) {
 
-            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to insert cart items into origin table');
+            $this->logger->error(print_r($e, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            throw new Exception('copy of cart items into temp table not possible');
         }
+
+        $this->cliOutput->writeSameLineCliOutput('...done');
     }
 }

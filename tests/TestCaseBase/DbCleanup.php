@@ -16,7 +16,8 @@ namespace MuckiFacilityPlugin\tests\TestCaseBase;
 final class DbCleanup
 {
     public const CART_TEMP_TEST_TABLE_NAME = 'cart_temp_TEST';
-    public const CART_TEMP_TEST_CREATE_STATEMENT = 'CREATE TABLE `cart_temp_TEST` (
+    public const VALID_DAYS = 4;
+    public const CART_TEMP_TEST_CREATE_STATEMENT = 'CREATE TABLE IF NOT EXISTS `cart` (
         `token` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
         `name` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `price` float DEFAULT NULL,

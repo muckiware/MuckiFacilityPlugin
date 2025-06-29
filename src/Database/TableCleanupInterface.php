@@ -20,9 +20,8 @@ interface TableCleanupInterface
     public function checkOldTempTable(): bool;
     public function removeOldTableItems(): void;
     public function createTempTable(string $sqlCreateStatement): bool;
-    public function copyTableItemsIntoTempTable(): void;
     public function countTableItems(string $tableName): int;
     public function removeTableByName(string $tableName): void;
     public function createNewTable(string $sqlCreateStatement): void;
-    public function insertCartItemsFromTempTable(): void;
+    public function copyTableItems(string $sourceTableName, string $targetTableName): void;
 }

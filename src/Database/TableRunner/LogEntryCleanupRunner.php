@@ -50,11 +50,6 @@ class LogEntryCleanupRunner implements TableCleanupInterface
         return false;
     }
 
-    public function copyTableItemsIntoTempTable(): void
-    {
-        // TODO: Implement copyTableItemsIntoTempTable() method.
-    }
-
     public function countTableItems(string $tableName): int
     {
         return 0;
@@ -70,13 +65,13 @@ class LogEntryCleanupRunner implements TableCleanupInterface
         // TODO: Implement createNewTable() method.
     }
 
-    public function insertCartItemsFromTempTable(): void
-    {
-        // TODO: Implement insertCartItemsFromTempTable() method.
-    }
-
     public function getTempTableName(): string
     {
         return 'log_entry_temp';
+    }
+
+    public function copyTableItems(string $sourceTableName, string $targetTableName): void
+    {
+        // TODO: Implement copyTableItems() method.
     }
 }
