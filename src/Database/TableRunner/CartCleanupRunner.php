@@ -120,6 +120,7 @@ class CartCleanupRunner implements TableCleanupInterface
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->cliOutput->writeNewLineCliOutput($e->getMessage());
             throw new Exception('Problem to remove old cart items');
         }
 
