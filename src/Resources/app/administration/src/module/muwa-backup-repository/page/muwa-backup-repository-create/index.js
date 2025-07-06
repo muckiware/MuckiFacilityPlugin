@@ -183,8 +183,8 @@ Component.register('muwa-backup-repository-create', {
                 this.backupRepository.repositoryRepeatPassword === ''
             ) {
                 this.createNotificationError({
-                    title: this.$t('lightson-pseudo-product.detail.error-message-internal-name-required-title'),
-                    message: this.$t('lightson-pseudo-product.detail.error-message-internal-name-required-message')
+                    title: this.$t('muwa-backup-repository.detail.error-message-internal-name-required-title'),
+                    message: this.$t('muwa-backup-repository.detail.error-message-internal-name-required-message')
                 });
                 return true;
             }

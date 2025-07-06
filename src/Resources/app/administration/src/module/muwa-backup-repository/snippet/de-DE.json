@@ -38,7 +38,11 @@
       "docsCountLabel": "Anzahl Dokumente",
       "storageSizeLabel": "Speichergröße",
       "docsDeletedLabel": "gelöschte Dokumente",
-      "restoreLabel": "Snapshot wiederherstellen"
+      "restoreLabel": "Snapshot wiederherstellen",
+      "column-internal-name": "Interner Name",
+      "column-active": "Aktiv",
+      "column-created-at": "Erstellt am",
+      "column-updated-at": "Aktualisiert am"
     },
     "detail": {
       "mappingLabel": "Zuweisungen (sprachabhängig)",

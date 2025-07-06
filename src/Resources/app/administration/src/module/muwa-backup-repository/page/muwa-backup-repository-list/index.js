@@ -60,22 +60,22 @@ Component.register('muwa-backup-repository-list', {
                 {
                     property: 'name',
                     dataIndex: 'name',
-                    label: this.$t('lightson-pseudo-product.list.column-internal-name'),
+                    label: this.$t('muwa-backup-repository.list.column-internal-name'),
                     allowResize: true
                 }, {
                     property: 'active',
                     dataIndex: 'active',
-                    label: this.$t('lightson-pseudo-product.list.column-active'),
+                    label: this.$t('muwa-backup-repository.list.column-active'),
                     allowResize: true
                 }, {
                     property: 'createdAt',
                     dataIndex: 'createdAt',
-                    label: this.$t('lightson-pseudo-product.list.column-created-at'),
+                    label: this.$t('muwa-backup-repository.list.column-created-at'),
                     allowResize: true
                 }, {
                     property: 'updatedAt',
                     dataIndex: 'updatedAt',
-                    label: this.$t('lightson-pseudo-product.list.column-updated-at'),
+                    label: this.$t('muwa-backup-repository.list.column-updated-at'),
                     allowResize: true
                 }];
         },

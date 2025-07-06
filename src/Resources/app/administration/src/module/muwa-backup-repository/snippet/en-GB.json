@@ -38,7 +38,11 @@
       "docsCountLabel": "Number of documents",
       "storageSizeLabel": "storage size",
       "docsDeletedLabel": "Deleted documents",
-      "restoreLabel": "Restore Snapshot"
+      "restoreLabel": "Restore Snapshot",
+      "column-internal-name": "Internal Name",
+      "column-active": "Active",
+      "column-created-at": "Created at",
+      "column-updated-at": "Updated at"
     },
     "detail": {
       "mappingLabel": "Mappings (language-dependent)",

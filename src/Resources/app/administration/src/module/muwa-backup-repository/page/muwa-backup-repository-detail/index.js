@@ -226,8 +226,8 @@ Component.register('muwa-backup-repository-detail', {
 
             if (this.backupRepository.internalName === '') {
                 this.createNotificationError({
-                    title: this.$t('lightson-pseudo-product.detail.error-message-internal-name-required-title'),
-                    message: this.$t('lightson-pseudo-product.detail.error-message-internal-name-required-message')
+                    title: this.$t('muwa-backup-repository.detail.error-message-internal-name-required-title'),
+                    message: this.$t('muwa-backup-repository.detail.error-message-internal-name-required-message')
                 });
                 return true;
             }
@@ -264,7 +264,7 @@ Component.register('muwa-backup-repository-detail', {
 
                 this.isLoading = false;
                 this.createNotificationError({
-                    title: this.$t('lightson-pseudo-product.detail.error-message'),
+                    title: this.$t('muwa-backup-repository.detail.error-message'),
                     message: exception
                 });
             });
