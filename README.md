@@ -132,6 +132,7 @@ bin/console muckiware:table:cleanup cart
 - After the cleanup, the table cart has become correspondingly much smaller size as before.<br>![after_cart_cleanup.png](img%2Fafter_cart_cleanup.png)
 The maximum number of days that should remain in the cart table can be set in the plugin configuration.
 <br>
+
 # Testing
 ## phpstan
 ### Install
