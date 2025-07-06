@@ -22,7 +22,7 @@ use MuckiFacilityPlugin\Database\TableCleanupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Services\CliOutput;
 
-class CartCleanupRunner implements TableCleanupInterface
+class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
 {
     public const CART_TEMP_TABLE_NAME = 'cart_temp';
     protected string $cartTempTableName = self::CART_TEMP_TABLE_NAME;
@@ -230,25 +230,5 @@ class CartCleanupRunner implements TableCleanupInterface
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
             throw new Exception('Not possible to create new cart table');
         }
-    }
-
-    public function copyTableItems(string $sourceTableName, string $targetTableName): void
-    {
-        $this->cliOutput->writeNewLineCliOutput('Copy cart items into temp table');
-
-        $sql = '
-            INSERT INTO `' . $targetTableName . '`
-            SELECT * FROM `' . $sourceTableName . '`;
-        ';
-
-        try {
-            $this->connection->executeStatement($sql);
-        } catch (Exception $e) {
-
-            $this->logger->error(print_r($e, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('copy of cart items into temp table not possible');
-        }
-
-        $this->cliOutput->writeSameLineCliOutput('...done');
     }
 }
