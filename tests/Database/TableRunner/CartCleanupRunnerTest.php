@@ -68,7 +68,11 @@ class CartCleanupRunnerTest extends TestCase
         $countCartItemsBefore = $cartCleanupRunner->countTableItems('cart');
         $this->assertEquals(3, $countCartItemsBefore, 'There should be 3 items in the cart table before cleanup.');
 
-        $cartCleanupRunner->removeOldTableItems();
+        try {
+            $cartCleanupRunner->removeOldTableItems();
+        } catch (Exception $e) {
+            $this->fail('Exception occurred while removing old table items: ' . $e->getMessage());
+        }
         $countCartItemsAfter = $cartCleanupRunner->countTableItems('cart');
         $this->assertEquals(1, $countCartItemsAfter, 'There should be 1 item in the cart table after cleanup.');
     }
