@@ -28,23 +28,23 @@ class DbTableCleanup
         protected TableCleanupRunnerFactory $tableCleanupRunnerFactory
     ) {}
 
-    public function cleanupTable(string $tableName): bool
+    public function cleanupTable(string $tableNameForCleanup): bool
     {
-        $runner = $this->getCleanupRunner($tableName);
-        if($runner->countTableItems($tableName) < 1) {
+        $runner = $this->getCleanupRunner($tableNameForCleanup);
+        if($runner->countTableItems($tableNameForCleanup) < 1) {
 
-            $this->logger->info('No items found in table: '.$tableName, PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->logger->info('No items found in table: '.$tableNameForCleanup, PluginDefaults::DEFAULT_LOGGER_CONFIG);
             return true;
         }
         $sqlCreateStatement = $this->prepareCleanup($runner);
 
         if($sqlCreateStatement) {
 
-            $this->performCleanup($runner, $tableName, $sqlCreateStatement);
+            $this->performCleanup($runner, $tableNameForCleanup, $sqlCreateStatement);
             $runner->removeTableByName($runner->getTempTableName());
         } else {
 
-            $this->logger->error('No SQL create statement found for table: '.$tableName, PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->logger->error('No SQL create statement found for table: '.$tableNameForCleanup, PluginDefaults::DEFAULT_LOGGER_CONFIG);
             return false;
         }
 
@@ -70,16 +70,16 @@ class DbTableCleanup
         return $sqlCreateStatement;
     }
 
-    public function performCleanup(TableCleanupInterface $runner, string $tableName, string $sqlCreateStatement): bool
+    public function performCleanup(TableCleanupInterface $runner, string $tableNameForCleanup, string $sqlCreateStatement): bool
     {
         try {
 
-            $runner->copyTableItemsIntoTempTable();
+            $runner->copyTableItems($tableNameForCleanup, $runner->getTempTableName());
 
             if($runner->countTableItems($runner->getTempTableName()) >= 1) {
-                $runner->removeTableByName($tableName);
+                $runner->removeTableByName($tableNameForCleanup);
                 $runner->createNewTable($sqlCreateStatement);
-                $runner->insertCartItemsFromTempTable();
+                $runner->copyTableItems($runner->getTempTableName(), $tableNameForCleanup);
             } else {
                 $this->logger->info('Found no items', PluginDefaults::DEFAULT_LOGGER_CONFIG);
             }

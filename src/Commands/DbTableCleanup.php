@@ -83,9 +83,9 @@ class DbTableCleanup extends Commands
         $output->writeln( 'Starting executing cleanup table');
         $this->logger->info('Starting executing cleanup table', PluginDefaults::DEFAULT_LOGGER_CONFIG);
 
-        $tableName = $this->checkInputForTableCleanupType($input);
-        if($tableName) {
-            $this->servicesDbTableCleanup->cleanupTable($tableName);
+        $tableNameForCleanup = $this->checkInputForTableCleanupType($input);
+        if($tableNameForCleanup) {
+            $this->servicesDbTableCleanup->cleanupTable($tableNameForCleanup);
         } else {
             $output->writeln('Problem: No table name provided or invalid table name');
             $this->logger->error('No table name provided or invalid table name', PluginDefaults::DEFAULT_LOGGER_CONFIG);

@@ -7,8 +7,8 @@ Muckiware Facility Plugin for Shopware 6 Web shops for to maintenance and backup
 
 ## Requirements
 - Shopware 6.6.x
-- PHP 8.2.x
-- restic 0.14.x or greater
+- PHP 8.2.x or greater
+- restic 0.15.x or greater
 
 ## Installation
 ```shell
@@ -121,9 +121,17 @@ restic -r /srv/restic-repo restore 79766175 --target /tmp/restore-workdir
 Checkout the description of the restic command for more information. https://restic.readthedocs.io/en/stable/050_restore.html#
 
 # Database cleanup
+This command offers a more effective option to clean up database tables as the origin Shopware function and free up more memory.
+## Cart Cleanup
 ```shell
 bin/console muckiware:table:cleanup cart 
 ```
+### Example
+- Database table overview of cart before cleanup<br>![before_cart_cleanup.png](img%2Fbefore_cart_cleanup.png)<br>
+- Execute the cleanup command<br>![execute_table_cart_cleanup.png](img%2Fexecute_table_cart_cleanup.png)
+- After the cleanup, the table cart has become correspondingly much smaller size as before.<br>![after_cart_cleanup.png](img%2Fafter_cart_cleanup.png)<br>
+<br>
+The maximum number of days that should remain in the cart table can be set in the plugin configuration.
 # Testing
 ## phpstan
 ### Install
