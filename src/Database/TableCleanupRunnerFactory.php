@@ -23,6 +23,7 @@ use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 use MuckiFacilityPlugin\Database\TableRunner\CartCleanupRunner;
 use MuckiFacilityPlugin\Database\TableRunner\LogEntryCleanupRunner;
+use MuckiFacilityPlugin\Database\DatabaseHelper;
 
 class TableCleanupRunnerFactory
 {
@@ -30,7 +31,8 @@ class TableCleanupRunnerFactory
         protected LoggerInterface $logger,
         protected Connection $connection,
         protected SettingsInterface $settings,
-        protected ServicesCliOutput $servicesCliOutput
+        protected ServicesCliOutput $servicesCliOutput,
+        protected DatabaseHelper $databaseHelper
     ) {}
 
     /**
@@ -45,7 +47,8 @@ class TableCleanupRunnerFactory
                     $this->logger,
                     $this->connection,
                     $this->settings,
-                    $this->servicesCliOutput
+                    $this->servicesCliOutput,
+                    $this->databaseHelper
                 );
                 break;
 
@@ -54,7 +57,8 @@ class TableCleanupRunnerFactory
                     $this->logger,
                     $this->connection,
                     $this->settings,
-                    $this->servicesCliOutput
+                    $this->servicesCliOutput,
+                    $this->databaseHelper
                 );
                 break;
 

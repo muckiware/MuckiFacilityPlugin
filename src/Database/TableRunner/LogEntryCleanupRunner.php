@@ -18,6 +18,7 @@ use Doctrine\DBAL\Connection;
 use MuckiFacilityPlugin\Database\TableCleanupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Services\CliOutput;
+use MuckiFacilityPlugin\Database\DatabaseHelper;
 
 class LogEntryCleanupRunner implements TableCleanupInterface
 {
@@ -27,7 +28,8 @@ class LogEntryCleanupRunner implements TableCleanupInterface
         protected LoggerInterface $logger,
         protected Connection $connection,
         protected SettingsInterface $pluginSettings,
-        protected CliOutput $cliOutput
+        protected CliOutput $cliOutput,
+        protected DatabaseHelper $databaseHelper
     ) {}
 
     public function getCreateTableStatement(): string

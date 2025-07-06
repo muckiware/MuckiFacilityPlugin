@@ -44,11 +44,17 @@
             <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
         </service>
+        <service id="MuckiFacilityPlugin\Database\DatabaseHelper">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+        </service>
         <service id="MuckiFacilityPlugin\Database\TableCleanupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+            <argument type="service" id="MuckiFacilityPlugin\Database\DatabaseHelper"/>
         </service>
 
         <service class="MuckiFacilityPlugin\Commands\BackupCheck" id="muwa.command.backup.check" public="true">

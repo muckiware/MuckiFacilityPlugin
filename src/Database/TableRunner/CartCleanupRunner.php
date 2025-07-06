@@ -17,6 +17,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Database\DatabaseHelper;
 use MuckiFacilityPlugin\Database\TableCleanupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Services\CliOutput;
@@ -30,7 +31,8 @@ class CartCleanupRunner implements TableCleanupInterface
         protected LoggerInterface $logger,
         protected Connection $connection,
         protected SettingsInterface $pluginSettings,
-        protected CliOutput $cliOutput
+        protected CliOutput $cliOutput,
+        protected DatabaseHelper $databaseHelper
     ) {}
 
     public function getCartTempTableName(): string
@@ -106,7 +108,8 @@ class CartCleanupRunner implements TableCleanupInterface
         $this->cliOutput->writeNewLineCliOutput('Remove old cart items');
         $lastValidDate = $this->pluginSettings->getLastValidDateForCart();
 
-        $sql = '
+        if($this->databaseHelper->columnExists('cart', 'updated_at')) {
+            $sql = '
             DELETE FROM
                 `cart`
             WHERE
@@ -114,6 +117,14 @@ class CartCleanupRunner implements TableCleanupInterface
 	            AND
 		            (updated_at IS NULL OR updated_at <= ' . $this->connection->quote($lastValidDate) . ')
         ';
+        } else {
+            $sql = '
+            DELETE FROM
+                `cart`
+            WHERE
+		            created_at <= ' . $this->connection->quote($lastValidDate) . '
+        ';
+        }
 
         try {
             $this->connection->executeStatement($sql);

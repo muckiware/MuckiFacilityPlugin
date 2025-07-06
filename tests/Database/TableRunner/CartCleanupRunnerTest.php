@@ -21,6 +21,7 @@ use MuckiFacilityPlugin\Database\TableRunner\CartCleanupRunner;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Services\CliOutput;
 use MuckiFacilityPlugin\tests\TestCaseBase\DbCleanup as TestCaseBaseDbCleanup;
+use MuckiFacilityPlugin\Database\DatabaseHelper;
 
 class CartCleanupRunnerTest extends TestCase
 {
@@ -161,7 +162,9 @@ class CartCleanupRunnerTest extends TestCase
         $cliOutput->method('writeNewLineCliOutput')->willReturnCallback(function ($message) {
             echo $message . PHP_EOL;
         });
+        $databaseHelper = $this->createMock(DatabaseHelper::class);
+        $databaseHelper->method('columnExists')->willReturn(false);
 
-        return new CartCleanupRunner($logger, $connection, $settings, $cliOutput);
+        return new CartCleanupRunner($logger, $connection, $settings, $cliOutput, $databaseHelper);
     }
 }
