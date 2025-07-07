@@ -84,4 +84,14 @@ class Commands extends Command
 
         return false;
     }
+
+    protected function checkInputForMediaId(InputInterface $input): ?string
+    {
+        $mediaIdInput = $input->getArgument('mediaId');
+        if($mediaIdInput !== '') {
+            return $mediaIdInput;
+        } else {
+            return null;
+        }
+    }
 }
