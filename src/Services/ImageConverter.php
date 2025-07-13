@@ -21,6 +21,8 @@ use Shopware\Core\Framework\DataAbstractionLayer\Dbal\Common\RepositoryIterator;
 use Shopware\Core\Content\Media\MediaEntity;
 use Shopware\Core\Content\ImportExport\Struct\Progress;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Jenssegers\ImageHash\ImageHash;
+use Jenssegers\ImageHash\Implementations\DifferenceHash;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
@@ -49,7 +51,6 @@ class ImageConverter
         if($media) {
             $this->convertImageToWebp($media->getPath());
         }
-        $checker =1;
     }
 
     public function convertAllImage(Context $context)
@@ -82,9 +83,19 @@ class ImageConverter
             return false;
         }
 
+        $imageHasher = new ImageHash(new DifferenceHash());
+        $imageHash = $imageHasher->hash($absoluteImagePath)->toHex();
+        $webpImagePath = $absoluteImagePath. '.'.$imageHash.'.webp';
+
+        if(is_readable($webpImagePath)) {
+
+            // The WebP image already exists, so we skip the conversion
+            return false;
+        }
+
         $options = [];
         try {
-            WebPConvert::convert($absoluteImagePath, $absoluteImagePath. '.webp', $options);
+            WebPConvert::convert($absoluteImagePath, $webpImagePath, $options);
         } catch (ConversionFailedException $e) {
 
             $this->logger->error('Error setting conversion options: '.$e->getMessage());

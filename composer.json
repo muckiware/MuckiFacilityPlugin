@@ -1,7 +1,7 @@
 {
 	"name" : "muckiware/facility-plugin",
 	"description" : "Muckiware Facility Plugin for Shopware 6",
-	"version": "v0.6.0",
+	"version": "v0.7.0",
 	"keywords": [
 		"shopware6",
 		"backup",
@@ -32,7 +32,8 @@
 		"spatie/db-dumper": "^3.7",
 		"muckiware/restic": "^1.0",
 		"gabrielelana/byte-units": "^0.5.0",
-		"rosell-dk/webp-convert": "^2.9"
+		"rosell-dk/webp-convert": "^2.9",
+		"jenssegers/imagehash": "^0.10.0"
 	},
 	"require-dev" : {
 		"phpstan/phpstan" : "*"
