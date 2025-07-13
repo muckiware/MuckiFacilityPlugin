@@ -18,13 +18,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-use MuckiRestic\Entity\Result\ResultEntity;
-
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
-use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Services\ImageConverter;
 
 #[AsCommand(
@@ -67,9 +64,7 @@ class ConvertSingleWebp extends Commands
      */
     public function configure(): void
     {
-        $this->setDescription(
-            'Convert images to WebP format'
-        );
+        $this->setDescription('Convert images to WebP format');
         $this->addArgument('mediaId',InputArgument::REQUIRED, 'Id of the image to convert');
         parent::configure();
     }

@@ -22,6 +22,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\Filter;
 use Shopware\Core\Content\Media\MediaCollection;
 use Shopware\Core\Framework\DataAbstractionLayer\Dbal\Common\RepositoryIterator;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\MultiFilter;
 
 class MediaRepository
 {
@@ -46,6 +47,14 @@ class MediaRepository
         if ($folderFilter) {
             $criteria->addFilter($folderFilter);
         }
+
+        $criteria->addFilter(
+            new MultiFilter(MultiFilter::CONNECTION_OR, [
+                new EqualsFilter('media.mimeType', 'image/jpeg'),
+                new EqualsFilter('media.mimeType', 'image/png'),
+                new EqualsFilter('media.mimeType', 'image/tiff')
+            ])
+        );
 
         return $criteria;
     }

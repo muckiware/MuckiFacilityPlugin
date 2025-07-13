@@ -73,7 +73,6 @@ class ImageConverter
                 ]
             );
         }
-        $checker =1;
     }
 
     public function convertImageToWebp(string $imagePath): bool
