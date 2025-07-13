@@ -19,6 +19,9 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\Filter;
+use Shopware\Core\Content\Media\MediaCollection;
+use Shopware\Core\Framework\DataAbstractionLayer\Dbal\Common\RepositoryIterator;
 
 class MediaRepository
 {
@@ -27,6 +30,25 @@ class MediaRepository
         protected EntityRepository $mediaRepository,
     )
     {}
+
+    public function createCriteria(Filter $folderFilter = null, int $batchSize = null): Criteria
+    {
+        $criteria = new Criteria();
+        $criteria->setOffset(0);
+
+        if($batchSize) {
+            $criteria->setLimit($batchSize);
+        }
+        $criteria->addFilter(new EqualsFilter('media.mediaFolder.configuration.createThumbnails', true));
+        $criteria->addAssociation('thumbnails');
+        $criteria->addAssociation('mediaFolder.configuration.mediaThumbnailSizes');
+
+        if ($folderFilter) {
+            $criteria->addFilter($folderFilter);
+        }
+
+        return $criteria;
+    }
 
     public function getMediaRepositoryById(string $mediaRepositoryId): ?MediaEntity
     {
@@ -43,6 +65,12 @@ class MediaRepository
         }
 
         return null;
+    }
+
+    public function getMediaRepository(Context $context): RepositoryIterator
+    {
+        /** @var RepositoryIterator<MediaCollection> $mediaIterator */
+        return new RepositoryIterator($this->mediaRepository, $context, $this->createCriteria());
     }
 }
 

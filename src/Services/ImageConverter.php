@@ -12,9 +12,15 @@
 namespace MuckiFacilityPlugin\Services;
 
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Uuid\Uuid;
-use Symfony\Component\Console\Output\OutputInterface;
+use SwagMigrationAssistant\Exception\ConverterNotFoundException;
+use WebPConvert\Convert\Exceptions\ConversionFailedException;
 use WebPConvert\WebPConvert;
+use Shopware\Core\Framework\DataAbstractionLayer\Dbal\Common\RepositoryIterator;
+use Shopware\Core\Content\Media\MediaEntity;
+use Shopware\Core\Content\ImportExport\Struct\Progress;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
@@ -38,7 +44,6 @@ class ImageConverter
 
     public function convertImageById(string $mediaId)
     {
-        //https://sw66.ddev.site/media/1b/3f/3f/1751907539/Desktop Hintergrund 04.png?ts=1751907539
         //0197e5d395fc78cbac877fba3a05e716
         $media = $this->mediaRepository->getMediaRepositoryById($mediaId);
         if($media) {
@@ -47,15 +52,95 @@ class ImageConverter
         $checker =1;
     }
 
-    public function convertImageToWebp(string $imagePath)
+    public function convertAllImage(Context $context)
+    {
+        $mediaIterator = $this->mediaRepository->getMediaRepository($context);
+        $totalMediaCount = $mediaIterator->getTotal();
+        if($this->servicesCliOutput->isCli()) {
+
+            $this->servicesCliOutput->printCliOutputNewline('Found '.$totalMediaCount.' media items to convert to WebP format.');
+            $progress = $this->servicesCliOutput->prepareProgress($totalMediaCount);
+            $progressBar = $this->servicesCliOutput->prepareProgressBar($progress, $totalMediaCount);
+            $this->servicesCliOutput->setProgressMessage('Media');
+
+            $generateWebpImagesResults = $this->generateWebpImages($mediaIterator, $progress, $progressBar);
+            $this->servicesCliOutput->getSymfonyStyle()->table(
+                ['Action', 'Number of Media Entities'],
+                [
+                    ['Generated', $generateWebpImagesResults['generated']],
+                    ['Skipped', $generateWebpImagesResults['skipped']],
+                    ['Errors', $generateWebpImagesResults['errored']],
+                ]
+            );
+        }
+        $checker =1;
+    }
+
+    public function convertImageToWebp(string $imagePath): bool
     {
         $absoluteImagePath = $this->pluginSettings->getProjectPublicDir().'/'.$imagePath;
-        if(is_readable($absoluteImagePath)) {
-
-            $options = [];
-            WebPConvert::convert($absoluteImagePath, $absoluteImagePath. '.webp', $options);
-            $checker = 1;
+        if(!is_readable($absoluteImagePath)) {
+            return false;
         }
-        $checker = 1;
+
+        $options = [];
+        try {
+            WebPConvert::convert($absoluteImagePath, $absoluteImagePath. '.webp', $options);
+        } catch (ConversionFailedException $e) {
+
+            $this->logger->error('Error setting conversion options: '.$e->getMessage());
+            throw new ConverterNotFoundException(
+                \sprintf('Cannot convert image %s to WebP format. Error message: %s', $absoluteImagePath, $e->getMessage())
+            );
+        }
+
+        return true;
+    }
+
+    private function generateWebpImages(RepositoryIterator $iterator, Progress $progress=null, ProgressBar $progressBar=null): array
+    {
+        $generated = 0;
+        $skipped = 0;
+        $errored = 0;
+        $errors = [];
+
+        while (($result = $iterator->fetch()) !== null) {
+
+            /** @var MediaEntity $media */
+            foreach ($result->getEntities() as $media) {
+
+                $this->setProgressStatus($progress, $progressBar);
+                try {
+                    if ($this->convertImageToWebp($media->getPath())) {
+                        ++$generated;
+                    } else {
+                        ++$skipped;
+                    }
+                } catch (\Throwable $e) {
+                    ++$errored;
+                    $errors[] = [\sprintf('Cannot process file %s (id: %s) due error: %s', $media->getFileName(), $media->getId(), $e->getMessage())];
+                }
+            }
+        }
+
+        return [
+            'generated' => $generated,
+            'skipped' => $skipped,
+            'errored' => $errored,
+            'errors' => $errors,
+        ];
+    }
+
+    public function setProgressStatus(?Progress $progress, ?ProgressBar $progressBar)
+    {
+        if ($this->servicesCliOutput->isCli() && $progress && $progressBar) {
+
+            if ($progress->getOffset() >= $progress->getTotal()) {
+                $progressBar->setProgress($progress->getTotal());
+            } else {
+                $progressBar->advance();
+                $progressBar->display();
+            }
+        }
     }
 }

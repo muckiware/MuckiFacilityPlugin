@@ -15,6 +15,7 @@ use Shopware\Core\Content\ImportExport\Struct\Progress;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 class CliOutput
 {
@@ -24,6 +25,8 @@ class CliOutput
     final const PROGRESS_BAR_OFFSET = 0;
 
     protected string $progressMessage = '';
+
+    protected SymfonyStyle $symfonyStyle;
 
     public function getOutput(): OutputInterface
     {
@@ -55,10 +58,7 @@ class CliOutput
         $this->progressMessage = $progressMessage;
     }
 
-    public function prepareProgressBar(
-        Progress $progress,
-        int $totalCounter
-    ): ProgressBar
+    public function prepareProgressBar(Progress $progress, int $totalCounter): ProgressBar
     {
         if(!$progress->getTotal()) {
             $progressTotal = 0;
@@ -112,5 +112,15 @@ class CliOutput
         } else {
             $cliOutput->write($lineText, true);
         }
+    }
+
+    public function getSymfonyStyle(): SymfonyStyle
+    {
+        return $this->symfonyStyle;
+    }
+
+    public function setSymfonyStyle(SymfonyStyle $symfonyStyle): void
+    {
+        $this->symfonyStyle = $symfonyStyle;
     }
 }

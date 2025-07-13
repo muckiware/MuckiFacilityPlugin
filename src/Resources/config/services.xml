@@ -129,6 +129,18 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service class="MuckiFacilityPlugin\Commands\ConvertAllWebp" id="muwa.command.convert.all.image" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ImageConverter"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service class="MuckiFacilityPlugin\Commands\ConvertSingleWebp" id="muwa.command.convert.single.image" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
