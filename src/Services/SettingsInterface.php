@@ -27,4 +27,5 @@ interface SettingsInterface
     public function getOwnResticBinaryPath(): ?string;
     public function getLastValidDateForCart(): string;
     public function getLastValidDateForLogEntry(): string;
+    public function getProjectPublicDir(): string;
 }

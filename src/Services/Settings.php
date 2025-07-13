@@ -135,4 +135,9 @@ class Settings implements SettingsInterface
             strtotime('-'.$validDays.' days', strtotime(date('Y-m-d')))
         );
     }
+
+    public function getProjectPublicDir(): string
+    {
+        return $this->kernel->getProjectDir().'/public';
+    }
 }

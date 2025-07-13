@@ -28,10 +28,10 @@ use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Services\ImageConverter;
 
 #[AsCommand(
-    name: 'muckiware:convert:webp',
+    name: 'muckiware:convert:singleWebp',
     description: 'Convert images to WebP format'
 )]
-class ConvertWebp extends Commands
+class ConvertSingleWebp extends Commands
 {
     protected ?ContainerInterface $container = null;
 
@@ -86,7 +86,6 @@ class ConvertWebp extends Commands
 
         $inputMediaId = $this->checkInputForMediaId($input);
         if($this->pluginSettings->isEnabled() && $inputMediaId) {
-
             $this->imageConverter->convertImageById($inputMediaId);
         }
 
