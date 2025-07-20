@@ -50,6 +50,25 @@ final class Defaults
         'TEST file content 9'
     ];
 
+    public const MEDIA_TEST_FILE_1 = [
+        'url' => 'https://example.com/media/4f/0e/87/1711356804/waschmaschine_600x600.jpg',
+        'path' => 'media/4f/0e/87/1711356804/waschmaschine_600x600.jpg',
+        'title' => 'Waschmaschine',
+        'alt' => 'Waschmaschine 600x600',
+        'fileName' => 'waschmaschine_600x600.jpg',
+        'mimeType' => 'image/jpeg',
+        'fileExtension' => 'jpg',
+    ];
+    public const MEDIA_TEST_FILE_2 = [
+        'url' => 'https://example.com/media/4f/0e/87/1711356804/shirt_red_600x600.jpg',
+        'path' => 'media/4f/0e/87/1711356804/shirt_red_600x600.jpg',
+        'title' => 'Shirt Red',
+        'alt' => 'Shirt Red 600x600',
+        'fileName' => 'shirt_red_600x600.jpg',
+        'mimeType' => 'image/jpeg',
+        'fileExtension' => 'jpg',
+    ];
+
     public static function getPluginPath(): string
     {
         return str_replace('/tests','', dirname(__DIR__));
