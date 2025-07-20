@@ -21,7 +21,6 @@ use MuckiFacilityPlugin\Entity\MediaLocationEntity;
 
 class HelperMedia
 {
-
     public function getMediaLocationByMedia(string $workingPath, MediaEntity $media): MediaLocationEntity
     {
         $absolutePathOrigin = $workingPath.'/'.$media->getPath();

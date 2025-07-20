@@ -191,6 +191,7 @@
         </service>
         <service id="MuckiFacilityPlugin\Services\SettingsInterface" alias="MuckiLogPlugin\Services\Settings"/>
         <service id="MuckiFacilityPlugin\Services\Helper"/>
+        <service id="MuckiFacilityPlugin\Services\HelperMedia"/>
         <service id="MuckiFacilityPlugin\Services\CliOutput" />
         <service id="MuckiFacilityPlugin\Services\DbTableCleanup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -212,6 +213,7 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\MediaRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\HelperMedia"/>
         </service>
 
         <service id="MuckiFacilityPlugin\Core\Database\Database">
