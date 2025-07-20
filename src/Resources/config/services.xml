@@ -207,6 +207,7 @@
         </service>
         <service id="MuckiFacilityPlugin\Services\ImageConverter" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
@@ -236,6 +237,23 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+        </service>
+
+        <service id="MuckiFacilityPlugin\Storefront\Framework\Twig\WebPExtension" decorates="Shopware\Storefront\Framework\Twig\ThumbnailExtension" decoration-priority="100">
+            <argument type="service" id="MuckiFacilityPlugin\Storefront\Framework\Twig\WebPExtension.inner"/>
+            <argument type="service" id="Shopware\Core\Framework\Adapter\Twig\TemplateFinder"/>
+        </service>
+<!--        <service id="MuckiFacilityPlugin\Storefront\Framework\Twig\Extension\WebpLoaderExtension" public="true">-->
+<!--            <argument type="service" id="Psr\Log\LoggerInterface"/>-->
+<!--            <argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>-->
+<!--            <argument type="service" id="MuckiFacilityPlugin\Services\ImageConverter"/>-->
+<!--            <tag name="twig.extension"/>-->
+<!--        </service>-->
+        <service id="MuckiFacilityPlugin\Twig\Extension\WebpUrlEncodingTwigFilter" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ImageConverter"/>
+            <tag name="twig.extension"/>
         </service>
     </services>
 </container>

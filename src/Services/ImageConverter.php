@@ -21,8 +21,12 @@ use Shopware\Core\Framework\DataAbstractionLayer\Dbal\Common\RepositoryIterator;
 use Shopware\Core\Content\Media\MediaEntity;
 use Shopware\Core\Content\ImportExport\Struct\Progress;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Jenssegers\ImageHash\ImageHash;
 use Jenssegers\ImageHash\Implementations\DifferenceHash;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
@@ -37,6 +41,7 @@ class ImageConverter
 {
     public function __construct(
         protected LoggerInterface $logger,
+        protected KernelInterface $kernel,
         protected PluginSettings $pluginSettings,
         protected PluginHelper $pluginHelper,
         protected ServicesCliOutput $servicesCliOutput,
@@ -83,11 +88,8 @@ class ImageConverter
             return false;
         }
 
-        $imageHasher = new ImageHash(new DifferenceHash());
-        $imageHash = $imageHasher->hash($absoluteImagePath)->toHex();
-        $webpImagePath = $absoluteImagePath. '.'.$imageHash.'.webp';
-
-        if(is_readable($webpImagePath)) {
+        $webpImagePath = $this->getWebpAbsolutePath($absoluteImagePath);
+        if($webpImagePath && is_readable($webpImagePath)) {
 
             // The WebP image already exists, so we skip the conversion
             return false;
@@ -105,6 +107,24 @@ class ImageConverter
         }
 
         return true;
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    public function getWebpAbsolutePath(string $absoluteImagePath): ?string
+    {
+        $adapter = new LocalFilesystemAdapter($this->kernel->getProjectDir().'/public');
+        $filesystem = new Filesystem($adapter);
+
+        if($filesystem->fileExists($absoluteImagePath)) {
+
+            $imageHasher = new ImageHash(new DifferenceHash());
+            $imageHash = $imageHasher->hash($absoluteImagePath)->toHex();
+            return $absoluteImagePath. '.'.$imageHash.'.webp';
+        }
+
+        return null;
     }
 
     private function generateWebpImages(RepositoryIterator $iterator, Progress $progress=null, ProgressBar $progressBar=null): array
