@@ -35,9 +35,6 @@ use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 use MuckiFacilityPlugin\Services\Content\MediaRepository;
 use MuckiFacilityPlugin\Entity\MediaLocationEntity;
 
-/**
- *
- */
 class ImageConverter
 {
     protected int $generated = 0;
@@ -84,16 +81,6 @@ class ImageConverter
                     ['Errors', $generateWebpImagesResults['errored']],
                 ]
             );
-
-//            $generateWebpImagesResults = $this->generateWebpThumbnails($mediaIterator, $progress, $progressBar);
-//            $this->servicesCliOutput->getSymfonyStyle()->table(
-//                ['Action', 'Number of Thumbnail Entities to WebP format'],
-//                [
-//                    ['Generated', $generateWebpImagesResults['generated']],
-//                    ['Skipped', $generateWebpImagesResults['skipped']],
-//                    ['Errors', $generateWebpImagesResults['errored']],
-//                ]
-//            );
         }
     }
 
@@ -187,42 +174,10 @@ class ImageConverter
             }
         } catch (\Throwable $e) {
             ++$this->errored;
-            $this->errors[] = [\sprintf('Cannot process file %s (id: %s) due error: %s', $media->getFileName(), $media->getId(), $e->getMessage())];
+            $this->errors[] = [\sprintf('Cannot process file %s (id: %s) due error: %s',
+                $mediaLocation->getAbsolutePathOrigin(), $mediaLocation->getMediaId(), $e->getMessage()
+            )];
         }
-    }
-
-    private function generateWebpThumbnails(RepositoryIterator $iterator, Progress $progress=null, ProgressBar $progressBar=null): array
-    {
-        $generated = 0;
-        $skipped = 0;
-        $errored = 0;
-        $errors = [];
-
-        while (($result = $iterator->fetch()) !== null) {
-
-            /** @var MediaEntity $media */
-            foreach ($result->getEntities() as $media) {
-
-                $this->setProgressStatus($progress, $progressBar);
-                try {
-                    if ($this->convertImageToWebp($media->getPath())) {
-                        ++$generated;
-                    } else {
-                        ++$skipped;
-                    }
-                } catch (\Throwable $e) {
-                    ++$errored;
-                    $errors[] = [\sprintf('Cannot process file %s (id: %s) due error: %s', $media->getFileName(), $media->getId(), $e->getMessage())];
-                }
-            }
-        }
-
-        return [
-            'generated' => $generated,
-            'skipped' => $skipped,
-            'errored' => $errored,
-            'errors' => $errors,
-        ];
     }
 
     public function setProgressStatus(?Progress $progress, ?ProgressBar $progressBar)
