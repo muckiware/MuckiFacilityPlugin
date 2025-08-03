@@ -12,6 +12,7 @@
 namespace MuckiFacilityPlugin\Services;
 
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
 use Shopware\Core\Content\Media\MediaEntity;
 use Jenssegers\ImageHash\ImageHash;
 use Jenssegers\ImageHash\Implementations\DifferenceHash;
@@ -22,6 +23,25 @@ use MuckiFacilityPlugin\Entity\MediaLocationEntity;
 class HelperMedia
 {
     public function getMediaLocationByMedia(string $workingPath, MediaEntity $media): MediaLocationEntity
+    {
+        $absolutePathOrigin = $workingPath.'/'.$media->getPath();
+        $originImageHash = $this->getImageHashByAbsolutePath($absolutePathOrigin);
+        $webpExtension = '.'.$originImageHash.'.webp';
+
+        $mediaLocation = new MediaLocationEntity();
+        $mediaLocation->setMediaId($media->getId());
+        $mediaLocation->setImageHash($originImageHash);
+        $mediaLocation->setUrlOrigin($media->getUrl());
+        $mediaLocation->setUrlWebp($media->getUrl().$webpExtension );
+        $mediaLocation->setAbsolutePathOrigin($absolutePathOrigin);
+        $mediaLocation->setAbsolutePathWebp($absolutePathOrigin.$webpExtension );
+        $mediaLocation->setRelativePathOrigin($media->getPath());
+        $mediaLocation->setRelativePathWebp($media->getPath().$webpExtension );
+
+        return $mediaLocation;
+    }
+
+    public function getMediaLocationByThumbnail(string $workingPath, MediaThumbnailEntity $media): MediaLocationEntity
     {
         $absolutePathOrigin = $workingPath.'/'.$media->getPath();
         $originImageHash = $this->getImageHashByAbsolutePath($absolutePathOrigin);

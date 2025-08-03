@@ -69,6 +69,8 @@ final class Defaults
         'fileExtension' => 'jpg',
     ];
 
+    public const ENCODE_WEBP_URL = 'https://sw66.ddev.site/thumbnail/25/fe/cc/1711356804/hq_1280x1280_1920x1920.jpg?ts=1729685240';
+
     public static function getPluginPath(): string
     {
         return str_replace('/tests','', dirname(__DIR__));

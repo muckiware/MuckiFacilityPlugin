@@ -62,7 +62,7 @@
 
         {# generate srcset with all available thumbnails #}
         {% set srcsetValue %}{% apply spaceless %}
-            {% if loadOriginalImage %}{{ media|muwa_encode_media_webp_url }} {{ thumbnails|first.width + 1 }}w, {% endif %}{% for thumbnail in thumbnails %}{{ thumbnail.url|muwa_encode_webp_url }} {{ thumbnail.width }}w{% if not loop.last %}, {% endif %}{% endfor %}
+            {% if loadOriginalImage %}{{ media|muwa_encode_media_webp_url }} {{ thumbnails|first.width + 1 }}, {% endif %}{% for thumbnail in thumbnails %}{{ thumbnail.url|muwa_encode_webp_url }} {{ thumbnail.width }}w{% if not loop.last %}, {% endif %}{% endfor %}
         {% endapply %}{% endset %}
 
         {# generate sizes #}
@@ -87,16 +87,22 @@
     {% endif %}
 
     {% block thumbnail_utility_img %}
-        <img {% if load %}src="{{ media|muwa_encode_media_webp_url }}" {% else %}data-src="{{ media|muwa_encode_media_webp_url }}" {% endif %}
-            {% if media.thumbnails|length > 0 %}
-                {% if load %}srcset="{{ srcsetValue }}" {% else %}data-srcset="{{ srcsetValue }}" {% endif %}
-                {% if sizes['default'] %}
-                sizes="{{ sizes['default'] }}"
-                {% elseif sizes|length > 0 %}
-                sizes="{{ sizesValue }}"
+{#        {{ dump(media.url|muwa_encode_webp_url) }}<br>#}
+        {{ dump(media) }}
+        <picture>
+            <source type="image/webp" srcset="{{ media.url|muwa_encode_webp_url }}">
+            <source type="image/jpeg" srcset="{{ media|sw_encode_media_url }}">
+            <img {% if load %}src="{{ media|sw_encode_media_url }}" {% else %}data-src="{{ media|sw_encode_media_url }}" {% endif %}
+                    {% if media.thumbnails|length > 0 %}
+                    {% if load %}srcset="{{ srcsetValue }}" {% else %}data-srcset="{{ srcsetValue }}" {% endif %}
+                    {% if sizes['default'] %}
+                     sizes="{{ sizes['default'] }}"
+                    {% elseif sizes|length > 0 %}
+                     sizes="{{ sizesValue }}"
                 {% endif %}
-            {% endif %}
-            {% for key, value in attributes %}{% if value != '' %} {{ key }}="{{ value }}"{% endif %}{% endfor %}
-        />
+                {% endif %}
+                {% for key, value in attributes %}{% if value != '' %} {{ key }}="{{ value }}"{% endif %}{% endfor %}
+            />
+        </picture>
     {% endblock %}
 {% endblock %}

@@ -42,7 +42,7 @@ class WebpLoaderExtension extends AbstractExtension
     public function getUrlWebpImage(string $filePath): ?string
     {
         try {
-            return $this->imageConverter->getWebpAbsolutePath($filePath);
+            return $this->imageConverter->getWebpPath($filePath);
         } catch (FilesystemException $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }

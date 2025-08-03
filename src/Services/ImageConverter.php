@@ -40,6 +40,10 @@ use MuckiFacilityPlugin\Entity\MediaLocationEntity;
  */
 class ImageConverter
 {
+    protected int $generated = 0;
+    protected int $skipped = 0;
+    protected int $errored = 0;
+    protected array $errors = [];
     public function __construct(
         protected LoggerInterface $logger,
         protected KernelInterface $kernel,
@@ -118,16 +122,22 @@ class ImageConverter
     /**
      * @throws FilesystemException
      */
-    public function getWebpAbsolutePath(string $absoluteImagePath): ?string
+    public function getWebpPath(string $relativeImagePath, bool $absolutePath=false): ?string
     {
-        $adapter = new LocalFilesystemAdapter($this->kernel->getProjectDir().'/public');
+        $projectPublicDir = $this->pluginSettings->getProjectPublicDir();
+        $absoluteImagePath = $projectPublicDir.'/'.$relativeImagePath;
+        $adapter = new LocalFilesystemAdapter($projectPublicDir);
         $filesystem = new Filesystem($adapter);
 
-        if($filesystem->fileExists($absoluteImagePath)) {
+        if($filesystem->fileExists($relativeImagePath)) {
 
             $imageHasher = new ImageHash(new DifferenceHash());
             $imageHash = $imageHasher->hash($absoluteImagePath)->toHex();
-            return $absoluteImagePath. '.'.$imageHash.'.webp';
+            if($absolutePath) {
+                return $absoluteImagePath. '.'.$imageHash.'.webp';
+            }
+
+            return $relativeImagePath. '.'.$imageHash.'.webp';
         }
 
         return null;
@@ -135,11 +145,6 @@ class ImageConverter
 
     private function generateWebpImages(RepositoryIterator $iterator, Progress $progress=null, ProgressBar $progressBar=null): array
     {
-        $generated = 0;
-        $skipped = 0;
-        $errored = 0;
-        $errors = [];
-
         while (($result = $iterator->fetch()) !== null) {
 
             /** @var MediaEntity $media */
@@ -150,25 +155,40 @@ class ImageConverter
                     $this->pluginSettings->getProjectPublicDir(),
                     $media
                 );
-                try {
-                    if ($this->convertImageToWebp($mediaLocation)) {
-                        ++$generated;
-                    } else {
-                        ++$skipped;
-                    }
-                } catch (\Throwable $e) {
-                    ++$errored;
-                    $errors[] = [\sprintf('Cannot process file %s (id: %s) due error: %s', $media->getFileName(), $media->getId(), $e->getMessage())];
+
+                $this->executeConverter($mediaLocation);
+
+                foreach ($media->getThumbnails() as $thumbnail) {
+
+                    $thumbnailLocation = $this->helperMedia->getMediaLocationByThumbnail(
+                        $this->pluginSettings->getProjectPublicDir(),
+                        $thumbnail
+                    );
+                    $this->executeConverter($thumbnailLocation);
                 }
             }
         }
 
         return [
-            'generated' => $generated,
-            'skipped' => $skipped,
-            'errored' => $errored,
-            'errors' => $errors,
+            'generated' => $this->generated,
+            'skipped' => $this->skipped,
+            'errored' => $this->errored,
+            'errors' => $this->errors,
         ];
+    }
+
+    public function executeConverter(MediaLocationEntity $mediaLocation): void
+    {
+        try {
+            if ($this->convertImageToWebp($mediaLocation)) {
+                ++$this->generated;
+            } else {
+                ++$this->skipped;
+            }
+        } catch (\Throwable $e) {
+            ++$this->errored;
+            $this->errors[] = [\sprintf('Cannot process file %s (id: %s) due error: %s', $media->getFileName(), $media->getId(), $e->getMessage())];
+        }
     }
 
     private function generateWebpThumbnails(RepositoryIterator $iterator, Progress $progress=null, ProgressBar $progressBar=null): array

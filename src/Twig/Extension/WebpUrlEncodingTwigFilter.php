@@ -14,6 +14,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\ImageConverter;
+use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 
 #[Package('framework')]
 class WebpUrlEncodingTwigFilter extends AbstractExtension
@@ -21,7 +22,8 @@ class WebpUrlEncodingTwigFilter extends AbstractExtension
     public function __construct(
         private readonly LoggerInterface $logger,
         protected KernelInterface $kernel,
-        protected ImageConverter $imageConverter
+        protected ImageConverter $imageConverter,
+        protected PluginSettings $pluginSettings
     )
     {}
     /**
@@ -30,12 +32,12 @@ class WebpUrlEncodingTwigFilter extends AbstractExtension
     public function getFilters(): array
     {
         return [
-            new TwigFilter('muwa_encode_webp_url', $this->encodeUrl(...)),
+            new TwigFilter('muwa_encode_webp_url', $this->encodeWebpUrl(...)),
             new TwigFilter('muwa_encode_media_webp_url', $this->encodeMediaWebpUrl(...))
         ];
     }
 
-    public function encodeUrl(?string $mediaUrlInput): ?string
+    public function encodeWebpUrl(?string $mediaUrlInput, bool $noCheckWebp=false): ?string
     {
         if ($mediaUrlInput === null) {
             return null;
@@ -46,7 +48,7 @@ class WebpUrlEncodingTwigFilter extends AbstractExtension
             return null;
         }
 
-        $segments = explode('/', $urlInfo['path'] ?? '');
+        $segments = array_filter(explode('/', $urlInfo['path'] ?? ''), fn($v) => $v !== '');
 
         foreach ($segments as $index => $segment) {
             $segments[$index] = rawurlencode($segment);
@@ -57,13 +59,16 @@ class WebpUrlEncodingTwigFilter extends AbstractExtension
             $path .= "?{$urlInfo['query']}";
         }
 
-        $webpImagesPath = $this->checkWebpImagesPath(explode('?', $path)[0]);
-        if($webpImagesPath) {
+        if(!$noCheckWebp) {
 
-            if (isset($urlInfo['query'])) {
-                $path = $webpImagesPath."?{$urlInfo['query']}";
-            } else {
-                $path = $webpImagesPath;
+            $webpImagesPath = $this->checkWebpImagesPath(explode('?', $path)[0]);
+            if($webpImagesPath) {
+
+                if (isset($urlInfo['query'])) {
+                    $path = $webpImagesPath."?{$urlInfo['query']}";
+                } else {
+                    $path = $webpImagesPath;
+                }
             }
         }
 
@@ -81,7 +86,7 @@ class WebpUrlEncodingTwigFilter extends AbstractExtension
             $encodedPath .= ":{$urlInfo['port']}";
         }
 
-        return $encodedPath . $path;
+        return $encodedPath.'/'.$path;
     }
 
     public function encodeMediaWebpUrl(?MediaEntity $media): ?string
@@ -92,16 +97,16 @@ class WebpUrlEncodingTwigFilter extends AbstractExtension
 
         $webpImagesUrl = $this->checkWebpImagesPath($media->getPath());
         if($webpImagesUrl) {
-            return $this->encodeUrl($webpImagesUrl);
+            return $this->encodeWebpUrl($webpImagesUrl, true);
         }
-        return $this->encodeUrl($media->getUrl());
+        return $this->encodeWebpUrl($media->getUrl());
     }
 
     public function checkWebpImagesPath(string $filePath): ?string
     {
         try {
 
-            $webpAbsolutePath = $this->imageConverter->getWebpAbsolutePath($filePath);
+            $webpAbsolutePath = $this->imageConverter->getWebpPath($filePath);
             if($webpAbsolutePath) {
                 return $webpAbsolutePath;
             }

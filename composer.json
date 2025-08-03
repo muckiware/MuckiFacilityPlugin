@@ -29,6 +29,7 @@
 	},
 	"require" : {
 		"php" : ">= 8.1",
+		"ext-fileinfo": "*",
 		"spatie/db-dumper": "^3.7",
 		"muckiware/restic": "^1.0",
 		"gabrielelana/byte-units": "^0.5.0",
