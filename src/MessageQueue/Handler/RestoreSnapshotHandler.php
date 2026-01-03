@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\MessageQueue\Handler;
 
+use MuckiRestic\Exception\InvalidConfigurationException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -18,6 +19,7 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
 use MuckiFacilityPlugin\Services\RestoreSnapshot as RestoreSnapshotServices;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
+use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
 
 #[AsMessageHandler]
 class RestoreSnapshotHandler
@@ -25,9 +27,14 @@ class RestoreSnapshotHandler
     public function __construct(
         protected LoggerInterface $logger,
         protected RestoreSnapshotServices $restoreSnapshotServices,
-        protected ServicesCliOutput $servicesCliOutput
+        protected ServicesCliOutput $servicesCliOutput,
+        protected BackupRepositoryService $backupRepositoryService
     )
     {}
+
+    /**
+     * @throws InvalidConfigurationException
+     */
     public function __invoke(CreateBackupMessage $message): void
     {
         $this->logger->debug(
@@ -36,6 +43,9 @@ class RestoreSnapshotHandler
         );
 
         $this->servicesCliOutput->setIsCli(false);
+
+        $backupRepository = $this->backupRepositoryService->getBackupRepositoryById($message->getBackupRepositoryId());
+        $message->setRepositoryPassword($backupRepository->getRepositoryPassword());
         $this->restoreSnapshotServices->restoreSnapshot($message, false);
 
         $this->logger->debug(

@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -54,7 +54,6 @@ class RestoreSnapshotController extends AbstractController
 
             $message = new CreateBackupMessage();
             $message->setBackupRepositoryId($requestDataBag->get('backupRepositoryId'));
-            $message->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $message->setRepositoryPath($backupRepository->getRepositoryPath());
             $message->setRestorePath($backupRepository->getRestorePath());
             $message->setSnapshotId($requestDataBag->get('snapshotId'));

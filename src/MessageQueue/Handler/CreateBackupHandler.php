@@ -18,6 +18,7 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
+use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
 
 #[AsMessageHandler]
 class CreateBackupHandler
@@ -25,7 +26,8 @@ class CreateBackupHandler
     public function __construct(
         protected LoggerInterface $logger,
         protected BackupService $backupService,
-        protected ServicesCliOutput $servicesCliOutput
+        protected ServicesCliOutput $servicesCliOutput,
+        protected BackupRepositoryService $backupRepositoryService
     )
     {}
     public function __invoke(CreateBackupMessage $message): void
@@ -37,6 +39,8 @@ class CreateBackupHandler
 
         $this->servicesCliOutput->setIsCli(false);
         $message->setBackupPaths($this->backupService->prepareBackupPaths($message->getBackupPaths()));
+        $backupRepository = $this->backupRepositoryService->getBackupRepositoryById($message->getBackupRepositoryId());
+        $message->setRepositoryPassword($backupRepository->getRepositoryPassword());
         $this->backupService->createBackup($message, false);
         $this->logger->debug(
             'Backup process done. BackupRepositoryId: '.$message->getBackupRepositoryId(),
