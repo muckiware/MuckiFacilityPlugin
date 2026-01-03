@@ -195,6 +195,7 @@
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\RestoreSnapshot"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
             <tag name="messenger.message_handler"/>
         </service>
 
