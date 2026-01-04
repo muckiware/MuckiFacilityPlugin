@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -36,6 +36,7 @@ class Migration1735638755 extends MigrationStep
               `active` tinyint(1) DEFAULT \'0\',
               `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
               `type` varchar(45) COLLATE utf8mb4_general_ci NOT NULL,
+              `hostname` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL,
               `repository_path` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
               `repository_password` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
               `restore_path` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,

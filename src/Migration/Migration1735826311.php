@@ -28,6 +28,7 @@ class Migration1735826311 extends MigrationStep
               `snapshot_id` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
               `snapshot_short_id` varchar(45) COLLATE utf8mb4_general_ci NOT NULL,
               `paths` varchar(155) COLLATE utf8mb4_general_ci DEFAULT NULL,
+              `hostname` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL,
               `size` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
               `created_at` datetime(3) NOT NULL,
               `updated_at` datetime(3) DEFAULT NULL,
