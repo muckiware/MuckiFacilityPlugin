@@ -73,6 +73,7 @@
       "snapshotShortIdStatusLabel": "Snapshot ID",
       "createdAtLabel": "Erstellt am",
       "pathsLabel": "Pfad",
+      "hostnameLabel": "Hostname",
       "sizeLabel": "Größe",
       "databaseTypeLabel": "Datenbank dump Typ",
       "repositoryPathDescription": "Der Pfad zum Sicherungs-Repository. Gebe hier den absoluten Pfad zum Backup-Repository an. Beachte, dass dieser Pfad nach der Erstellung nicht mehr geändert werden kann!",

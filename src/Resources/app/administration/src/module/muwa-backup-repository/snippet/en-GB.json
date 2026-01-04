@@ -69,6 +69,7 @@
       "snapshotShortIdStatusLabel": "Snapshot ID",
       "createdAtLabel": "Created at",
       "pathsLabel": "Path",
+      "hostnameLabel": "Hostname",
       "sizeLabel": "Size",
       "databaseTypeLabel": "Database dump type",
       "forgetDailyLabel": "Delete daily backups",

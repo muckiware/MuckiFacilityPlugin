@@ -166,6 +166,11 @@ Component.register('muwa-backup-repository-detail', {
                     allowResize: true
                 },
                 {
+                    property: 'hostname',
+                    label: 'muwa-backup-repository.detail.hostnameLabel',
+                    allowResize: true
+                },
+                {
                     property: 'size',
                     label: 'muwa-backup-repository.detail.sizeLabel',
                     allowResize: true
