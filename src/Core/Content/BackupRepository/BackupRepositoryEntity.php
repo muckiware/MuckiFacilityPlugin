@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -14,6 +14,7 @@ namespace MuckiFacilityPlugin\Core\Content\BackupRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Entity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityIdTrait;
 
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Entity\ForgetTypes;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
@@ -87,6 +88,11 @@ class BackupRepositoryEntity extends Entity
      * @var bool
      */
     protected bool $compress;
+
+    /**
+     * @var string
+     */
+    protected string $hostname = PluginDefaults::DEFAULT_REPOSITORY_HOST_NAME;
 
     /**
      * @return string
@@ -304,5 +310,15 @@ class BackupRepositoryEntity extends Entity
     public function setForgetYearly(int $forgetYearly): void
     {
         $this->forgetYearly = $forgetYearly;
+    }
+
+    public function getHostname(): string
+    {
+        return $this->hostname;
+    }
+
+    public function setHostname(string $hostname): void
+    {
+        $this->hostname = $hostname;
     }
 }

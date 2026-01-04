@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -305,6 +305,7 @@ class Backup
             $createBackup->setBackupPaths($this->prepareBackupPaths($backupRepository->getBackupPaths()));
             $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
             $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
+            $createBackup->setHostName($backupRepository->getHostname());
         }
 
         return $createBackup;
