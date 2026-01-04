@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -109,7 +109,7 @@ class FilesRunner implements BackupInterface
      * @param ProgressBar|null $progressBar
      * @return void
      */
-    public function setProgressStatus(?Progress $progress, ?ProgressBar $progressBar)
+    public function setProgressStatus(?Progress $progress, ?ProgressBar $progressBar): void
     {
         if ($this->servicesCliOutput->isCli() && $progress && $progressBar) {
 
@@ -123,7 +123,7 @@ class FilesRunner implements BackupInterface
     }
 
     /**
-     * @throws InvalidConfigurationException
+     * @throws InvalidConfigurationException|\MuckiRestic\Exception\InvalidRepLocationException
      */
     public function checkBackupData(): void
     {
@@ -172,6 +172,7 @@ class FilesRunner implements BackupInterface
         $backupClient->setRepositoryPassword($this->createBackup->getRepositoryPassword());
         $backupClient->setRepositoryPath($this->createBackup->getRepositoryPath());
         $backupClient->setJsonOutput($isJsonOutput);
+        $backupClient->setHostName($this->createBackup->getHostName());
 
         return $backupClient;
     }

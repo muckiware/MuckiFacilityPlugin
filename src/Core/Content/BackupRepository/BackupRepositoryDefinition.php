@@ -55,6 +55,7 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new BoolField('active', 'active'))->addFlags(new Inherited()),
             (new StringField('name', 'name'))->addFlags(new Required()),
             (new StringField('type', 'type')),
+            (new StringField('hostname', 'hostname'))->addFlags(new ApiAware())->addFlags(new ApiAware()),
             (new StringField('repository_path', 'repositoryPath'))->addFlags(new Required()),
             (new StringField('repository_password', 'repositoryPassword'))->removeFlag(ApiAware::class),
             (new StringField('restore_path', 'restorePath')),

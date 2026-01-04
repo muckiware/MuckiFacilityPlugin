@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -18,4 +18,6 @@ class Defaults
     const CURRENT_DATETIME_STR_FORMAT = 'Y-m-d_H-i-s';
     const CURRENT_DATE_STR_FORMAT = 'Y-m-d';
     const DEFAULT_LOGGER_CONFIG = array('muwa', 'facility');
+    const DEFAULT_REPOSITORY_HOST_NAME = 'muwa-facility-client';
+    const DEFAULT_REPOSITORY_TAG = 'muwa-facility-Repository';
 }

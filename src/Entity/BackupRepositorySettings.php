@@ -4,12 +4,14 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
  */
 namespace MuckiFacilityPlugin\Entity;
+
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 
 /**
  *
@@ -74,6 +76,8 @@ class BackupRepositorySettings
      * @var int
      */
     protected int $forgetYearly;
+
+    protected string $hostName = PluginDefaults::DEFAULT_REPOSITORY_HOST_NAME;
 
     /**
      * @return string
@@ -311,5 +315,15 @@ class BackupRepositorySettings
     public function setResticPath(string $resticPath): void
     {
         $this->resticPath = $resticPath;
+    }
+
+    public function getHostName(): string
+    {
+        return $this->hostName;
+    }
+
+    public function setHostName(string $hostName): void
+    {
+        $this->hostName = $hostName;
     }
 }

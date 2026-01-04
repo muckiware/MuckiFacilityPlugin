@@ -55,6 +55,7 @@ class BackupRepositorySnapshotsDefinition extends EntityDefinition
             (new StringField('snapshot_id', 'snapshotId'))->addFlags(new ApiAware()),
             (new StringField('snapshot_short_id', 'snapshotShortId'))->addFlags(new ApiAware()),
             (new StringField('paths', 'paths'))->addFlags(new ApiAware()),
+            (new StringField('hostname', 'hostname'))->addFlags(new ApiAware()),
             (new StringField('size', 'size'))->addFlags(new ApiAware()),
 
             new CreatedAtField(),

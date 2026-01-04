@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -32,6 +32,7 @@ class BackupFileSnapshotsRepository
      * @param Connection $connection
      * @param PluginSettings $pluginSettings
      * @param EntityRepository $backupFileSnapshotsRepository
+     * @param PluginHelper $pluginHelper
      */
     public function __construct(
         protected LoggerInterface $logger,
@@ -58,6 +59,7 @@ class BackupFileSnapshotsRepository
                 'snapshotId' => $snapshot['id'],
                 'snapshotShortId' => $snapshot['short_id'],
                 'paths' => implode(',', $snapshot['paths']),
+                'hostname' => $snapshot['hostname'],
                 'size' => \ByteUnits\Binary::bytes($snapshot['summary']['total_bytes_processed'])->format(),
                 'createdAt' => $this->pluginHelper->createDateTimeFromString($snapshot['time'])
             ];

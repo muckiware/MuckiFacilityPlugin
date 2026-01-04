@@ -169,6 +169,24 @@
                             required
                         >
                         </sw-text-field>
+                        <sw-text-field
+                                v-if="isV6600"
+                                :label="$tc('muwa-backup-repository.detail.hostnameLabel')"
+                                v-model:value="backupRepository.hostname"
+                                maxlength="128"
+                                validation="required"
+                                required
+                        >
+                        </sw-text-field>
+                        <sw-text-field
+                                v-if="isV6500"
+                                :label="$tc('muwa-backup-repository.detail.hostnameLabel')"
+                                v-model="backupRepository.hostname"
+                                maxlength="128"
+                                validation="required"
+                                required
+                        >
+                        </sw-text-field>
 
                     </sw-card>
                     <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.backupPaths')">
@@ -388,6 +406,11 @@
                         <template #column-snapshot-paths="{item}">
                             <div v-if="item.paths" :title="item.paths">
                                 {{ item.paths }}
+                            </div>
+                        </template>
+                        <template #column-snapshot-hostname="{item}">
+                            <div v-if="item.hostname" :title="item.hostname">
+                                {{ item.hostname }}
                             </div>
                         </template>
                         <template #column-snapshot-size="{item}">
