@@ -387,16 +387,19 @@
 
                     {# Tab Snapshots #}
                     <sw-entity-listing
-                            v-if="backupRepository && tab === 'backupRepositorySnapshots'"
-                            :isLoading="isLoading"
-                            :items="backupRepositorySnapshots"
-                            :repository="backupRepositorySnapshotsRepository"
-                            :columns="backupSnapshotsColumns"
-                            :showActions="true"
-                            :showSelection="false"
-                            :showSettings="false"
-                            :sort-by="sortBy"
-                            :sort-direction="sortDirection"
+                        v-if="backupRepository && tab === 'backupRepositorySnapshots'"
+                        :isLoading="isLoading"
+                        :items="backupRepositorySnapshots"
+                        :repository="backupRepositorySnapshotsRepository"
+                        :columns="backupSnapshotsColumns"
+                        :showActions="true"
+                        :showSettings="false"
+                        :show-selection="true"
+                        :sort-by="sortBy"
+                        :sort-direction="sortDirection"
+                        @selection-change="updateSelection"
+                        @items-delete-finish="itemsDeleteFinish"
+                        @column-sort="onSortColumn"
                     >
                         <template #column-snapshot-id="{item}">
                             <div v-if="item.snapshotShortId" :title="item.snapshotShortId">
@@ -431,9 +434,19 @@
                                     {% endblock %}
                                 </sw-context-menu-item>
                             {% endblock %}
+
+                            {% block wuwa_backup_repository_list_content_listing_delete %}
+                                <sw-context-menu-item
+                                    class="sw-customer-list__delete-action"
+                                    variant="danger"
+                                    :disabled="false"
+                                    @click="onDelete(item.id)"
+                                >
+                                    {{ $tc('muwa-backup-repository.list.deleteLabel') }}
+                                </sw-context-menu-item>
+                            {% endblock %}
                         </template>
                     </sw-entity-listing>
-
                 </sw-card-view>
             {% endblock %}
         </template>

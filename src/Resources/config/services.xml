@@ -205,5 +205,10 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
         </service>
+
+        <service id="MuckiFacilityPlugin\Subscriber\BackupRepositorySnapshotSubscriber">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
     </services>
 </container>

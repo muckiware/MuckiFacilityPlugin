@@ -54,4 +54,26 @@ class ManageController extends AbstractController
 
         return new JsonResponse($snapshots);
     }
+
+    /**
+     * @throws ExceptionInterface
+     */
+    #[Route(
+        path: '/api/_action/muwa/remove/snapshots',
+        name: 'api.action.muwa.remove.snapshots',
+        methods: ['POST']
+    )]
+    public function removeSnapshots(RequestDataBag $requestDataBag, Context $context): Response
+    {
+        $snapshots = array();
+        $backupRepositoryId = $requestDataBag->get('backupRepositoryId');
+        if(is_string($backupRepositoryId) && Uuid::isValid($backupRepositoryId)) {
+
+            $selectionSnapshotIds = $requestDataBag->get('selectionSnapshotIds')->all();
+
+            $checker =1;
+        }
+
+        return new JsonResponse($snapshots);
+    }
 }

@@ -1,4 +1,4 @@
-const {Module} = Shopware;
+const { Component, Module, Feature } = Shopware;
 
 import './page/muwa-backup-repository-list';
 import './page/muwa-backup-repository-create';
@@ -9,7 +9,7 @@ import enGB from './snippet/en-GB.json';
 
 Shopware.Component.register('muwa-backup-repository-entity-path-select', () => import('./component/muwa-backup-repository-entity-path-select'));
 
-Module.register('muwa-backup-repository', {
+Shopware.Module.register('muwa-backup-repository', {
 
     type: 'plugin',
     name: 'muwaBackupRepository',

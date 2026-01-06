@@ -39,6 +39,7 @@
       "storageSizeLabel": "Speichergröße",
       "docsDeletedLabel": "gelöschte Dokumente",
       "restoreLabel": "Snapshot wiederherstellen",
+      "deleteLabel": "Snapshot löschen",
       "column-internal-name": "Interner Name",
       "column-active": "Aktiv",
       "column-created-at": "Erstellt am",
