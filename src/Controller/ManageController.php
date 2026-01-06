@@ -65,15 +65,18 @@ class ManageController extends AbstractController
     )]
     public function removeSnapshots(RequestDataBag $requestDataBag, Context $context): Response
     {
-        $snapshots = array();
+        $removedSnapshot = array();
         $backupRepositoryId = $requestDataBag->get('backupRepositoryId');
         if(is_string($backupRepositoryId) && Uuid::isValid($backupRepositoryId)) {
 
-            $selectionSnapshotIds = $requestDataBag->get('selectionSnapshotIds')->all();
+            $selectedSnapshots = $requestDataBag->get('selectedSnapshots')->all();
+            foreach ($selectedSnapshots as $selectedSnapshot) {
 
-            $checker =1;
+                $this->manageService->removeSnapshotById($backupRepositoryId, $selectedSnapshot['snapshotId']);
+                $removedSnapshot[] = $selectedSnapshot['snapshotId'];
+            }
         }
 
-        return new JsonResponse($snapshots);
+        return new JsonResponse($removedSnapshot);
     }
 }

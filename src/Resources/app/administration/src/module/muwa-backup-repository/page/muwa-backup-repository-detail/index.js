@@ -73,6 +73,7 @@ Component.register('muwa-backup-repository-detail', {
             httpClient: null,
             backupRepositoryChecks: [],
             backupRepositorySnapshots: [],
+            selectedSnapshots: [],
         };
     },
 
@@ -422,14 +423,15 @@ Component.register('muwa-backup-repository-detail', {
             });
         },
 
+        updateSelection(selection) {
+            this.selectedSnapshots = selection;
+        },
+
         itemsDeleteFinish() {
 
-            console.log('this.backupRepository', this.backupRepository);
-            console.log('this.selectionSnapshotIds', Object.keys(this.selection));
-            console.log('this.backupRepositorySnapshots', this.backupRepositorySnapshots);
             let payload = {
                 backupRepositoryId: this.backupRepository.id,
-                selectionSnapshotIds: Object.keys(this.selection)
+                selectedSnapshots : this.selectedSnapshots
             }
 
             this.httpClient.post(this.requestRemoveSnapshots, payload, { headers: this.getApiHeader() }).then(() => {
