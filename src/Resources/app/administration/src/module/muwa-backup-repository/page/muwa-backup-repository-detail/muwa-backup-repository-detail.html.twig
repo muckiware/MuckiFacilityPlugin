@@ -427,7 +427,10 @@
                         <template #actions="{ item }">
                             <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                             {% block wuwa_backup_repository_list_content_listing_actions %}
-                                <sw-context-menu-item @click="restoreSnapshot(item)">
+                                <sw-context-menu-item
+                                    size="small"
+                                    @click="restoreSnapshot(item)"
+                                >
                                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                     {% block wuwa_backup_repository_list_content_listing_action_show_label %}
                                         {{ $tc('muwa-backup-repository.list.restoreLabel') }}
@@ -440,12 +443,59 @@
                                     class="sw-customer-list__delete-action"
                                     variant="danger"
                                     :disabled="false"
+                                    size="small"
                                     @click="onDelete(item.id)"
                                 >
                                     {{ $tc('muwa-backup-repository.list.deleteLabel') }}
                                 </sw-context-menu-item>
                             {% endblock %}
                         </template>
+
+                        {% block wuwa_backup_repository_list_grid_action_modals %}
+                        <template #action-modals="{ item }">
+
+                            {% block wuwa_backup_repository_list_delete_modal %}
+                            <sw-modal
+                                    v-if="showDeleteModal === item.id"
+                                    :title="$tc('global.default.warning')"
+                                    variant="small"
+                                    @modal-close="onCloseDeleteModal"
+                            >
+
+                                {% block wuwa_backup_repository_list_delete_modal_confirm_delete_text %}
+                                <p class="muwa-backup-repository-list__confirm-delete-text">
+                                {{ $tc('muwa-backup-repository.list.textDeleteSnapshotConfirm', 0, { snapshotShortId: `${item.snapshotShortId}` }) }}
+                            </p>
+                            {% endblock %}
+
+                            {% block wuwa_backup_repository_list_delete_modal_footer %}
+                                <template #modal-footer>
+
+                                    {% block wuwa_backup_repository_list_delete_modal_cancel %}
+                                    <sw-button
+                                            size="small"
+                                            @click="onCloseDeleteModal"
+                                    >
+                                        {{ $tc('global.default.cancel') }}
+                                        </sw-button>
+                                        {% endblock %}
+
+                                        {% block sw_customer_list_delete_modal_confirm %}
+                                        <sw-button
+                                        variant="danger"
+                                        size="small"
+                                        @click="onConfirmDelete(item.id, item.snapshotId)"
+                                        >
+                                        {{ $tc('sw-customer.list.buttonDelete') }}
+                                    </sw-button>
+                                    {% endblock %}
+                                </template>
+                                {% endblock %}
+                            </sw-modal>
+                            {% endblock %}
+                        </template>
+                        {% endblock %}
+
                     </sw-entity-listing>
                 </sw-card-view>
             {% endblock %}

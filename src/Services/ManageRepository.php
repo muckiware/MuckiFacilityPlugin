@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -84,6 +84,28 @@ class ManageRepository
             $manageClient->setSnapshotId($snapshotId);
 
             return $manageClient->removeSnapshotById()->getOutput();
+
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+
+        return '';
+    }
+
+    public function cleanupRepository(string $backupRepositoryId, bool $isJsonOutput=true): string
+    {
+        $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+        try {
+
+            $manageClient = Manage::create();
+            if($this->pluginSettings->hasOwnResticBinaryPath()) {
+                $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
+            }
+            $manageClient->setRepositoryPath($backupRepository->getRepositoryPath());
+            $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
+            $manageClient->setJsonOutput($isJsonOutput);
+
+            return $manageClient->executePrune()->getOutput();
 
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);

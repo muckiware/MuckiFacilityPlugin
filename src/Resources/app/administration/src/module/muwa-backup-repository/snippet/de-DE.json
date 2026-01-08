@@ -43,7 +43,8 @@
       "column-internal-name": "Interner Name",
       "column-active": "Aktiv",
       "column-created-at": "Erstellt am",
-      "column-updated-at": "Aktualisiert am"
+      "column-updated-at": "Aktualisiert am",
+      "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?"
     },
     "detail": {
       "mappingLabel": "Zuweisungen (sprachabhängig)",

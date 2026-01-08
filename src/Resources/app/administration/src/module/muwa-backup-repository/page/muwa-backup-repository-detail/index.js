@@ -58,6 +58,7 @@ Component.register('muwa-backup-repository-detail', {
                 backupPaths: []
             },
             isLoading: false,
+            showDeleteModal: false,
             isSaveSuccessful: false,
             type: [
                 { value: 'noneDatabase', label: this.$tc('muwa-backup-repository.general.types.noneDatabase') },
@@ -425,6 +426,49 @@ Component.register('muwa-backup-repository-detail', {
 
         updateSelection(selection) {
             this.selectedSnapshots = selection;
+        },
+
+        onDelete(id) {
+            this.showDeleteModal = id;
+        },
+        onCloseDeleteModal() {
+            this.showDeleteModal = false;
+        },
+
+        onConfirmDelete(id, snapshotId) {
+
+            let snapshotIds = {};
+            snapshotIds[id] = {
+                snapshotId: snapshotId,
+                id: id
+            };
+
+            console.log('snapshotIds', snapshotIds);
+
+            this.showDeleteModal = false;
+
+            let payload = {
+                backupRepositoryId: this.backupRepository.id,
+                selectedSnapshots : snapshotIds
+            }
+
+            this.httpClient.post(this.requestRemoveSnapshots, payload, { headers: this.getApiHeader() }).then(() => {
+
+                this.createNotificationSuccess({
+                    title: this.$t('muwa-backup-repository.restore.process-success-title'),
+                    message: this.$t('muwa-backup-repository.restore.process-success-message')
+                });
+
+                this.isBackupProcessInProgress = false;
+                this.onRefresh();
+
+            }).catch((exception) => {
+
+                this.createNotificationError({
+                    title: this.$t('muwa-backup-repository.restore.error-message'),
+                    message: exception.response.data.errors[0].detail
+                });
+            });
         },
 
         itemsDeleteFinish() {

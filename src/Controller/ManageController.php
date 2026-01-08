@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -55,9 +55,6 @@ class ManageController extends AbstractController
         return new JsonResponse($snapshots);
     }
 
-    /**
-     * @throws ExceptionInterface
-     */
     #[Route(
         path: '/api/_action/muwa/remove/snapshots',
         name: 'api.action.muwa.remove.snapshots',
@@ -65,18 +62,35 @@ class ManageController extends AbstractController
     )]
     public function removeSnapshots(RequestDataBag $requestDataBag, Context $context): Response
     {
-        $removedSnapshot = array();
-        $backupRepositoryId = $requestDataBag->get('backupRepositoryId');
-        if(is_string($backupRepositoryId) && Uuid::isValid($backupRepositoryId)) {
-
-            $selectedSnapshots = $requestDataBag->get('selectedSnapshots')->all();
-            foreach ($selectedSnapshots as $selectedSnapshot) {
-
-                $this->manageService->removeSnapshotById($backupRepositoryId, $selectedSnapshot['snapshotId']);
-                $removedSnapshot[] = $selectedSnapshot['snapshotId'];
-            }
-        }
+        $removedSnapshot = $this->removeSnapshotsByIds(
+            $this->getSnapshotIds($requestDataBag),
+            $requestDataBag->get('backupRepositoryId')
+        );
 
         return new JsonResponse($removedSnapshot);
+    }
+
+    protected function removeSnapshotsByIds(array $snapshotsByIds, string $backupRepositoryId): array
+    {
+        $removedSnapshot = array();
+        foreach ($snapshotsByIds as $selectedSnapshot) {
+
+            $this->manageService->removeSnapshotById($backupRepositoryId, $selectedSnapshot['snapshotId']);
+            $this->manageService->saveSnapshots($backupRepositoryId);
+            $this->manageService->cleanupRepository($backupRepositoryId);
+            $removedSnapshot[] = $selectedSnapshot['snapshotId'];
+        }
+
+        return $removedSnapshot;
+    }
+
+    protected function getSnapshotIds(RequestDataBag $requestDataBag): array
+    {
+        $backupRepositoryId = $requestDataBag->get('backupRepositoryId');
+        if(is_string($backupRepositoryId) && Uuid::isValid($backupRepositoryId)) {
+            return $requestDataBag->get('selectedSnapshots')->all();
+        }
+
+        return [];
     }
 }
