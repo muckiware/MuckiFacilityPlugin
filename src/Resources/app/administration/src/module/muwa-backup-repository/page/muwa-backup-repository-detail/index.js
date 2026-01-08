@@ -71,10 +71,12 @@ Component.register('muwa-backup-repository-detail', {
             requestBackupProcess: '/_action/muwa/backup/process',
             requestRestoreProcess: '/_action/muwa/restore/process',
             requestRemoveSnapshots: '/_action/muwa/remove/snapshots',
+            requestRepositoryStats: '/_action/muwa/repository/stats',
             httpClient: null,
             backupRepositoryChecks: [],
             backupRepositorySnapshots: [],
             selectedSnapshots: [],
+            stats: null
         };
     },
 
@@ -225,6 +227,7 @@ Component.register('muwa-backup-repository-detail', {
             this.getBackupRepository();
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
+            this.getBackupRepositoryStats();
         },
 
         getBackupRepository() {
@@ -443,8 +446,6 @@ Component.register('muwa-backup-repository-detail', {
                 id: id
             };
 
-            console.log('snapshotIds', snapshotIds);
-
             this.showDeleteModal = false;
 
             let payload = {
@@ -462,6 +463,20 @@ Component.register('muwa-backup-repository-detail', {
                 this.isBackupProcessInProgress = false;
                 this.onRefresh();
 
+            }).catch((exception) => {
+
+                this.createNotificationError({
+                    title: this.$t('muwa-backup-repository.restore.error-message'),
+                    message: exception.response.data.errors[0].detail
+                });
+            });
+        },
+
+        getBackupRepositoryStats() {
+
+            const apiRoute = `${this.requestRepositoryStats}/${this.$route.params.id}`;
+            this.httpClient.get(apiRoute, { headers: this.getApiHeader() }).then((collection) => {
+                this.stats = collection;
             }).catch((exception) => {
 
                 this.createNotificationError({

@@ -70,6 +70,24 @@ class ManageController extends AbstractController
         return new JsonResponse($removedSnapshot);
     }
 
+    /**
+     * @throws ExceptionInterface
+     */
+    #[Route(
+        path: '/api/_action/muwa/repository/stats/{backupRepositoryId}',
+        name: 'api.action.muwa.repository.stats',
+        methods: ['GET']
+    )]
+    public function getRepositoryStats(string $backupRepositoryId, Context $context): Response
+    {
+        $repositoryStats = array();
+        if(Uuid::isValid($backupRepositoryId)) {
+            $repositoryStats = json_decode($this->manageService->getRepositoryStatsById($backupRepositoryId));
+        }
+
+        return new JsonResponse($repositoryStats);
+    }
+
     protected function removeSnapshotsByIds(array $snapshotsByIds, string $backupRepositoryId): array
     {
         $removedSnapshot = array();

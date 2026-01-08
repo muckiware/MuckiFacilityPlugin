@@ -92,6 +92,28 @@ class ManageRepository
         return '';
     }
 
+    public function getRepositoryStatsById(string $backupRepositoryId, bool $isJsonOutput=true): string
+    {
+        $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+        try {
+
+            $manageClient = Manage::create();
+            if($this->pluginSettings->hasOwnResticBinaryPath()) {
+                $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
+            }
+            $manageClient->setRepositoryPath($backupRepository->getRepositoryPath());
+            $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
+            $manageClient->setJsonOutput($isJsonOutput);
+
+            return $manageClient->getRepositoryStats()->getOutput();
+
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+
+        return '';
+    }
+
     public function cleanupRepository(string $backupRepositoryId, bool $isJsonOutput=true): string
     {
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
