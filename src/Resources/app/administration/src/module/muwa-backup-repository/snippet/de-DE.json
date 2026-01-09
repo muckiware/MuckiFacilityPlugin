@@ -46,7 +46,7 @@
       "column-updated-at": "Aktualisiert am",
       "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
       "totalFileSizeLabel": "Gesamt Dateigröße",
-      "stats": "Repository Statistik",
+      "stats": "Repository Status",
       "statsItemLabel": "Name",
       "statsItemValueLabel": "Wert",
       "CheckStatusLabel": "Check Status",
@@ -107,6 +107,11 @@
       "error-message": "Ein Fehler ist aufgetreten",
       "process-success-title": "Wiederherstellungsprozess gestartet",
       "process-success-message": "Der Wiederherstellungsprozess wurde erfolgreich gestartet."
+    },
+    "manage": {
+      "delete-success-title": "Snapshot gelöscht",
+      "delete-success-message": "Der Snapshot wurde erfolgreich gelöscht.",
+      "deletes-success-message": "Die Snapshots wurden erfolgreich gelöscht."
     }
   }
 }

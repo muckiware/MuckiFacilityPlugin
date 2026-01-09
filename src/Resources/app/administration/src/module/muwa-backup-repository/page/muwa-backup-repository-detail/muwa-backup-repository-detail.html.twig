@@ -9,6 +9,7 @@
                 <sw-button-process
                     position-identifier="muwa-backup-repository"
                     :isLoading="isLoading"
+                    v-if="backupRepository && tab === 'backupRepositoryConfig'"
                     :processSuccess="processSuccess"
                     variant="primary"
                     @process-finish="saveFinish"
@@ -19,7 +20,7 @@
                 <sw-button-process
                         variant="ghost"
                         class="sw-settings-search__search-index-rebuild-button"
-                        :is-loading="isBackupProcessInProgress"
+                        :isLoading="isBackupProcessInProgress"
                         :disabled="isBackupProcessDisabled"
                         :process-success="isBackupProcessSuccess"
                         @update:process-success="createFinish"

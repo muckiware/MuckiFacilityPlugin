@@ -480,8 +480,8 @@ Component.register('muwa-backup-repository-detail', {
             this.httpClient.post(this.requestRemoveSnapshots, payload, { headers: this.getApiHeader() }).then(() => {
 
                 this.createNotificationSuccess({
-                    title: this.$t('muwa-backup-repository.restore.process-success-title'),
-                    message: this.$t('muwa-backup-repository.restore.process-success-message')
+                    title: this.$t('muwa-backup-repository.manage.delete-success-title'),
+                    message: this.$t('muwa-backup-repository.manage.delete-success-message')
                 });
 
                 this.isBackupProcessInProgress = false;
@@ -521,14 +521,18 @@ Component.register('muwa-backup-repository-detail', {
                 selectedSnapshots : this.selectedSnapshots
             }
 
+            this.isLoading = true
+            this.isStatsLoading = true
+
             this.httpClient.post(this.requestRemoveSnapshots, payload, { headers: this.getApiHeader() }).then(() => {
 
                 this.createNotificationSuccess({
-                    title: this.$t('muwa-backup-repository.restore.process-success-title'),
-                    message: this.$t('muwa-backup-repository.restore.process-success-message')
+                    title: this.$t('muwa-backup-repository.manage.delete-success-title'),
+                    message: this.$t('muwa-backup-repository.manage.deletes-success-message')
                 });
 
                 this.isBackupProcessInProgress = false;
+                this.onRefresh();
 
             }).catch((exception) => {
 
