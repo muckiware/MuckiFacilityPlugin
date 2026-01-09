@@ -163,9 +163,7 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\SettingsInterface" alias="MuckiLogPlugin\Services\Settings"/>
-        <service id="MuckiFacilityPlugin\Services\Helper" public="true">
-            <argument type="service" id="Psr\Log\LoggerInterface"/>
-        </service>
+        <service id="MuckiFacilityPlugin\Services\Helper" public="true"/>
         <service id="MuckiFacilityPlugin\Services\CliOutput" />
         <service id="MuckiFacilityPlugin\Services\DbTableCleanup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>

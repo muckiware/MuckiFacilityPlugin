@@ -11,7 +11,6 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
-use Psr\Log\LoggerInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\FilesystemException;
@@ -27,10 +26,6 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
  */
 class Helper
 {
-    public function __construct(
-        protected LoggerInterface $logger,
-    )
-    {}
     /**
      * @param array<mixed>|string $data
      * @return string
