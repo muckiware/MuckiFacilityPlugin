@@ -42,7 +42,17 @@
       "column-internal-name": "Internal Name",
       "column-active": "Active",
       "column-created-at": "Created at",
-      "column-updated-at": "Updated at"
+      "column-updated-at": "Updated at",
+      "textDeleteSnapshotConfirm": "Are you sure you want to delete the snapshot \"{snapshotShortId}\"?",
+      "totalFileSizeLabel": "Total File Size",
+      "stats": "Repository Status",
+      "statsItemLabel": "Name",
+      "statsItemValueLabel": "Value",
+      "CheckStatusLabel": "Check Status",
+      "totalFilesLabel": "Number of Files",
+      "totalSnapshotsLabel": "Number of Snapshots",
+      "totalFileRepositorySizeLabel": "Total Size of Repository",
+      "totalFileSystemSizeLabel": "Total Size on File System"
     },
     "detail": {
       "mappingLabel": "Mappings (language-dependent)",
@@ -96,6 +106,11 @@
       "error-message": "An error has occurred",
       "process-success-title": "Restore process started",
       "process-success-message": "The restore process has been started successfully."
+    },
+    "manage": {
+      "delete-success-title": "Snapshot deleted",
+      "delete-success-message": "The snapshot was deleted successfully.",
+      "deletes-success-message": "The snapshots were deleted successfully."
     }
   }
 }

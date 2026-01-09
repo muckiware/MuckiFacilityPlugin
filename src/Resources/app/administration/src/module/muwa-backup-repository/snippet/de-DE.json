@@ -39,10 +39,21 @@
       "storageSizeLabel": "Speichergröße",
       "docsDeletedLabel": "gelöschte Dokumente",
       "restoreLabel": "Snapshot wiederherstellen",
+      "deleteLabel": "Snapshot löschen",
       "column-internal-name": "Interner Name",
       "column-active": "Aktiv",
       "column-created-at": "Erstellt am",
-      "column-updated-at": "Aktualisiert am"
+      "column-updated-at": "Aktualisiert am",
+      "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
+      "totalFileSizeLabel": "Gesamt Dateigröße",
+      "stats": "Repository Status",
+      "statsItemLabel": "Name",
+      "statsItemValueLabel": "Wert",
+      "CheckStatusLabel": "Check Status",
+      "totalFilesLabel": "Anzahl Dateien",
+      "totalSnapshotsLabel": "Anzahl Snapshots",
+      "totalFileRepositorySizeLabel": "Gesamtgröße des Repository",
+      "totalFileSystemSizeLabel": "Gesamtgröße auf Dateisystems"
     },
     "detail": {
       "mappingLabel": "Zuweisungen (sprachabhängig)",
@@ -96,6 +107,11 @@
       "error-message": "Ein Fehler ist aufgetreten",
       "process-success-title": "Wiederherstellungsprozess gestartet",
       "process-success-message": "Der Wiederherstellungsprozess wurde erfolgreich gestartet."
+    },
+    "manage": {
+      "delete-success-title": "Snapshot gelöscht",
+      "delete-success-message": "Der Snapshot wurde erfolgreich gelöscht.",
+      "deletes-success-message": "Die Snapshots wurden erfolgreich gelöscht."
     }
   }
 }

@@ -175,7 +175,9 @@ class BackupRepositoryTest extends TestCase
             $this->createMock(LoggerInterface::class),
             $backupRepositoryMock,
             $this->createMock(BackupFileSnapshotsRepository::class),
+            $this->createMock(BackupRepositoryChecks::class),
             $pluginSettingsMock,
+            $this->createMock(PluginHelper::class)
         );
 
         $snapshots = json_decode($manageService->getSnapshots($backupRepositoryId), true);

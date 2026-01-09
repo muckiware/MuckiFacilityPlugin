@@ -9,6 +9,7 @@
                 <sw-button-process
                     position-identifier="muwa-backup-repository"
                     :isLoading="isLoading"
+                    v-if="backupRepository && tab === 'backupRepositoryConfig'"
                     :processSuccess="processSuccess"
                     variant="primary"
                     @process-finish="saveFinish"
@@ -19,7 +20,7 @@
                 <sw-button-process
                         variant="ghost"
                         class="sw-settings-search__search-index-rebuild-button"
-                        :is-loading="isBackupProcessInProgress"
+                        :isLoading="isBackupProcessInProgress"
                         :disabled="isBackupProcessDisabled"
                         :process-success="isBackupProcessSuccess"
                         @update:process-success="createFinish"
@@ -386,17 +387,46 @@
                     </sw-entity-listing>
 
                     {# Tab Snapshots #}
+                    <sw-card
+                        positionIdentifier="muwaBackupRepositoryStats"
+                        v-if="backupRepository && tab === 'backupRepositorySnapshots'"
+                        :title="$tc('muwa-backup-repository.list.stats')"
+                        :large="true"
+                    >
+                        <template #grid>
+                            <sw-data-grid
+                                v-if="stats"
+                                :showSelection="false"
+                                :showActions="false"
+                                :dataSource="stats.data"
+                                :columns="statsColumns"
+                                :plain-appearance="true"
+                                :is-loading="isStatsLoading"
+                            >
+                                <template #column-label="{ item }">
+                                    {{ $tc(item.label) }}
+                                </template>
+                                <template #column-value="{ item }">
+                                    {{ item.value }}
+                                </template>
+                            </sw-data-grid>
+                        </template>
+                    </sw-card>
                     <sw-entity-listing
-                            v-if="backupRepository && tab === 'backupRepositorySnapshots'"
-                            :isLoading="isLoading"
-                            :items="backupRepositorySnapshots"
-                            :repository="backupRepositorySnapshotsRepository"
-                            :columns="backupSnapshotsColumns"
-                            :showActions="true"
-                            :showSelection="false"
-                            :showSettings="false"
-                            :sort-by="sortBy"
-                            :sort-direction="sortDirection"
+                        v-if="backupRepository && tab === 'backupRepositorySnapshots'"
+                        :isLoading="isLoading"
+                        :items="backupRepositorySnapshots"
+                        :repository="backupRepositorySnapshotsRepository"
+                        :columns="backupSnapshotsColumns"
+                        :showActions="true"
+                        :showSettings="false"
+                        :show-selection="true"
+                        :sort-by="sortBy"
+                        :sort-direction="sortDirection"
+                        @selection-change="updateSelection"
+                        @items-delete-finish="itemsDeleteFinish"
+                        @column-sort="onSortColumn"
+                        :large="true"
                     >
                         <template #column-snapshot-id="{item}">
                             <div v-if="item.snapshotShortId" :title="item.snapshotShortId">
@@ -424,16 +454,76 @@
                         <template #actions="{ item }">
                             <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                             {% block wuwa_backup_repository_list_content_listing_actions %}
-                                <sw-context-menu-item @click="restoreSnapshot(item)">
+                                <sw-context-menu-item
+                                    size="small"
+                                    @click="restoreSnapshot(item)"
+                                >
                                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                     {% block wuwa_backup_repository_list_content_listing_action_show_label %}
                                         {{ $tc('muwa-backup-repository.list.restoreLabel') }}
                                     {% endblock %}
                                 </sw-context-menu-item>
                             {% endblock %}
-                        </template>
-                    </sw-entity-listing>
 
+                            {% block wuwa_backup_repository_list_content_listing_delete %}
+                                <sw-context-menu-item
+                                    class="sw-customer-list__delete-action"
+                                    variant="danger"
+                                    :disabled="false"
+                                    size="small"
+                                    @click="onDelete(item.id)"
+                                >
+                                    {{ $tc('muwa-backup-repository.list.deleteLabel') }}
+                                </sw-context-menu-item>
+                            {% endblock %}
+                        </template>
+
+                        {% block wuwa_backup_repository_list_grid_action_modals %}
+                        <template #action-modals="{ item }">
+
+                            {% block wuwa_backup_repository_list_delete_modal %}
+                            <sw-modal
+                                    v-if="showDeleteModal === item.id"
+                                    :title="$tc('global.default.warning')"
+                                    variant="small"
+                                    @modal-close="onCloseDeleteModal"
+                            >
+
+                                {% block wuwa_backup_repository_list_delete_modal_confirm_delete_text %}
+                                <p class="muwa-backup-repository-list__confirm-delete-text">
+                                {{ $tc('muwa-backup-repository.list.textDeleteSnapshotConfirm', 0, { snapshotShortId: `${item.snapshotShortId}` }) }}
+                            </p>
+                            {% endblock %}
+
+                            {% block wuwa_backup_repository_list_delete_modal_footer %}
+                                <template #modal-footer>
+
+                                    {% block wuwa_backup_repository_list_delete_modal_cancel %}
+                                    <sw-button
+                                            size="small"
+                                            @click="onCloseDeleteModal"
+                                    >
+                                        {{ $tc('global.default.cancel') }}
+                                        </sw-button>
+                                        {% endblock %}
+
+                                        {% block sw_customer_list_delete_modal_confirm %}
+                                        <sw-button
+                                        variant="danger"
+                                        size="small"
+                                        @click="onConfirmDelete(item.id, item.snapshotId)"
+                                        >
+                                        {{ $tc('sw-customer.list.buttonDelete') }}
+                                    </sw-button>
+                                    {% endblock %}
+                                </template>
+                                {% endblock %}
+                            </sw-modal>
+                            {% endblock %}
+                        </template>
+                        {% endblock %}
+
+                    </sw-entity-listing>
                 </sw-card-view>
             {% endblock %}
         </template>
