@@ -45,7 +45,15 @@
       "column-created-at": "Erstellt am",
       "column-updated-at": "Aktualisiert am",
       "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
-      "totalFileSizeLabel": "Gesamt Dateigröße"
+      "totalFileSizeLabel": "Gesamt Dateigröße",
+      "stats": "Repository Statistik",
+      "statsItemLabel": "Name",
+      "statsItemValueLabel": "Wert",
+      "CheckStatusLabel": "Check Status",
+      "totalFilesLabel": "Anzahl Dateien",
+      "totalSnapshotsLabel": "Anzahl Snapshots",
+      "totalFileRepositorySizeLabel": "Gesamtgröße des Repository",
+      "totalFileSystemSizeLabel": "Gesamtgröße auf Dateisystems"
     },
     "detail": {
       "mappingLabel": "Zuweisungen (sprachabhängig)",

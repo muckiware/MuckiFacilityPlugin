@@ -13,6 +13,7 @@ namespace MuckiFacilityPlugin\Services;
 
 use League\Flysystem\FilesystemException;
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Framework\Uuid\Uuid;
 
 use MuckiRestic\Library\Manage;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
@@ -134,6 +135,7 @@ class ManageRepository
         }
 
         $statsOutputs['totalFileSystemSize'] = array (
+            'id' => Uuid::randomHex(),
             'label' => 'muwa-backup-repository.list.totalFileSystemSizeLabel',
             'value' => \ByteUnits\Binary::bytes($directorySize)->asMetric()->format()
         );
@@ -141,6 +143,7 @@ class ManageRepository
         if(array_key_exists('total_size', $repositoryStats)) {
 
             $statsOutputs['totalFileRepositorySize'] = array (
+                'id' => Uuid::randomHex(),
                 'label' => 'muwa-backup-repository.list.totalFileRepositorySizeLabel',
                 'value' => \ByteUnits\Binary::bytes($repositoryStats['total_size'])->asMetric()->format()
             );
@@ -149,6 +152,7 @@ class ManageRepository
         if(array_key_exists('snapshots_count', $repositoryStats)) {
 
             $statsOutputs['totalSnapshots'] = array (
+                'id' => Uuid::randomHex(),
                 'label' => 'muwa-backup-repository.list.totalSnapshotsLabel',
                 'value' => $repositoryStats['snapshots_count']
             );
@@ -157,6 +161,7 @@ class ManageRepository
         if(array_key_exists('total_file_count', $repositoryStats)) {
 
             $statsOutputs['totalFiles'] = array (
+                'id' => Uuid::randomHex(),
                 'label' => 'muwa-backup-repository.list.totalFilesLabel',
                 'value' => $repositoryStats['total_file_count']
             );
@@ -166,6 +171,7 @@ class ManageRepository
         if($checks) {
 
             $statsOutputs['checkStatus'] = array (
+                'id' => Uuid::randomHex(),
                 'label' => 'muwa-backup-repository.list.CheckStatusLabel',
                 'value' => $checks->getCheckStatus()
             );

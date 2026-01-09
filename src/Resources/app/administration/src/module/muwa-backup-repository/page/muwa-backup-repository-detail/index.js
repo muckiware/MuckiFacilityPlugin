@@ -58,6 +58,7 @@ Component.register('muwa-backup-repository-detail', {
                 backupPaths: []
             },
             isLoading: false,
+            isStatsLoading: false,
             showDeleteModal: false,
             isSaveSuccessful: false,
             type: [
@@ -149,6 +150,24 @@ Component.register('muwa-backup-repository-detail', {
             ];
         },
 
+        statsColumns() {
+
+            return [
+                {
+                    property: 'label',
+                    label: 'muwa-backup-repository.list.statsItemLabel',
+                    allowResize: true,
+                    width: '30%',
+                },
+                {
+                    property: 'value',
+                    label: 'muwa-backup-repository.list.statsItemValueLabel',
+                    allowResize: true,
+                    width: '70%',
+                }
+            ];
+        },
+
         backupChecksColumns() {
 
             return [
@@ -223,6 +242,7 @@ Component.register('muwa-backup-repository-detail', {
         createdComponent() {
 
             this.isLoading = true;
+            this.isStatsLoading = true;
             this.isBackupProcessInProgress = true;
             this.getBackupRepository();
             this.fetchBackupRepositoryChecks();
@@ -262,6 +282,7 @@ Component.register('muwa-backup-repository-detail', {
 
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
+            this.getBackupRepositoryStats();
         },
 
         onClickSave() {
@@ -453,6 +474,9 @@ Component.register('muwa-backup-repository-detail', {
                 selectedSnapshots : snapshotIds
             }
 
+            this.isLoading = true
+            this.isStatsLoading = true
+
             this.httpClient.post(this.requestRemoveSnapshots, payload, { headers: this.getApiHeader() }).then(() => {
 
                 this.createNotificationSuccess({
@@ -474,9 +498,13 @@ Component.register('muwa-backup-repository-detail', {
 
         getBackupRepositoryStats() {
 
+            this.isStatsLoading = true;
+
             const apiRoute = `${this.requestRepositoryStats}/${this.$route.params.id}`;
             this.httpClient.get(apiRoute, { headers: this.getApiHeader() }).then((collection) => {
+
                 this.stats = collection;
+                this.isStatsLoading = false;
             }).catch((exception) => {
 
                 this.createNotificationError({
