@@ -11,13 +11,16 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
+use League\Flysystem\FilesystemException;
 use Psr\Log\LoggerInterface;
 
 use MuckiRestic\Library\Manage;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
+use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository;
+use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
 
 class ManageRepository
 {
@@ -25,7 +28,9 @@ class ManageRepository
         protected LoggerInterface $logger,
         protected BackupRepository $backupRepository,
         protected BackupFileSnapshotsRepository $backupFileSnapshotsRepository,
-        protected PluginSettings $pluginSettings
+        protected BackupRepositoryChecks $backupRepositoryChecks,
+        protected PluginSettings $pluginSettings,
+        protected PluginHelper $pluginHelper,
     )
     {}
 
@@ -112,6 +117,61 @@ class ManageRepository
         }
 
         return '';
+    }
+
+    public function generateStatsOutputs(array $repositoryStats, string $backupRepositoryId): array
+    {
+        $directorySize = 0;
+        $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+        $statsOutputs = array();
+
+        try {
+            $directorySize = $this->pluginHelper->getDirectorySize($backupRepository->getRepositoryPath());
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        } catch (FilesystemException $e) {
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+
+        $statsOutputs['totalFileSystemSize'] = array (
+            'label' => 'muwa-backup-repository.list.totalFileSystemSizeLabel',
+            'value' => \ByteUnits\Binary::bytes($directorySize)->asMetric()->format()
+        );
+
+        if(array_key_exists('total_size', $repositoryStats)) {
+
+            $statsOutputs['totalFileRepositorySize'] = array (
+                'label' => 'muwa-backup-repository.list.totalFileRepositorySizeLabel',
+                'value' => \ByteUnits\Binary::bytes($repositoryStats['total_size'])->asMetric()->format()
+            );
+        }
+
+        if(array_key_exists('snapshots_count', $repositoryStats)) {
+
+            $statsOutputs['totalSnapshots'] = array (
+                'label' => 'muwa-backup-repository.list.totalSnapshotsLabel',
+                'value' => $repositoryStats['snapshots_count']
+            );
+        }
+
+        if(array_key_exists('total_file_count', $repositoryStats)) {
+
+            $statsOutputs['totalFiles'] = array (
+                'label' => 'muwa-backup-repository.list.totalFilesLabel',
+                'value' => $repositoryStats['total_file_count']
+            );
+        }
+
+        $checks = $this->backupRepositoryChecks->getLatestChecksByRepositoryId($backupRepositoryId);
+        if($checks) {
+
+            $statsOutputs['checkStatus'] = array (
+                'label' => 'muwa-backup-repository.list.CheckStatusLabel',
+                'value' => $checks->getCheckStatus()
+            );
+        }
+
+        return $statsOutputs;
     }
 
     public function cleanupRepository(string $backupRepositoryId, bool $isJsonOutput=true): string

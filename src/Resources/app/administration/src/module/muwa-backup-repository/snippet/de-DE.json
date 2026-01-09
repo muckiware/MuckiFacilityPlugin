@@ -44,7 +44,8 @@
       "column-active": "Aktiv",
       "column-created-at": "Erstellt am",
       "column-updated-at": "Aktualisiert am",
-      "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?"
+      "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
+      "totalFileSizeLabel": "Gesamt Dateigröße"
     },
     "detail": {
       "mappingLabel": "Zuweisungen (sprachabhängig)",

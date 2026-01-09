@@ -82,7 +82,10 @@ class ManageController extends AbstractController
     {
         $repositoryStats = array();
         if(Uuid::isValid($backupRepositoryId)) {
-            $repositoryStats = json_decode($this->manageService->getRepositoryStatsById($backupRepositoryId));
+            $repositoryStats = $this->manageService->generateStatsOutputs(
+                json_decode($this->manageService->getRepositoryStatsById($backupRepositoryId), true),
+                $backupRepositoryId
+            );
         }
 
         return new JsonResponse($repositoryStats);

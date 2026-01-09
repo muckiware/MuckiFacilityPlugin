@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -12,6 +12,10 @@
 namespace MuckiFacilityPlugin\Services;
 
 use Psr\Log\LoggerInterface;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Local\LocalFilesystemAdapter;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\StorageAttributes;
 
 use MuckiRestic\ResultParser\CheckResultParser;
 use MuckiRestic\Entity\Result\ResultEntity;
@@ -23,6 +27,10 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
  */
 class Helper
 {
+    public function __construct(
+        protected LoggerInterface $logger,
+    )
+    {}
     /**
      * @param array<mixed>|string $data
      * @return string
@@ -116,5 +124,41 @@ class Helper
     public function isValidShortId(string $input): bool
     {
         return preg_match('/^[a-zA-Z0-9]{8}$/', $input) === 1;
+    }
+
+    /**
+     * Method to calculate the total size in byte of a directory by absolute path.
+     *
+     * @param string $directoryPath absolute path
+     * @param bool $recursive whether to include subdirectories
+     * @return int size in byte
+     *
+     * @throws FilesystemException
+     */
+    public function getDirectorySize(string $directoryPath, bool $recursive=true): int
+    {
+        $directorySize = 0;
+        $directoryFolders = explode('/', $directoryPath);
+        $targetFolder = array_pop($directoryFolders);
+        $workingPath = implode('/', $directoryFolders);
+
+        $adapter = new LocalFilesystemAdapter($workingPath);
+        $filesystem = new Filesystem($adapter);
+
+        if(!$filesystem->directoryExists($targetFolder)) {
+            return $directorySize;
+        }
+
+        $allFilePaths = $filesystem->listContents($targetFolder, $recursive)
+            ->filter(fn (StorageAttributes $attributes) => $attributes->isFile())
+            ->map(fn (StorageAttributes $attributes) => $attributes->path())
+            ->toArray();
+
+        /** @var StorageAttributes $directoryItem */
+        foreach ($allFilePaths as $filePath) {
+            $directorySize += $filesystem->fileSize($filePath);
+        }
+
+        return $directorySize;
     }
 }

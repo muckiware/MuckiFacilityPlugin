@@ -163,7 +163,9 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\SettingsInterface" alias="MuckiLogPlugin\Services\Settings"/>
-        <service id="MuckiFacilityPlugin\Services\Helper"/>
+        <service id="MuckiFacilityPlugin\Services\Helper" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+        </service>
         <service id="MuckiFacilityPlugin\Services\CliOutput" />
         <service id="MuckiFacilityPlugin\Services\DbTableCleanup" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -203,7 +205,9 @@
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
 
         <service id="MuckiFacilityPlugin\Subscriber\BackupRepositorySnapshotSubscriber">
