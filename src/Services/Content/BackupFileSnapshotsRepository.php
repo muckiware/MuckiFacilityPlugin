@@ -60,7 +60,7 @@ class BackupFileSnapshotsRepository
                 'snapshotShortId' => $snapshot['short_id'],
                 'paths' => implode(',', $snapshot['paths']),
                 'hostname' => $snapshot['hostname'],
-                'size' => \ByteUnits\Binary::bytes($snapshot['summary']['total_bytes_processed'])->format(),
+                'size' => \ByteUnits\Binary::bytes($snapshot['summary']['total_bytes_processed'])->asMetric()->format(),
                 'createdAt' => $this->pluginHelper->createDateTimeFromString($snapshot['time'])
             ];
         }
