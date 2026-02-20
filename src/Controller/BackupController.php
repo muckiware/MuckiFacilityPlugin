@@ -48,7 +48,10 @@ class BackupController extends AbstractController
     )]
     public function process(RequestDataBag $requestDataBag, Context $context): Response
     {
-        $message = new CreateBackupMessage();
+        $message = new CreateBackupMessage(
+            $requestDataBag->get('id'),
+            $context
+        );
         $message->setBackupRepositoryId($requestDataBag->get('id'));
         $message->setBackupPaths($this->createBackupPaths($requestDataBag->get('backupPaths')));
         $message->setRepositoryPath($requestDataBag->get('repositoryPath'));
