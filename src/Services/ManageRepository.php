@@ -98,9 +98,20 @@ class ManageRepository
         return '';
     }
 
+    /**
+     * @throws \Exception
+     */
     public function getRepositoryStatsById(string $backupRepositoryId, bool $isJsonOutput=true): string
     {
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+        if ($backupRepository && !is_dir($backupRepository->getRepositoryPath())) {
+
+            $this->logger->error(
+                'Repository path does not exist: '.$backupRepository->getRepositoryPath(),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+            throw new \Exception('Repository path does not exist: '.$backupRepository->getRepositoryPath());
+        }
         try {
 
             $manageClient = Manage::create();

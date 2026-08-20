@@ -54,6 +54,7 @@ Component.register('muwa-backup-repository-detail', {
         return {
             V6_5_0_0: false,
             V6_6_0_0: false,
+            V6_7_0_0: false,
             backupRepository: {
                 backupPaths: []
             },
@@ -61,6 +62,8 @@ Component.register('muwa-backup-repository-detail', {
             isStatsLoading: false,
             showDeleteModal: false,
             isSaveSuccessful: false,
+            // sw-button-process declares processSuccess as a required prop
+            processSuccess: false,
             type: [
                 { value: 'noneDatabase', label: this.$tc('muwa-backup-repository.general.types.noneDatabase') },
                 { value: 'completeDatabaseSingleFile', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSingleFile') },
@@ -89,6 +92,10 @@ Component.register('muwa-backup-repository-detail', {
 
         if (this.feature.isActive('V6_5_0_0') && !this.feature.isActive('V6_6_0_0')) {
             this.V6_5_0_0 = true;
+        }
+
+        if (this.feature.isActive('V6_7_0_0')) {
+            this.V6_7_0_0 = true;
         }
 
         if(this.$route.params.tab === undefined) {
@@ -226,6 +233,27 @@ Component.register('muwa-backup-repository-detail', {
         },
         isV6500() {
             return this.V6_5_0_0;
+        },
+        isV6700() {
+            return this.V6_7_0_0;
+        },
+
+        /**
+         * Options for the database dump type select.
+         *
+         * Both key sets are supplied on purpose: up to 6.6 sw-select-field renders
+         * sw-select-field-deprecated, which reads `id` and `name`, whereas from 6.7
+         * on it renders mt-select, which reads `value` and `label`.
+         */
+        typeOptions() {
+            return this.type.map((option) => {
+                return {
+                    id: option.value,
+                    name: option.label,
+                    value: option.value,
+                    label: option.label,
+                };
+            });
         },
 
         tab() {

@@ -1,7 +1,7 @@
 {
 	"name" : "muckiware/facility-plugin",
 	"description" : "Muckiware Facility Plugin for Shopware 6",
-	"version": "v0.6.1",
+	"version": "v0.7.0",
 	"keywords": [
 		"shopware6",
 		"backup",
@@ -28,7 +28,8 @@
 		}
 	},
 	"require" : {
-		"php" : ">= 8.1",
+		"php" : "~8.2.0 || ~8.3.0 || ~8.4.0",
+		"shopware/core": "~6.6.0 || ~6.7.0",
 		"spatie/db-dumper": "^3.7",
 		"muckiware/restic": "^1.4",
 		"gabrielelana/byte-units": "^0.5.0"

@@ -6,7 +6,7 @@ Muckiware Facility Plugin for Shopware 6 Web shops for to maintenance and backup
 - Cleanups tables like cart, if the database table grow up in too large.
 
 ## Requirements
-- Shopware 6.6.x
+- Shopware 6.6.x or 6.7.x
 - PHP 8.2.x or greater
 - restic 0.15.x or greater
 

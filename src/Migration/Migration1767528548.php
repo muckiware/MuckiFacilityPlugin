@@ -38,7 +38,7 @@ class Migration1767528548 extends MigrationStep
                 AND 
                 COLUMN_NAME = \'hostname\'
         ');
-        if(!empty($columnCheck) && $columnCheck[0] === '0') {
+        if(!empty($columnCheck) && (int) $columnCheck[0] === 0) {
             $connection->executeStatement('ALTER TABLE `muwa_backup_repository` ADD COLUMN `hostname` VARCHAR(128) NULL DEFAULT NULL AFTER `type`;');
         }
     }

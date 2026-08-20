@@ -18,6 +18,7 @@ use Doctrine\DBAL\Exception;
 use Shopware\Core\Framework\Test\TestCaseBase\KernelTestBehaviour;
 
 use MuckiFacilityPlugin\Database\TableRunner\CartCleanupRunner;
+use MuckiFacilityPlugin\Exception\TableCleanupFailedException;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Services\CliOutput;
 use MuckiFacilityPlugin\tests\TestCaseBase\DbCleanup as TestCaseBaseDbCleanup;
@@ -45,7 +46,7 @@ class CartCleanupRunnerTest extends TestCase
 
     public function testCreateTempTableException(): void
     {
-        $this->expectException(Exception::class);
+        $this->expectException(TableCleanupFailedException::class);
         $this->expectExceptionMessage('Problem to create temp cart table');
         $cartCleanupRunner = $this->createRunnerInstance();
 

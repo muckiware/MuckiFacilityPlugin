@@ -17,6 +17,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Exception\TableCleanupFailedException;
 use MuckiFacilityPlugin\Database\DatabaseHelper;
 use MuckiFacilityPlugin\Database\TableCleanupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
@@ -47,7 +48,7 @@ class CleanupRunner
         } catch (Exception $e) {
 
             $this->logger->error(print_r($e, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('copy of '.$sourceTableName.' items into '.$targetTableName.' table not possible');
+            throw new TableCleanupFailedException('copy of '.$sourceTableName.' items into '.$targetTableName.' table not possible');
         }
 
         $this->cliOutput->writeSameLineCliOutput('...done');

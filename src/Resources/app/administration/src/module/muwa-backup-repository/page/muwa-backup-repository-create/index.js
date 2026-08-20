@@ -18,6 +18,7 @@ Component.register('muwa-backup-repository-create', {
         return {
             V6_5_0_0: false,
             V6_6_0_0: false,
+            V6_7_0_0: false,
             backupRepository: {},
             isLoading: false,
             isLoadingInit: false,
@@ -45,6 +46,10 @@ Component.register('muwa-backup-repository-create', {
 
         if (this.feature.isActive('V6_5_0_0') && !this.feature.isActive('V6_6_0_0')) {
             this.V6_5_0_0 = true;
+        }
+
+        if (this.feature.isActive('V6_7_0_0')) {
+            this.V6_7_0_0 = true;
         }
 
         this.httpClient = Shopware.Application.getContainer('init').httpClient;
@@ -81,6 +86,27 @@ Component.register('muwa-backup-repository-create', {
         },
         isV6500() {
             return this.V6_5_0_0;
+        },
+        isV6700() {
+            return this.V6_7_0_0;
+        },
+
+        /**
+         * Options for the database dump type select.
+         *
+         * Both key sets are supplied on purpose: up to 6.6 sw-select-field renders
+         * sw-select-field-deprecated, which reads `id` and `name`, whereas from 6.7
+         * on it renders mt-select, which reads `value` and `label`.
+         */
+        typeOptions() {
+            return this.type.map((option) => {
+                return {
+                    id: option.value,
+                    name: option.label,
+                    value: option.value,
+                    label: option.label,
+                };
+            });
         },
 
         getBackupPaths() {

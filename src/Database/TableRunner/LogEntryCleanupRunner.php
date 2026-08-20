@@ -17,6 +17,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Exception\TableCleanupFailedException;
 use MuckiFacilityPlugin\Database\DatabaseHelper;
 use MuckiFacilityPlugin\Database\TableCleanupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
@@ -58,7 +59,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
         } catch (Exception $e) {
 
             $this->logger->error(print_r($e, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to insert log_entry items into origin table '.$e->getMessage());
+            throw new TableCleanupFailedException('Not possible to insert log_entry items into origin table '.$e->getMessage());
         }
 
         return str_replace(
@@ -75,7 +76,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
 
         try {
 
-            if ($schemaManager->tablesExist($tableName)) {
+            if ($schemaManager->tablesExist([$tableName])) {
 
                 $this->cliOutput->writeNewLineCliOutput('Drop old '.$tableName.' table');
                 $schemaManager->dropTable($tableName);
@@ -84,7 +85,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
         } catch (Exception $e) {
 
             $this->logger->error(print_r($e->getMessage(), true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to check old '.$tableName.' table');
+            throw new TableCleanupFailedException('Not possible to check old '.$tableName.' table');
         }
 
         $this->cliOutput->writeSameLineCliOutput('...done');
@@ -121,7 +122,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
             $this->cliOutput->writeNewLineCliOutput($e->getMessage());
-            throw new Exception('Problem to remove old log entry items');
+            throw new TableCleanupFailedException('Problem to remove old log entry items');
         }
 
         $this->cliOutput->writeSameLineCliOutput('...done');
@@ -150,7 +151,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Problem to create temp log_entry table');
+            throw new TableCleanupFailedException('Problem to create temp log_entry table');
         }
 
         return true;
@@ -169,7 +170,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('copy of log_entry items into temp table not possible');
+            throw new TableCleanupFailedException('copy of log_entry items into temp table not possible');
         }
 
         $this->cliOutput->writeSameLineCliOutput('...found ' . $counter . ' current log_entry items');
@@ -189,7 +190,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to remove '.$tableName.' table');
+            throw new TableCleanupFailedException('Not possible to remove '.$tableName.' table');
         }
     }
 
@@ -205,7 +206,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to create new log_entry table');
+            throw new TableCleanupFailedException('Not possible to create new log_entry table');
         }
     }
 

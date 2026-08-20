@@ -96,22 +96,28 @@
                         >
                         </sw-text-field>
 
+                        {# From 6.7 on sw-select-field renders mt-select, which binds via
+                           modelValue and ignores forwarded option slots. #}
                         <sw-select-field
-                            v-if="backupRepository && isV6600"
+                            v-if="backupRepository && isV6700"
+                            v-model="backupRepository.type"
+                            validation="required"
+                            required
+                            :disabled="false"
+                            :options="typeOptions"
+                            :label="$tc('muwa-backup-repository.detail.card-base.type')"
+                        >
+                        </sw-select-field>
+                        <sw-select-field
+                            v-if="backupRepository && isV6600 && !isV6700"
                             v-model:value="backupRepository.type"
                             validation="required"
                             required
                             :disabled="false"
                             type="select"
+                            :options="typeOptions"
                             :label="$tc('muwa-backup-repository.detail.card-base.type')"
                         >
-                            <option slot="options"
-                                v-for="option in type"
-                                :key="option.value"
-                                :value="option.value"
-                            >
-                                {{ option.label }}
-                            </option>
                         </sw-select-field>
                         <sw-select-field
                             v-if="backupRepository && isV6500"

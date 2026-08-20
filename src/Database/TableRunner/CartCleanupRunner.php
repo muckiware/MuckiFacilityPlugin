@@ -17,6 +17,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Exception\TableCleanupFailedException;
 use MuckiFacilityPlugin\Database\DatabaseHelper;
 use MuckiFacilityPlugin\Database\TableCleanupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
@@ -51,7 +52,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
     }
 
     /**
-     * @throws Exception
+     * @throws TableCleanupFailedException
      */
     public function getCreateTableStatement(): string
     {
@@ -63,7 +64,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
         } catch (Exception $e) {
 
             $this->logger->error(print_r($e, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to insert cart items into origin table '.$e->getMessage());
+            throw new TableCleanupFailedException('Not possible to insert cart items into origin table '.$e->getMessage());
         }
 
         return str_replace(
@@ -74,7 +75,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
     }
 
     /**
-     * @throws Exception
+     * @throws TableCleanupFailedException
      */
     public function checkOldTempTable(): bool
     {
@@ -83,7 +84,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
 
         try {
 
-            if ($schemaManager->tablesExist($tableName)) {
+            if ($schemaManager->tablesExist([$tableName])) {
 
                 $this->cliOutput->writeNewLineCliOutput('Drop old '.$tableName.' table');
                 $schemaManager->dropTable($tableName);
@@ -92,7 +93,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
         } catch (Exception $e) {
 
             $this->logger->error(print_r($e->getMessage(), true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to check old '.$tableName.' table');
+            throw new TableCleanupFailedException('Not possible to check old '.$tableName.' table');
         }
 
         $this->cliOutput->writeSameLineCliOutput('...done');
@@ -101,7 +102,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
     }
 
     /**
-     * @throws Exception
+     * @throws TableCleanupFailedException
      */
     public function removeOldTableItems(): void
     {
@@ -132,14 +133,14 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
             $this->cliOutput->writeNewLineCliOutput($e->getMessage());
-            throw new Exception('Problem to remove old cart items');
+            throw new TableCleanupFailedException('Problem to remove old cart items');
         }
 
         $this->cliOutput->writeSameLineCliOutput('...done');
     }
 
     /**
-     * @throws Exception
+     * @throws TableCleanupFailedException
      */
     public function createTempTable(string $sqlCreateStatement): bool
     {
@@ -164,14 +165,14 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Problem to create temp cart table');
+            throw new TableCleanupFailedException('Problem to create temp cart table');
         }
 
         return true;
     }
 
     /**
-     * @throws Exception
+     * @throws TableCleanupFailedException
      */
     public function countTableItems(string $tableName): int
     {
@@ -186,7 +187,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('copy of cart items into temp table not possible');
+            throw new TableCleanupFailedException('copy of cart items into temp table not possible');
         }
 
         $this->cliOutput->writeSameLineCliOutput('...found ' . $counter . ' current cart items');
@@ -195,7 +196,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
     }
 
     /**
-     * @throws Exception
+     * @throws TableCleanupFailedException
      */
     public function removeTableByName(string $tableName): void
     {
@@ -209,12 +210,12 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to remove '.$tableName.' table');
+            throw new TableCleanupFailedException('Not possible to remove '.$tableName.' table');
         }
     }
 
     /**
-     * @throws Exception
+     * @throws TableCleanupFailedException
      */
     public function createNewTable(string $sqlCreateStatement): void
     {
@@ -228,7 +229,7 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new Exception('Not possible to create new cart table');
+            throw new TableCleanupFailedException('Not possible to create new cart table');
         }
     }
 }
