@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -114,6 +114,9 @@ class ManageSnapshots extends Command
         throw new \InvalidArgumentException('Invalid or missing backup repository id');
     }
 
+    /**
+     * @return array<int, string> validated restic short ids
+     */
     protected function checkInputForRemoveSnapshotIds(InputInterface $input): array
     {
         $remove = $input->getOption('remove');

@@ -65,6 +65,9 @@ class ManageRepository
         $this->backupFileSnapshotsRepository->createNewSnapshots($backupRepositoryId, $fileSnapshots);
     }
 
+    /**
+     * @param array<int, string> $snapshotIds
+     */
     public function removeSnapshotByIds(string $backupRepositoryId, array $snapshotIds, bool $isJsonOutput=true): string
     {
         $result = [];
@@ -131,6 +134,10 @@ class ManageRepository
         return '';
     }
 
+    /**
+     * @param array<string, mixed> $repositoryStats decoded output of `restic stats`
+     * @return array<string, array{id: string, label: string, value: mixed}>
+     */
     public function generateStatsOutputs(array $repositoryStats, string $backupRepositoryId): array
     {
         $directorySize = 0;

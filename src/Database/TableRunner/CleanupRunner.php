@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -26,11 +26,11 @@ use MuckiFacilityPlugin\Services\CliOutput;
 class CleanupRunner
 {
     public function __construct(
-        LoggerInterface $logger,
-        Connection $connection,
-        SettingsInterface $pluginSettings,
-        CliOutput $cliOutput,
-        DatabaseHelper $databaseHelper
+        protected LoggerInterface $logger,
+        protected Connection $connection,
+        protected SettingsInterface $pluginSettings,
+        protected CliOutput $cliOutput,
+        protected DatabaseHelper $databaseHelper
     )
     {}
 

@@ -91,6 +91,10 @@ class ManageController extends AbstractController
         return new JsonResponse($repositoryStats);
     }
 
+    /**
+     * @param array<int, array{snapshotId: string}> $snapshotsByIds
+     * @return array<int, string> ids of the removed snapshots
+     */
     protected function removeSnapshotsByIds(array $snapshotsByIds, string $backupRepositoryId): array
     {
         $removedSnapshot = array();
@@ -105,6 +109,9 @@ class ManageController extends AbstractController
         return $removedSnapshot;
     }
 
+    /**
+     * @return array<int, array{snapshotId: string}>
+     */
     protected function getSnapshotIds(RequestDataBag $requestDataBag): array
     {
         $backupRepositoryId = $requestDataBag->get('backupRepositoryId');

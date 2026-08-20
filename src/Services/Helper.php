@@ -149,7 +149,7 @@ class Helper
             ->map(fn (StorageAttributes $attributes) => $attributes->path())
             ->toArray();
 
-        /** @var StorageAttributes $directoryItem */
+        /** @var string $filePath listContents() was mapped to the plain path above */
         foreach ($allFilePaths as $filePath) {
             $directorySize += $filesystem->fileSize($filePath);
         }

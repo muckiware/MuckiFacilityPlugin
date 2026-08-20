@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024-2025 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -30,11 +30,11 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
     protected string $logEntryTempTableName = self::LOG_ENTRY_TEMP_TABLE_NAME;
 
     public function __construct(
-        protected LoggerInterface $logger,
-        protected Connection $connection,
-        protected SettingsInterface $pluginSettings,
-        protected CliOutput $cliOutput,
-        protected DatabaseHelper $databaseHelper
+        LoggerInterface $logger,
+        Connection $connection,
+        SettingsInterface $pluginSettings,
+        CliOutput $cliOutput,
+        DatabaseHelper $databaseHelper
     ) {
         parent::__construct($logger, $connection, $pluginSettings, $cliOutput, $databaseHelper);
     }
