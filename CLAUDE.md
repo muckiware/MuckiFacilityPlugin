@@ -4,22 +4,29 @@ Backup-, Restore- und Datenbank-Cleanup-Plugin fuer Shopware 6, basierend auf de
 [restic](https://restic.readthedocs.io/). Die eigentliche restic-Ansteuerung liegt in der
 Composer-Library `muckiware/restic`, dieses Plugin ist die Shopware-Integration darum herum.
 
-**Wichtig:** Das ist ein **Fremd-Plugin** (`muckiware/facility-plugin`, MIT), kein LightsOn-Plugin.
-Der Namespace ist `MuckiFacilityPlugin\`, **nicht** `LightsOn\`. Anpassungen niemals direkt im
-Plugin-Verzeichnis "verstecken" — entweder Upstream-PR/Fork mit eigenem Branch, oder Composer-Patch.
-Beim Update wird alles hier ueberschrieben.
+**Wichtig:** Das ist kein LightsOn-Plugin — der Namespace ist `MuckiFacilityPlugin\`, **nicht**
+`LightsOn\`, und die LightsOn-PHP-Standards (`final`, `readonly`, `private`) gelten hier nicht.
+
+Dieses Verzeichnis ist **kein von Composer geliefertes Paket**, sondern ein Git-Checkout des
+Upstream-Repos selbst (`git@github.com:muckiware/MuckiFacilityPlugin.git`, Branch `main`) unter
+`custom/static-plugins/`. Der Maintainer von `muckiware/facility-plugin` ist t.freyda@lights-on.io —
+also dieselbe Person, die hier arbeitet.
+
+Daraus folgt: Aenderungen gehen als normaler Commit auf `main` in dieses Repo. **Kein** Fork, **kein**
+Upstream-PR gegen Dritte, **kein** Composer-Patch — und Composer ueberschreibt hier nichts. Wer einen
+Bug fixt, der auch andere Nutzer des Plugins betrifft, bumpt Version und `CHANGELOG.md` mit.
 
 ## Fakten
 
 | | |
 |---|---|
-| Composer-Paket | `muckiware/facility-plugin`, Version `v0.6.1` |
+| Composer-Paket | `muckiware/facility-plugin`, Version `v0.7.0` |
 | Plugin-Klasse | `MuckiFacilityPlugin\MuckiFacilityPlugin` |
-| Shopware im Projekt | `shopware/core` **v6.6.10.5** |
+| Shopware im Projekt | `shopware/core` **v6.7.14.0** (Arbeitsprojekt `sw67`; das Repo liegt ggf. in mehreren Shops) |
 | Von Plugin unterstuetzt | Shopware 6.6.x + 6.7.x, PHP 8.2–8.4, restic >= 0.15 |
 | CI-Matrix | PHP 8.2, MySQL 8.0, Shopware v6.6.9.0 (`.github/workflows/main.yml`) |
 | Runtime-Deps | `muckiware/restic ^1.4`, `spatie/db-dumper ^3.7`, `gabrielelana/byte-units ^0.5` |
-| Git-Stand | Branch `main`, letzter Commit `da5e97f` |
+| Git-Stand | Branch `main` (tracked `origin/main`), letzter Commit `8077d42` |
 
 Es gibt **keine** Storefront-Integration (Controller/Templates/JS) — nur API-Routes, Admin-Modul
 und CLI. Die `storefront.*.json`-Snippets enthalten `muwaSearch.suggest.*`-Keys aus einem anderen
@@ -48,9 +55,33 @@ immer drei Stellen zu aendern: Enum + Factory + Runner.
 | `files` | `Backup\Files\FilesRunner` | restic-Snapshot ueber `MuckiRestic\Library\Backup` |
 | `noneDatabase` | — | DB-Dump wird uebersprungen |
 
-`Services\Backup::createBackup()` ist die Orchestrierung: erst DB-Dump nach
-`<projectDir>/var/db/backup`, dann diesen Ordner per `files`-Runner in das restic-Repository
-schieben, Dump-Ordner loeschen, Files-Pfade sichern, Check-Item schreiben, Snapshots persistieren.
+`Services\Backup::createBackup()` ist die Orchestrierung: erst DB-Dump in den Dump-Ordner, dann
+diesen Ordner per `files`-Runner in das restic-Repository schieben, Dump-Ordner loeschen,
+Files-Pfade sichern, Check-Item schreiben, Snapshots persistieren.
+
+**Dump-Pfad.** Pro Repository ueber `db_dump_path` / `dbDumpPath` konfigurierbar, Fallback ist
+`<projectDir>/var/db/backup` (`Defaults::DATABASE_BACKUP_PATH`). Aufgeloest wird in
+`Settings::getBackupPath(bool $useSubFolder, ?string $ownDumpPath)`: ein Wert mit fuehrendem
+Schraegstrich gilt absolut, jeder andere relativ zum Projektverzeichnis. `resolveOwnDumpPath()`
+verwirft unsichere Werte (leer, `/`, Segmente `.` oder `..`, das Projektverzeichnis selbst oder ein
+Elternverzeichnis davon) und faellt mit Log-Eintrag auf den Default zurueck. Das ist kein
+Schoenheitsthema: der Dump-Ordner wird vor **und** nach jedem DB-Backup per
+`Helper::deleteDirectory()` rekursiv geloescht.
+
+**Falle: `backupPaths` wird mitten im Lauf ueberschrieben.** `runDatabaseBackup()` setzt
+`$createBackup->setBackupPaths([<Dump-Ordner>])` und den Typ auf `files`, damit derselbe
+`FilesRunner` den Dump ins restic-Repository schiebt. Nach diesem Aufruf enthaelt
+`$createBackup->getBackupPaths()` also **nicht** mehr die konfigurierten Datei-Pfade.
+`createBackup()` cached sie deshalb vorher in `$cachePaths` — und jede Pruefung auf "gibt es
+ueberhaupt Datei-Pfade?" muss gegen `$cachePaths` laufen, nicht gegen den Getter. Genau das war ein
+Bug: bei einem Repository mit leeren `backup_paths` wurde ein Files-Backup ohne Pfade gestartet,
+`FilesRunner::createBackupData()` lief durch die leere Schleife, und `getBackupResults()` griff auf
+die uninitialisierte Property `$backupResults` zu. Regressionstests dazu in
+`tests/Services/BackupTest.php` und `tests/Backup/Files/FilesRunnerTest.php`.
+
+Zwei Konsequenzen fuer aehnliche Aenderungen: Runner-Properties, die erst in einer Schleife
+befuellt werden, brauchen einen Default (`= []`) — und `startBackupRunner()` / `checkBackup()`
+fangen nur `\Exception`, kein `\Error`, ein `\Error` reisst den ganzen Lauf ungeloggt ab.
 
 ### Cleanup-Pfad
 `CleanupTables`-Enum → `TableCleanupRunnerFactory` → `CartCleanupRunner` / `LogEntryCleanupRunner`
@@ -68,7 +99,7 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 
 | Entity / Tabelle | Zweck | Relationen |
 |---|---|---|
-| `muwa_backup_repository` | Repository-Konfiguration (Pfad, Passwort, Hostname, Restore-Pfad, `backup_paths` als JsonField, forget-Policy) | 1:n Checks, 1:n Snapshots |
+| `muwa_backup_repository` | Repository-Konfiguration (Pfad, Passwort, Hostname, Restore-Pfad, `db_dump_path`, `backup_paths` als JsonField, forget-Policy) | 1:n Checks, 1:n Snapshots |
 | `muwa_backup_repository_checks` | Ergebnis von `restic check` je Backup-Lauf | n:1 Repository |
 | `muwa_backup_repository_snapshots` | gespiegelte restic-Snapshot-Liste (snapshotId, shortId, paths, hostname, size) | n:1 Repository |
 
@@ -124,8 +155,9 @@ und setzt das Passwort erst dann (`setRepositoryPassword()`). Dieses Muster beib
 `numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`.
 
 Zugriff ausschliesslich ueber `Services\Settings` + `Core\ConfigPath`-Enum. `Settings` liest
-zusaetzlich `DATABASE_URL` via `EnvironmentHelper` und leitet den Dump-Pfad aus
-`kernel->getProjectDir()` + `Defaults::DATABASE_BACKUP_PATH` ab.
+zusaetzlich `DATABASE_URL` via `EnvironmentHelper` und loest den Dump-Pfad auf — der haengt aber
+nicht an der Plugin-Konfiguration, sondern am jeweiligen Repository (`db_dump_path`), siehe
+[Backup-Pfad](#backup-pfad).
 
 ## Administration
 
@@ -194,22 +226,17 @@ Upstream-Bugs, sie gehoeren in einen Issue/PR gegen `muckiware/facility-plugin`.
 11. `Services\DbTableCleanup` injiziert die konkrete `Services\Settings`, alle anderen Konsumenten
     das `SettingsInterface` — inkonsistent.
 12. Kein `declare(strict_types=1)`-Verstoss, aber durchgaengig kein `final`, kein `readonly`,
-    Properties `protected` statt `private`. Entspricht nicht den LightsOn-PHP-Standards; bei
-    Fremdcode ist das hinzunehmen.
+    Properties `protected` statt `private`. Entspricht nicht den LightsOn-PHP-Standards — die hier
+    aber auch nicht gelten (siehe Kopf). Der Stil ist konsistent, also nicht punktuell umstellen.
 
 **Repository-Hygiene**
 
 13. `bin/restic_0.17.3_linux_386` — ein 24 MB Linux-Binary ist versioniert (`git ls-files` bestaetigt).
-14. `var/` ist gitignored, enthaelt aber lokale Artefakte aus Integrationstests: echte
-    restic-Repositories (`var/repository/`), Restore-Ergebnisse (`var/restore/`), PHPStan-Cache und
-    eine Kopie der Migrationen. In `var/Migration/` liegt zusaetzlich eine **neuere** Migration
-    `Migration1771602076` (Spalte `db_dump_path` in `muwa_backup_repository`), die es in `src/`
-    noch nicht gibt — nicht als Quelle behandeln, das ist Ablage.
-15. Aktueller Arbeitsstand ist unsauber: `src/Services/ManageRepository.php` modifiziert,
-    und `src/Core/Content/Media/` ist **untracked** — CMS-Media-Resolver
-    (`DefaultMediaResolver`, `ImageCmsElementResolver`, Slider/Gallery-Resolver), die thematisch
-    nicht zu einem Backup-Plugin gehoeren und in keiner `services.xml` registriert sind. Vor eigenen
-    Aenderungen klaeren, ob das weg kann.
+14. `var/` ist per `.gitignore` komplett ausgeschlossen und reine Ablage — nie als Quelle
+    behandeln. Aktuell liegt dort nur `var/cache/`; die Integrationstests aus `tests/Integration/`
+    legen bei jedem Lauf echte restic-Repositories und Restore-Ergebnisse daneben. Taucht dort eine
+    Migration oder sonstiger PHP-Code auf, ist das eine verirrte Kopie, kein Stand, der nach `src/`
+    gehoert.
 
 ## Shopware 6.6 **und** 6.7 parallel
 

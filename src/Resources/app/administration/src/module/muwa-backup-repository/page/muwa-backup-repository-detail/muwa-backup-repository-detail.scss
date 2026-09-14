@@ -16,3 +16,27 @@ div.muwa-backup-repository-detail-repository-path__description {
   border: #ff992f 1px solid;
   border-radius: 4px;
 }
+
+/* Die Tabs liegen im Fluss oberhalb der absolut positionierten, 100 % hohen
+   .sw-card-view. Deren Hoehen summieren sich dadurch auf 100 % + Tabs-Hoehe,
+   sodass zusaetzlich zu .sw-card-view__content auch
+   .sw-page__main-content-inner scrollt (zweiter Scrollbalken).
+   Loesung: Spalten-Flexbox, Card-View in den Fluss holen. */
+.muwa-backup-repository-tabs-detail {
+    > .sw-page__content > .sw-page__main-content > .sw-page__main-content-inner {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        > .muwa-backup-repository-content-tabs {
+            flex: 0 0 auto;
+        }
+
+        > .sw-card-view {
+            position: relative;
+            flex: 1 1 auto;
+            min-height: 0;
+            height: auto;
+        }
+    }
+}

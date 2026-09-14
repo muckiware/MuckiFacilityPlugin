@@ -400,6 +400,7 @@
                         :showSettings="false"
                         :sort-by="sortBy"
                         :sort-direction="sortDirection"
+                        :full-page="false"
                     >
                         <template #column-checkStatus="{item}">
                             <div v-if="item.checkStatus" :title="item.checkStatus">
@@ -452,6 +453,7 @@
                         @items-delete-finish="itemsDeleteFinish"
                         @column-sort="onSortColumn"
                         :large="true"
+                        :full-page="false"
                     >
                         <template #column-snapshot-id="{item}">
                             <div v-if="item.snapshotShortId" :title="item.snapshotShortId">
