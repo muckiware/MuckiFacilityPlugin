@@ -19,7 +19,7 @@
 - Kompatibilität mit Shopware 6.6 **und** 6.7 gleichzeitig — es gibt keine getrennten Branches.
 - **Nie `new \Doctrine\DBAL\Exception(...)`** — in DBAL 4 ist das ein Interface.
 - `League\Flysystem\FilesystemException` erbt `Throwable`, **nicht** `\Exception` — ein `catch (\Exception $e)` fängt sie nicht. Immer eigener catch-Block, wie in `ManageRepository::generateStatsOutputs()`.
-- Arbeit läuft auf Branch `feat/repository-status-tab`. **Nicht** nach `main` mergen, nicht pushen — das macht der Maintainer selbst.
+- Arbeit läuft auf Branch `feat/repository-status-tab`. **Nicht committen, nicht mergen, nicht pushen.** Der Maintainer sichtet den Diff und committet selbst — Änderungen bleiben im Arbeitsbaum liegen. Aus diesem Grund enthält keine Task einen Commit-Schritt; die Task-Grenzen markieren trotzdem sinnvolle Sichtungspunkte.
 - Alle Kommandos laufen über DDEV (Projekt `sw67`) vom Shop-Root `/Users/torstenfreyda/shopdev/sw6/sw67` aus.
 - Version am Ende: `v0.7.0` → `v0.8.0`.
 
@@ -121,14 +121,6 @@ return $loader;
 
 Run: `ddev exec "cd custom/static-plugins/MuckiFacilityPlugin && /var/www/html/vendor/bin/phpunit -c phpunit.unit.xml"`
 Expected: `OK (8 tests, 24 assertions)`
-
-- [ ] **Step 4: Commit**
-
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add tests/UnitTestBootstrap.php phpunit.unit.xml
-git commit -m "test: add unit test suite that runs without the shopware kernel"
-```
 
 ---
 
@@ -447,14 +439,6 @@ ddev mysql -e "DESCRIBE muwa_backup_repository_stats;"
 ```
 Expected: Neun Spalten wie in Step 1 definiert.
 
-- [ ] **Step 9: Commit**
-
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add src/Migration/Migration1789430400.php src/Core/Content/BackupRepository/Stats src/Core/Content/BackupRepository/BackupRepositoryDefinition.php src/Resources/config/services.xml
-git commit -m "feat: add muwa_backup_repository_stats entity and migration"
-```
-
 ---
 
 ### Task 3: Persistenz-Service `Services\Content\BackupRepositoryStats`
@@ -570,14 +554,6 @@ Expected: `[OK] No errors`
 
 Run: `ddev exec "bin/console debug:container MuckiFacilityPlugin\\\\Services\\\\Content\\\\BackupRepositoryStats"`
 Expected: Der Service wird gefunden, keine `ServiceNotFoundException`.
-
-- [ ] **Step 5: Commit**
-
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add src/Services/Content/BackupRepositoryStats.php src/Resources/config/services.xml
-git commit -m "feat: add persistence service for repository stats"
-```
 
 ---
 
@@ -924,14 +900,6 @@ ddev exec "bin/console debug:container MuckiFacilityPlugin\\\\Services\\\\Reposi
 ```
 Expected: `[OK] No errors` und ein aufgelöster Service ohne `ServiceNotFoundException`.
 
-- [ ] **Step 8: Commit**
-
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add src/Services/RepositoryStats.php tests/Services/RepositoryStatsTest.php phpunit.unit.xml src/Resources/config/services.xml
-git commit -m "feat: add repository stats collection service"
-```
-
 ---
 
 ### Task 5: Trigger 1 — Status am Ende jedes Backup-Laufs
@@ -1101,14 +1069,6 @@ weil `createCheckItem()` unmittelbar davor läuft.
 Falls Werte `NULL` sind, ist das kein Fehlschlag dieses Schritts, sondern ein Hinweis: in
 `var/log/` nach Einträgen des `muwa`-Kanals suchen — `RepositoryStats` loggt jede geschluckte
 Exception.
-
-- [ ] **Step 9: Commit**
-
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add src/Services/Backup.php tests/Services/BackupTest.php src/Resources/config/services.xml
-git commit -m "feat: collect repository stats at the end of every backup run"
-```
 
 ---
 
@@ -1289,14 +1249,6 @@ ddev mysql -e "SELECT COUNT(*) FROM muwa_backup_repository_stats;"
 ```
 Expected: Zähler steigt um 1.
 
-- [ ] **Step 7: Commit**
-
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add src/MessageQueue src/Controller/ManageController.php src/Resources/config/services.xml
-git commit -m "feat: refresh repository stats asynchronously after snapshot removal"
-```
-
 ---
 
 ### Task 7: Trigger 3 — CLI-Command
@@ -1435,14 +1387,6 @@ ddev mysql -e "SELECT LOWER(HEX(id)) FROM muwa_backup_repository LIMIT 1;"
 ddev exec "bin/console muckiware:repository:stats <id-aus-der-vorigen-zeile>"
 ```
 Expected: `muckiware:repository:stats` steht in der Liste; der Lauf gibt fünf Zeilen aus (`totalSize`, `totalFileCount`, `snapshotsCount`, `fileSystemSize`, `checkStatus`), Werte oder `-`.
-
-- [ ] **Step 5: Commit**
-
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add src/Commands/RepositoryStats.php src/Resources/config/services.xml
-git commit -m "feat: add muckiware:repository:stats command"
-```
 
 ---
 
@@ -1726,14 +1670,6 @@ Detail-Seite eines Repositories öffnen (`Einstellungen → Erweiterungen → Ba
 5. Das Sidebar-Refresh-Icon ist im Status-Tab sichtbar und lädt die Liste neu.
 6. Die Browser-Konsole zeigt keine Vue-Fehler.
 
-- [ ] **Step 12: Commit**
-
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add src/Resources/app/administration
-git commit -m "feat: move repository status into its own tab reading from the database"
-```
-
 ---
 
 ### Task 9: Dokumentation und Version
@@ -1816,17 +1752,11 @@ ddev exec "cd custom/static-plugins/MuckiFacilityPlugin && /var/www/html/vendor/
 ```
 Expected: alle Tests grün, `[OK] No errors`
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Abschluss melden**
 
-```bash
-cd /Users/torstenfreyda/shopdev/sw6/sw67/custom/static-plugins/MuckiFacilityPlugin
-git add CHANGELOG.md README.md CLAUDE.md composer.json
-git commit -m "docs: document repository status tab and bump to v0.8.0"
-```
-
-- [ ] **Step 7: Abschluss melden**
-
-Branch `feat/repository-status-tab` liegen lassen. **Nicht** nach `main` mergen, **nicht** pushen — das entscheidet der Maintainer. Dem Nutzer melden, was gelaufen ist und was manuell verifiziert wurde.
+Alle Aenderungen bleiben **uncommitted** im Arbeitsbaum von Branch `feat/repository-status-tab` liegen.
+Dem Nutzer melden, was gelaufen ist, welche Dateien angefasst wurden und was manuell verifiziert wurde —
+er sichtet den Diff und committet selbst.
 
 ---
 

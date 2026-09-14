@@ -45,6 +45,13 @@
                                 {{ $tc('muwa-backup-repository.tabs.config') }}
                             </sw-tabs-item>
                             <sw-tabs-item
+                                key="backupRepositoryStats"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryStats' } }"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.stats') }}
+                            </sw-tabs-item>
+                            <sw-tabs-item
                                 key="backupRepositoryChecks"
                                 :active-tab="active"
                                 :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryChecks' } }"
@@ -412,32 +419,73 @@
                         </template>
                     </sw-entity-listing>
 
-                    {# Tab Snapshots #}
+                    {# Tab Repository Status #}
                     <sw-card
-                        positionIdentifier="muwaBackupRepositoryStats"
-                        v-if="backupRepository && tab === 'backupRepositorySnapshots'"
+                        positionIdentifier="muwaBackupRepositoryStatsPanel"
+                        v-if="backupRepository && tab === 'backupRepositoryStats'"
                         :title="$tc('muwa-backup-repository.list.stats')"
+                        :isLoading="isStatsLoading"
+                        :large="true"
+                    >
+                        <template v-if="latestStats">
+                            <sw-description-list>
+                                <dt>{{ $tc('muwa-backup-repository.detail.statsCreatedAtLabel') }}</dt>
+                                <dd>{{ dateFilter(latestStats.createdAt, { hour: '2-digit', minute: '2-digit' }) }}</dd>
+                                <dt>{{ $tc('muwa-backup-repository.list.totalFileSystemSizeLabel') }}</dt>
+                                <dd>{{ formatBytes(latestStats.fileSystemSize) }}</dd>
+                                <dt>{{ $tc('muwa-backup-repository.list.totalFileRepositorySizeLabel') }}</dt>
+                                <dd>{{ formatBytes(latestStats.totalSize) }}</dd>
+                                <dt>{{ $tc('muwa-backup-repository.list.totalSnapshotsLabel') }}</dt>
+                                <dd>{{ formatCount(latestStats.snapshotsCount) }}</dd>
+                                <dt>{{ $tc('muwa-backup-repository.list.totalFilesLabel') }}</dt>
+                                <dd>{{ formatCount(latestStats.totalFileCount) }}</dd>
+                                <dt>{{ $tc('muwa-backup-repository.list.CheckStatusLabel') }}</dt>
+                                <dd>{{ latestStats.checkStatus || $tc('muwa-backup-repository.detail.statsNoValue') }}</dd>
+                            </sw-description-list>
+                        </template>
+                        <sw-empty-state
+                            v-else-if="!isStatsLoading"
+                            :absolute="false"
+                            :title="$tc('muwa-backup-repository.detail.statsEmptyTitle')"
+                            :subline="$tc('muwa-backup-repository.detail.statsEmptySubline')"
+                        />
+                    </sw-card>
+                    <sw-card
+                        positionIdentifier="muwaBackupRepositoryStatsHistory"
+                        v-if="backupRepository && tab === 'backupRepositoryStats' && backupRepositoryStats.length"
+                        :title="$tc('muwa-backup-repository.detail.statsHistoryLabel')"
                         :large="true"
                     >
                         <template #grid>
                             <sw-data-grid
-                                v-if="stats"
                                 :showSelection="false"
                                 :showActions="false"
-                                :dataSource="stats.data"
-                                :columns="statsColumns"
+                                :showSettings="false"
+                                :dataSource="backupRepositoryStats"
+                                :columns="statsHistoryColumns"
                                 :plain-appearance="true"
                                 :is-loading="isStatsLoading"
                             >
-                                <template #column-label="{ item }">
-                                    {{ $tc(item.label) }}
+                                <template #column-createdAt="{ item }">
+                                    {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit' }) }}
                                 </template>
-                                <template #column-value="{ item }">
-                                    {{ item.value }}
+                                <template #column-fileSystemSize="{ item }">
+                                    {{ formatBytes(item.fileSystemSize) }}
+                                </template>
+                                <template #column-totalSize="{ item }">
+                                    {{ formatBytes(item.totalSize) }}
+                                </template>
+                                <template #column-snapshotsCount="{ item }">
+                                    {{ formatCount(item.snapshotsCount) }}
+                                </template>
+                                <template #column-totalFileCount="{ item }">
+                                    {{ formatCount(item.totalFileCount) }}
                                 </template>
                             </sw-data-grid>
                         </template>
                     </sw-card>
+
+                    {# Tab Snapshots #}
                     <sw-entity-listing
                         v-if="backupRepository && tab === 'backupRepositorySnapshots'"
                         :isLoading="isLoading"
@@ -557,7 +605,7 @@
         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
         {% block muwa_backup_repository_list_sidebar %}
             <template #sidebar>
-                <sw-sidebar class="muwa-backup-repository-list__sidebar" v-if="tab === 'backupRepositoryChecks' || tab === 'backupRepositorySnapshots'">
+                <sw-sidebar class="muwa-backup-repository-list__sidebar" v-if="tab === 'backupRepositoryChecks' || tab === 'backupRepositorySnapshots' || tab === 'backupRepositoryStats'">
                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                     {% block muwa_backup_repository_list_sidebar_refresh %}
                         <sw-sidebar-item

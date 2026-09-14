@@ -19,9 +19,11 @@ use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Response;
 
+use MuckiFacilityPlugin\MessageQueue\Message\UpdateRepositoryStatsMessage;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
@@ -33,6 +35,7 @@ class ManageController extends AbstractController
     public function __construct(
         protected LoggerInterface $logger,
         protected ManageService $manageService,
+        protected MessageBusInterface $bus,
     )
     {}
 
@@ -62,10 +65,15 @@ class ManageController extends AbstractController
     )]
     public function removeSnapshots(RequestDataBag $requestDataBag, Context $context): Response
     {
+        $backupRepositoryId = $requestDataBag->get('backupRepositoryId');
         $removedSnapshot = $this->removeSnapshotsByIds(
             $this->getSnapshotIds($requestDataBag),
-            $requestDataBag->get('backupRepositoryId')
+            $backupRepositoryId
         );
+
+        if (is_string($backupRepositoryId) && Uuid::isValid($backupRepositoryId)) {
+            $this->bus->dispatch(new UpdateRepositoryStatsMessage($backupRepositoryId));
+        }
 
         return new JsonResponse($removedSnapshot);
     }
