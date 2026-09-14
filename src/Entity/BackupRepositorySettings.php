@@ -56,6 +56,10 @@ class BackupRepositorySettings
      */
     protected string $restorePath;
     /**
+     * @var string|null
+     */
+    protected ?string $dbDumpPath = null;
+    /**
      * @var string
      */
     protected string $snapshotId;
@@ -213,6 +217,23 @@ class BackupRepositorySettings
     public function setRestorePath(string $restorePath): void
     {
         $this->restorePath = $restorePath;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDbDumpPath(): ?string
+    {
+        return $this->dbDumpPath;
+    }
+
+    /**
+     * @param string|null $dbDumpPath
+     * @return void
+     */
+    public function setDbDumpPath(?string $dbDumpPath): void
+    {
+        $this->dbDumpPath = $dbDumpPath;
     }
 
     /**

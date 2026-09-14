@@ -14,7 +14,7 @@ namespace MuckiFacilityPlugin\Core;
 class Defaults
 {
     const DATABASE_BACKUP_PATH = '/var/db/backup';
-    const BACKUP_FOLDER_PERMISSION = 0777;
+    const BACKUP_FOLDER_PERMISSION = 0770;
     const CURRENT_DATETIME_STR_FORMAT = 'Y-m-d_H-i-s';
     const CURRENT_DATE_STR_FORMAT = 'Y-m-d';
     const DEFAULT_LOGGER_CONFIG = array('muwa', 'facility');

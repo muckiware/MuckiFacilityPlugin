@@ -63,6 +63,11 @@ class BackupRepositoryEntity extends Entity
     protected string $restorePath;
 
     /**
+     * @var string|null
+     */
+    protected ?string $dbDumpPath = null;
+
+    /**
      * @var array<BackupPathEntity>
      */
     protected array $backupPaths;
@@ -208,6 +213,23 @@ class BackupRepositoryEntity extends Entity
     public function setRestorePath(string $restorePath): void
     {
         $this->restorePath = $restorePath;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDbDumpPath(): ?string
+    {
+        return $this->dbDumpPath;
+    }
+
+    /**
+     * @param string|null $dbDumpPath
+     * @return void
+     */
+    public function setDbDumpPath(?string $dbDumpPath): void
+    {
+        $this->dbDumpPath = $dbDumpPath;
     }
 
     /**

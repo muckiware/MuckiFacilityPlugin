@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -29,6 +29,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
+
 class BackupRepositoryDefinition extends EntityDefinition
 {
     const ENTITY_NAME = 'muwa_backup_repository';
@@ -59,6 +60,7 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new StringField('repository_path', 'repositoryPath'))->addFlags(new Required()),
             (new StringField('repository_password', 'repositoryPassword'))->removeFlag(ApiAware::class),
             (new StringField('restore_path', 'restorePath')),
+            (new StringField('db_dump_path', 'dbDumpPath')),
             (new JsonField('backup_paths', 'backupPaths', [], [])),
             (new IntField('forget_daily', 'forgetDaily')),
             (new IntField('forget_weekly', 'forgetWeekly')),

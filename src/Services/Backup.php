@@ -138,7 +138,9 @@ class Backup
         }
 
         //Backup files
-        if(!empty($createBackup->getBackupPaths())) {
+        //$createBackup->getBackupPaths() has been overwritten by runDatabaseBackup(),
+        //so the originally configured file paths have to be checked instead.
+        if(!empty($cachePaths)) {
             $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
         }
 
@@ -166,10 +168,11 @@ class Backup
             $this->servicesCliOutput->printCliOutputNewline('run backup database...');
         }
 
-        $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
+        $dbDumpPath = $this->pluginSettings->getBackupPath(false, $createBackup->getDbDumpPath());
+        $this->pluginHelper->deleteDirectory($dbDumpPath);
 
         $backupPath = new BackupPathEntity();
-        $backupPath->setBackupPath($this->pluginSettings->getBackupPath());
+        $backupPath->setBackupPath($dbDumpPath);
         $backupPath->setPosition(0);
         $backupPath->setCompress($this->pluginSettings->isCompressDbBackupEnabled());
         $backupPath->setIsDefault(false);
@@ -183,7 +186,7 @@ class Backup
         $createBackup->setBackupType(BackupTypes::FILES->value);
         $this->startBackupRunner($createBackup, $isJsonOutput);
 
-        $this->pluginHelper->deleteDirectory($this->pluginSettings->getBackupPath());
+        $this->pluginHelper->deleteDirectory($dbDumpPath);
     }
 
     /**
@@ -306,6 +309,7 @@ class Backup
             $createBackup->setRepositoryPath($backupRepository->getRepositoryPath());
             $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $createBackup->setHostName($backupRepository->getHostname());
+            $createBackup->setDbDumpPath($backupRepository->getDbDumpPath());
         }
 
         return $createBackup;

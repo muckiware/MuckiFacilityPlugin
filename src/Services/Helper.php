@@ -53,14 +53,21 @@ class Helper
     }
 
     /**
+     * Creates the directory including missing parent directories when it does not exist yet.
+     *
+     * A failing mkdir must not stay silent, otherwise the error shows up much later as a failing
+     * dump without any hint about the real cause.
+     *
      * @param string $path
-     * @return void
+     * @return bool True when the directory exists afterwards
      */
-    public function ensureDirectoryExists(string $path): void
+    public function ensureDirectoryExists(string $path): bool
     {
-        if (!is_dir($path)) {
-            mkdir($path, PluginDefaults::BACKUP_FOLDER_PERMISSION, true);
+        if (is_dir($path)) {
+            return true;
         }
+
+        return mkdir($path, PluginDefaults::BACKUP_FOLDER_PERMISSION, true) || is_dir($path);
     }
 
     /**

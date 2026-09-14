@@ -16,11 +16,11 @@ class RestoreBackup
         $restoreBackupEntity = new BackupRepositorySettings();
         $restoreBackupEntity->setRepositoryPassword(TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PASSWORD);
         $restoreBackupEntity->setRepositoryPath(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH
+            TestCaseBaseDefaults::getTestRepositoryPath()
         );
         $restoreBackupEntity->setResticPath(TestCaseBaseDefaults::getResticPath());
         $restoreBackupEntity->setRestorePath(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_RESTORE_PATH
+            TestCaseBaseDefaults::getTestRestorePath()
         );
         $restoreBackupEntity->setSnapshotId($snapshotId);
 

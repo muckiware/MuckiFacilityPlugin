@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -41,6 +41,7 @@ class CreateBackupHandler
         $message->setBackupPaths($this->backupService->prepareBackupPaths($message->getBackupPaths()));
         $backupRepository = $this->backupRepositoryService->getBackupRepositoryById($message->getBackupRepositoryId());
         $message->setRepositoryPassword($backupRepository->getRepositoryPassword());
+        $message->setDbDumpPath($backupRepository->getDbDumpPath());
         $this->backupService->createBackup($message, false);
         $this->logger->debug(
             'Backup process done. BackupRepositoryId: '.$message->getBackupRepositoryId(),

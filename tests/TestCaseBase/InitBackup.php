@@ -21,11 +21,11 @@ class InitBackup
         $repositoryInitInputs->setForgetYearly(35);
         $repositoryInitInputs->setBackupType(BackupTypes::FILES->value);
         $repositoryInitInputs->setRepositoryPath(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH
+            TestCaseBaseDefaults::getTestRepositoryPath()
         );
         $repositoryInitInputs->setRepositoryPassword(TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PASSWORD);
         $repositoryInitInputs->setRestorePath(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_RESTORE_PATH
+            TestCaseBaseDefaults::getTestRestorePath()
         );
         $repositoryInitInputs->setResticPath(TestCaseBaseDefaults::getResticPath());
 

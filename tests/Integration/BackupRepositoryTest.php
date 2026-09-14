@@ -43,14 +43,14 @@ class BackupRepositoryTest extends TestCase
         $backupRepositoryId = Uuid::randomHex();
         $helper = new PluginHelper();
         $helper->deleteDirectory(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH
+            TestCaseBaseDefaults::getTestRepositoryPath()
         );
 
         $helper->deleteDirectory(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH
+            TestCaseBaseDefaults::getTestBackupPath()
         );
         $helper->deleteDirectory(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_RESTORE_PATH
+            TestCaseBaseDefaults::getTestRestorePath()
         );
 
         $this->CheckInitRepository();
@@ -104,7 +104,7 @@ class BackupRepositoryTest extends TestCase
         );
 
         HelperTest::createTextFiles(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH,
+            TestCaseBaseDefaults::getTestBackupPath(),
             TestCaseBaseDefaults::BACKUP_TEST_FILES
         );
 
@@ -160,7 +160,7 @@ class BackupRepositoryTest extends TestCase
     {
         $backupRepositoryEntity = new BackupRepositoryEntity();
         $backupRepositoryEntity->setRepositoryPath(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH
+            TestCaseBaseDefaults::getTestRepositoryPath()
         );
         $backupRepositoryEntity->setRepositoryPassword(TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PASSWORD);
 
@@ -186,7 +186,7 @@ class BackupRepositoryTest extends TestCase
         static::assertIsString($snapshots[0]['id'], 'getSnapshots should return snapshot with id');
         static::assertCount(1, $snapshots[0]['paths'], 'getSnapshots should return snapshot with paths');
         static::assertEquals(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH,
+            TestCaseBaseDefaults::getTestBackupPath(),
             $snapshots[0]['paths'][0],
             'getSnapshots path should return the test backup path'
         );
@@ -212,7 +212,7 @@ class BackupRepositoryTest extends TestCase
         $allResults = $restoreSnapshot->getAllResults();
 
         static::assertCount(1, $allResults, 'restoreSnapshot should return 1 result');
-        $restoreFolder = TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_RESTORE_PATH.TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH;
+        $restoreFolder = TestCaseBaseDefaults::getTestRestorePath().TestCaseBaseDefaults::getTestBackupPath();
         $restoreFiles = $this->getFilesFromDirectory($restoreFolder);
         static::assertCount(
             count(TestCaseBaseDefaults::BACKUP_TEST_FILES),

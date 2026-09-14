@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -22,12 +22,14 @@ use MuckiRestic\Entity\Result\ResultEntity;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
+use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 
 class CompleteFileRunner implements BackupInterface
 {
     public function __construct(
         protected LoggerInterface $logger,
-        protected SettingsInterface $pluginSettings
+        protected SettingsInterface $pluginSettings,
+        protected BackupRepositorySettings $createBackup
     ) {}
     public function createBackupData(bool $isJsonOutput=true): void
     {
@@ -75,7 +77,7 @@ class CompleteFileRunner implements BackupInterface
 
     public function createBackupFileName(string $databaseName, bool $useSubFolder=false): string
     {
-        $backupPath = $this->pluginSettings->getBackupPath($useSubFolder);
+        $backupPath = $this->pluginSettings->getBackupPath($useSubFolder, $this->createBackup->getDbDumpPath());
         $backupDateTimeStamp = $this->pluginSettings->getDateTimestamp();
         $backupFileName = '';
 

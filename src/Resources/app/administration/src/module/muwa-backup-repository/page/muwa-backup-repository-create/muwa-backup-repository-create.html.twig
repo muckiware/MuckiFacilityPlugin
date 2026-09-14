@@ -191,6 +191,25 @@
                         >
                         </sw-text-field>
 
+                        <sw-text-field
+                                v-if="isV6600"
+                                :label="$tc('muwa-backup-repository.detail.dbDumpPathLabel')"
+                                :placeholder="$tc('muwa-backup-repository.detail.dbDumpPathPlaceholder')"
+                                :helpText="$tc('muwa-backup-repository.detail.dbDumpPathHelpText')"
+                                v-model:value="backupRepository.dbDumpPath"
+                                maxlength="255"
+                        >
+                        </sw-text-field>
+                        <sw-text-field
+                                v-if="isV6500"
+                                :label="$tc('muwa-backup-repository.detail.dbDumpPathLabel')"
+                                :placeholder="$tc('muwa-backup-repository.detail.dbDumpPathPlaceholder')"
+                                :helpText="$tc('muwa-backup-repository.detail.dbDumpPathHelpText')"
+                                v-model="backupRepository.dbDumpPath"
+                                maxlength="255"
+                        >
+                        </sw-text-field>
+
                     </sw-card>
 
                     <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository" :title="$tc('muwa-backup-repository.create.backupPaths')">

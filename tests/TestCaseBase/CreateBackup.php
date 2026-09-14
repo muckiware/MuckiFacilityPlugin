@@ -27,7 +27,7 @@ class CreateBackup
         }
         $createBackupEntity->setRepositoryPassword(TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PASSWORD);
         $createBackupEntity->setRepositoryPath(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH
+            TestCaseBaseDefaults::getTestRepositoryPath()
         );
         $createBackupEntity->setResticPath(TestCaseBaseDefaults::getResticPath());
 
@@ -58,7 +58,7 @@ class CreateBackup
         $backupPathEntity = new BackupPathEntity();
         $backupPathEntity->setId(Uuid::randomHex());
         $backupPathEntity->setBackupPath(
-            TestCaseBaseDefaults::getPluginPath().'/'.TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATH
+            TestCaseBaseDefaults::getTestBackupPath()
         );
         $backupPathEntity->setCompress(true);
         $backupPathEntity->setPosition(0);

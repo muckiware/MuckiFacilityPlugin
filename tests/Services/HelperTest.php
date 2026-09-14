@@ -11,6 +11,28 @@ use MuckiFacilityPlugin\Core\BackupTypes;
 
 class HelperTest extends TestCase
 {
+    /**
+     * @var array<int, string>
+     */
+    private array $tempPaths = [];
+
+    protected function tearDown(): void
+    {
+        foreach ($this->tempPaths as $tempPath) {
+            if (is_file($tempPath)) {
+                unlink($tempPath);
+                continue;
+            }
+            self::deleteDirectory($tempPath);
+            if (is_dir($tempPath)) {
+                rmdir($tempPath);
+            }
+        }
+        $this->tempPaths = [];
+
+        parent::tearDown();
+    }
+
     public function testCheckHelperFunction(): void
     {
         $helperClass = new Helper();
@@ -30,6 +52,57 @@ class HelperTest extends TestCase
 
         $isValidEmailResultsNoValid = $helperClass->isValidEmail('test_test.com');
         static::assertFalse($isValidEmailResultsNoValid, 'isValidEmailResult should be false. E-Mail not valid');
+    }
+
+    public function testEnsureDirectoryExistsCreatesMissingDirectories(): void
+    {
+        $helperClass = new Helper();
+        $path = $this->createTempPath().'/nested/dump';
+
+        static::assertTrue(
+            $helperClass->ensureDirectoryExists($path),
+            'A missing directory should be reported as existing afterwards'
+        );
+        static::assertDirectoryExists($path, 'Missing directories should be created recursively');
+    }
+
+    public function testEnsureDirectoryExistsAcceptsAnExistingDirectory(): void
+    {
+        $helperClass = new Helper();
+        $path = $this->createTempPath();
+        self::createDirectory($path);
+
+        static::assertTrue(
+            $helperClass->ensureDirectoryExists($path),
+            'An already existing directory should be reported as existing'
+        );
+    }
+
+    public function testEnsureDirectoryExistsReturnsFalseWhenTheDirectoryCannotBeCreated(): void
+    {
+        $helperClass = new Helper();
+        $blockingFile = $this->createTempPath();
+        file_put_contents($blockingFile, 'no directory');
+
+        set_error_handler(static fn (): bool => true);
+        try {
+            $result = $helperClass->ensureDirectoryExists($blockingFile.'/dump');
+        } finally {
+            restore_error_handler();
+        }
+
+        static::assertFalse(
+            $result,
+            'A directory which is blocked by an existing file should be reported as not created'
+        );
+    }
+
+    private function createTempPath(): string
+    {
+        $tempPath = sys_get_temp_dir().'/muwa-helper-test-'.uniqid('', true);
+        $this->tempPaths[] = $tempPath;
+
+        return $tempPath;
     }
 
     public static function deleteDirectory(string $dir): bool

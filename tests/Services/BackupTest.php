@@ -23,6 +23,7 @@ use MuckiFacilityPlugin\Services\Settings as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
+use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
@@ -115,6 +116,47 @@ class BackupTest extends TestCase
             TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PATH,
             $prepareCreateBackup->getRepositoryPath(),
             'BackupRepositoryPath should be equal'
+        );
+    }
+
+    public function testCreateBackupWithoutFilePathsRunsNoFilesBackup(): void
+    {
+        $createBackup = new BackupRepositorySettings();
+        $createBackup->setBackupRepositoryId(Uuid::randomHex());
+        $createBackup->setBackupType(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
+        $createBackup->setBackupPaths([]);
+        $createBackup->setDbDumpPath('/tmp/muwa-db-dump');
+
+        $backupRunner = $this->createMock(BackupInterface::class);
+        $backupRunner->method('getBackupResults')->willReturn([]);
+
+        $runnerCalls = [];
+        $backupRunnerFactory = $this->createMock(BackupRunnerFactory::class);
+        $backupRunnerFactory->method('createBackupRunner')->willReturnCallback(
+            function (BackupRepositorySettings $settings) use (&$runnerCalls, $backupRunner): BackupInterface {
+                $runnerCalls[] = [$settings->getBackupType(), count($settings->getBackupPaths())];
+
+                return $backupRunner;
+            }
+        );
+
+        $backupService = new BackupService(
+            $this->createMock(LoggerInterface::class),
+            $backupRunnerFactory,
+            $this->createMock(BackupRepository::class),
+            $this->createMock(BackupRepositoryChecks::class),
+            $this->createMock(PluginSettings::class),
+            $this->createMock(PluginHelper::class),
+            $this->createMock(ManageService::class),
+            $this->createMock(ServicesCliOutput::class)
+        );
+
+        $backupService->createBackup($createBackup);
+
+        static::assertNotContains(
+            [BackupTypes::FILES->value, 0],
+            $runnerCalls,
+            'createBackup should not start a files backup when the repository has no backup paths configured'
         );
     }
 }

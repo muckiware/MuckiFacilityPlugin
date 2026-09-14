@@ -34,7 +34,7 @@ class FilesRunner implements BackupInterface
     /**
      * @var array<ResultEntity>
      */
-    protected array $backupResults;
+    protected array $backupResults = [];
 
     /**
      * @param LoggerInterface $logger

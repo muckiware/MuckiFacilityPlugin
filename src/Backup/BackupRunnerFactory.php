@@ -4,7 +4,7 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
@@ -42,11 +42,11 @@ class BackupRunnerFactory
         switch ($createBackup->getBackupType()) {
 
             case BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value:
-                $runner = new CompleteFileRunner($this->logger, $this->settings);
+                $runner = new CompleteFileRunner($this->logger, $this->settings, $createBackup);
                 break;
 
             case BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value:
-                $runner = new CompleteFilesRunner($this->logger, $this->settings, $this->database);
+                $runner = new CompleteFilesRunner($this->logger, $this->settings, $createBackup, $this->database);
                 break;
             case BackupTypes::FILES->value:
                 $runner = new FilesRunner(
