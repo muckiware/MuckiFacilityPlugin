@@ -7,6 +7,10 @@ div.muwa-backup-repository-detail-backup-paths__description {
   padding: 0;
 }
 
+.muwa-backup-repository-stats-history__chart + .muwa-backup-repository-stats-history__chart {
+  margin-top: 30px;
+}
+
 div.muwa-backup-repository-detail-repository-password__description,
 div.muwa-backup-repository-detail-repository-path__description {
   margin-bottom: 60px;

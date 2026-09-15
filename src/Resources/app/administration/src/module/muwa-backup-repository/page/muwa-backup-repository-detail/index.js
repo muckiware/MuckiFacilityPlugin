@@ -79,7 +79,8 @@ Component.register('muwa-backup-repository-detail', {
             backupRepositoryChecks: [],
             backupRepositorySnapshots: [],
             selectedSnapshots: [],
-            backupRepositoryStats: []
+            backupRepositoryStats: [],
+            statsHistoryView: 'table'
         };
     },
 
@@ -164,6 +165,64 @@ Component.register('muwa-backup-repository-detail', {
                     label: 'muwa-backup-repository.detail.compressPathLabel',
                     allowResize: true,
                     width: '5%',
+                }
+            ];
+        },
+
+        currentStatsColumns() {
+
+            return [
+                {
+                    property: 'name',
+                    label: 'muwa-backup-repository.list.statsItemLabel',
+                    allowResize: true,
+                    width: '50%',
+                },
+                {
+                    property: 'value',
+                    label: 'muwa-backup-repository.list.statsItemValueLabel',
+                    allowResize: true,
+                    width: '50%',
+                }
+            ];
+        },
+
+        currentStatsItems() {
+
+            if (!this.latestStats) {
+                return [];
+            }
+
+            return [
+                {
+                    id: 'createdAt',
+                    name: this.$tc('muwa-backup-repository.detail.statsCreatedAtLabel'),
+                    value: this.dateFilter(this.latestStats.createdAt, { hour: '2-digit', minute: '2-digit' }),
+                },
+                {
+                    id: 'fileSystemSize',
+                    name: this.$tc('muwa-backup-repository.list.totalFileSystemSizeLabel'),
+                    value: this.formatBytes(this.latestStats.fileSystemSize),
+                },
+                {
+                    id: 'totalSize',
+                    name: this.$tc('muwa-backup-repository.list.totalFileRepositorySizeLabel'),
+                    value: this.formatBytes(this.latestStats.totalSize),
+                },
+                {
+                    id: 'snapshotsCount',
+                    name: this.$tc('muwa-backup-repository.list.totalSnapshotsLabel'),
+                    value: this.formatCount(this.latestStats.snapshotsCount),
+                },
+                {
+                    id: 'totalFileCount',
+                    name: this.$tc('muwa-backup-repository.list.totalFilesLabel'),
+                    value: this.formatCount(this.latestStats.totalFileCount),
+                },
+                {
+                    id: 'checkStatus',
+                    name: this.$tc('muwa-backup-repository.list.CheckStatusLabel'),
+                    value: this.latestStats.checkStatus || this.$tc('muwa-backup-repository.detail.statsNoValue'),
                 }
             ];
         },
@@ -259,6 +318,85 @@ Component.register('muwa-backup-repository-detail', {
             ];
         },
 
+        statsHistorySeriesColors() {
+            // sw-chart's defaultOptions hard-code stroke.colors to a single brand color,
+            // which would paint every series line the same regardless of the series count.
+            // Overriding it here keeps the line colors in sync with the legend swatches.
+            return ['#008FFB', '#00E396'];
+        },
+
+        statsHistorySortedStats() {
+            // ascending (oldest first), the criteria sorts DESC for the table.
+            return [...this.backupRepositoryStats].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        },
+
+        statsHistoryCategories() {
+            return this.statsHistorySortedStats.map((stat) => new Date(stat.createdAt).getTime());
+        },
+
+        statsHistoryXAxisOptions() {
+            // type: 'category' + an explicit categories array (one entry per stat, built
+            // from statsHistoryCategories) places exactly one discrete tick per stat entry,
+            // matching the history table 1:1 — a continuous 'datetime' scale would instead
+            // generate its own evenly-spaced ticks and repeat the same date across several
+            // adjacent ticks whenever entries sit close together.
+            return {
+                type: 'category',
+                categories: this.statsHistoryCategories,
+                labels: { formatter: (value) => this.formatChartDate(value) },
+            };
+        },
+
+        statsHistorySizeSeries() {
+
+            return [
+                {
+                    name: this.$tc('muwa-backup-repository.list.totalFileSystemSizeLabel'),
+                    data: this.statsHistorySortedStats.map((stat) => stat.fileSystemSize),
+                },
+                {
+                    name: this.$tc('muwa-backup-repository.list.totalFileRepositorySizeLabel'),
+                    data: this.statsHistorySortedStats.map((stat) => stat.totalSize),
+                },
+            ];
+        },
+
+        statsHistorySizeChartOptions() {
+
+            return {
+                colors: this.statsHistorySeriesColors,
+                stroke: { colors: this.statsHistorySeriesColors },
+                xaxis: this.statsHistoryXAxisOptions,
+                yaxis: { labels: { formatter: (value) => this.formatBytes(value) } },
+                tooltip: { x: { formatter: (value, opts) => this.formatChartTooltipDate(value, opts) }, y: { formatter: (value) => this.formatBytes(value) } },
+            };
+        },
+
+        statsHistoryCountSeries() {
+
+            return [
+                {
+                    name: this.$tc('muwa-backup-repository.list.totalSnapshotsLabel'),
+                    data: this.statsHistorySortedStats.map((stat) => stat.snapshotsCount),
+                },
+                {
+                    name: this.$tc('muwa-backup-repository.list.totalFilesLabel'),
+                    data: this.statsHistorySortedStats.map((stat) => stat.totalFileCount),
+                },
+            ];
+        },
+
+        statsHistoryCountChartOptions() {
+
+            return {
+                colors: this.statsHistorySeriesColors,
+                stroke: { colors: this.statsHistorySeriesColors },
+                xaxis: this.statsHistoryXAxisOptions,
+                yaxis: { labels: { formatter: (value) => this.formatCount(value) } },
+                tooltip: { x: { formatter: (value, opts) => this.formatChartTooltipDate(value, opts) }, y: { formatter: (value) => this.formatCount(value) } },
+            };
+        },
+
         isV6600() {
             return this.V6_6_0_0;
         },
@@ -335,6 +473,10 @@ Component.register('muwa-backup-repository-detail', {
             }
 
             return false
+        },
+
+        onStatsHistoryTabChange(tabItem) {
+            this.statsHistoryView = tabItem.name;
         },
 
         onRefresh() {
@@ -588,6 +730,28 @@ Component.register('muwa-backup-repository-detail', {
                 return this.$tc('muwa-backup-repository.detail.statsNoValue');
             }
             return value.toLocaleString();
+        },
+
+        formatChartDate(value) {
+            // dateFilter defaults hour/minute to 'numeric' and only overrides options it
+            // receives explicitly — passing them as undefined is required to drop the
+            // time-of-day from the output, just setting year/month/day is not enough.
+            return this.dateFilter(Number(value), {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: undefined,
+                minute: undefined,
+            });
+        },
+
+        formatChartTooltipDate(value, opts) {
+            // ApexCharts does not reliably pass the hovered category's own value into
+            // tooltip.x.formatter the way it does for xaxis.labels.formatter — looking it
+            // up via dataPointIndex from our own categories list avoids that ambiguity.
+            const index = opts && typeof opts.dataPointIndex === 'number' ? opts.dataPointIndex : null;
+            const timestamp = index !== null ? this.statsHistoryCategories[index] : value;
+            return this.dateFilter(Number(timestamp), { hour: '2-digit', minute: '2-digit' });
         },
 
         itemsDeleteFinish() {

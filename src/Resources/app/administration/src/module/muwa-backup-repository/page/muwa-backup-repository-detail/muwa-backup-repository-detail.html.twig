@@ -428,20 +428,14 @@
                         :large="true"
                     >
                         <template v-if="latestStats">
-                            <sw-description-list>
-                                <dt>{{ $tc('muwa-backup-repository.detail.statsCreatedAtLabel') }}</dt>
-                                <dd>{{ dateFilter(latestStats.createdAt, { hour: '2-digit', minute: '2-digit' }) }}</dd>
-                                <dt>{{ $tc('muwa-backup-repository.list.totalFileSystemSizeLabel') }}</dt>
-                                <dd>{{ formatBytes(latestStats.fileSystemSize) }}</dd>
-                                <dt>{{ $tc('muwa-backup-repository.list.totalFileRepositorySizeLabel') }}</dt>
-                                <dd>{{ formatBytes(latestStats.totalSize) }}</dd>
-                                <dt>{{ $tc('muwa-backup-repository.list.totalSnapshotsLabel') }}</dt>
-                                <dd>{{ formatCount(latestStats.snapshotsCount) }}</dd>
-                                <dt>{{ $tc('muwa-backup-repository.list.totalFilesLabel') }}</dt>
-                                <dd>{{ formatCount(latestStats.totalFileCount) }}</dd>
-                                <dt>{{ $tc('muwa-backup-repository.list.CheckStatusLabel') }}</dt>
-                                <dd>{{ latestStats.checkStatus || $tc('muwa-backup-repository.detail.statsNoValue') }}</dd>
-                            </sw-description-list>
+                            <sw-data-grid
+                                :showSelection="false"
+                                :showActions="false"
+                                :showSettings="false"
+                                :dataSource="currentStatsItems"
+                                :columns="currentStatsColumns"
+                                :plain-appearance="true"
+                            />
                         </template>
                         <sw-empty-state
                             v-else-if="!isStatsLoading"
@@ -456,33 +450,71 @@
                         :title="$tc('muwa-backup-repository.detail.statsHistoryLabel')"
                         :large="true"
                     >
-                        <template #grid>
-                            <sw-data-grid
-                                :showSelection="false"
-                                :showActions="false"
-                                :showSettings="false"
-                                :dataSource="backupRepositoryStats"
-                                :columns="statsHistoryColumns"
-                                :plain-appearance="true"
-                                :is-loading="isStatsLoading"
+                        {% block muwa_backup_repository_stats_history_view_tabs %}
+                            <sw-tabs
+                                small
+                                default-item="table"
+                                position-identifier="muwa-backup-repository-stats-history"
+                                class="muwa-backup-repository-stats-history__tabs"
+                                @new-item-active="onStatsHistoryTabChange"
                             >
-                                <template #column-createdAt="{ item }">
-                                    {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit' }) }}
+                                <template #default="{ active }">
+                                    <sw-tabs-item name="table" :active-tab="active">
+                                        {{ $tc('muwa-backup-repository.detail.statsHistoryTabTable') }}
+                                    </sw-tabs-item>
+                                    <sw-tabs-item name="diagram" :active-tab="active">
+                                        {{ $tc('muwa-backup-repository.detail.statsHistoryTabDiagram') }}
+                                    </sw-tabs-item>
                                 </template>
-                                <template #column-fileSystemSize="{ item }">
-                                    {{ formatBytes(item.fileSystemSize) }}
-                                </template>
-                                <template #column-totalSize="{ item }">
-                                    {{ formatBytes(item.totalSize) }}
-                                </template>
-                                <template #column-snapshotsCount="{ item }">
-                                    {{ formatCount(item.snapshotsCount) }}
-                                </template>
-                                <template #column-totalFileCount="{ item }">
-                                    {{ formatCount(item.totalFileCount) }}
-                                </template>
-                            </sw-data-grid>
-                        </template>
+                            </sw-tabs>
+                        {% endblock %}
+
+                        {% block muwa_backup_repository_stats_history_table %}
+                            <template v-if="statsHistoryView === 'table'" #grid>
+                                <sw-data-grid
+                                    :showSelection="false"
+                                    :showActions="false"
+                                    :showSettings="false"
+                                    :dataSource="backupRepositoryStats"
+                                    :columns="statsHistoryColumns"
+                                    :plain-appearance="true"
+                                    :is-loading="isStatsLoading"
+                                >
+                                    <template #column-createdAt="{ item }">
+                                        {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit' }) }}
+                                    </template>
+                                    <template #column-fileSystemSize="{ item }">
+                                        {{ formatBytes(item.fileSystemSize) }}
+                                    </template>
+                                    <template #column-totalSize="{ item }">
+                                        {{ formatBytes(item.totalSize) }}
+                                    </template>
+                                    <template #column-snapshotsCount="{ item }">
+                                        {{ formatCount(item.snapshotsCount) }}
+                                    </template>
+                                    <template #column-totalFileCount="{ item }">
+                                        {{ formatCount(item.totalFileCount) }}
+                                    </template>
+                                </sw-data-grid>
+                            </template>
+                        {% endblock %}
+
+                        {% block muwa_backup_repository_stats_history_diagram %}
+                            <template v-if="statsHistoryView === 'diagram'">
+                                <sw-chart
+                                    type="line"
+                                    class="muwa-backup-repository-stats-history__chart"
+                                    :series="statsHistorySizeSeries"
+                                    :options="statsHistorySizeChartOptions"
+                                />
+                                <sw-chart
+                                    type="line"
+                                    class="muwa-backup-repository-stats-history__chart"
+                                    :series="statsHistoryCountSeries"
+                                    :options="statsHistoryCountChartOptions"
+                                />
+                            </template>
+                        {% endblock %}
                     </sw-card>
 
                     {# Tab Snapshots #}

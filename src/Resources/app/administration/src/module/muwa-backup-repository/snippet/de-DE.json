@@ -95,6 +95,8 @@
       "repositoryPasswordDescription": "Es ist sehr wichtig, sich dieses Passwort zu merken! Wenn Du es verlieren, kannst Du außerhalb der Shop-Funktionalität nicht mehr auf die im Repository gespeicherten Daten zugreifen. Beachte, dass dieser Pfad nach der Erstellung nicht mehr geändert werden kann!",
       "statsCreatedAtLabel": "Stand",
       "statsHistoryLabel": "Verlauf",
+      "statsHistoryTabTable": "Tabelle",
+      "statsHistoryTabDiagram": "Diagramm",
       "statsEmptyTitle": "Noch kein Status erhoben",
       "statsEmptySubline": "Der Status wird am Ende jedes Backup-Laufs erhoben. Alternativ per CLI: bin/console muckiware:repository:stats <id>",
       "statsNoValue": "–"

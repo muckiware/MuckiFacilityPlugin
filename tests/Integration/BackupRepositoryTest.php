@@ -21,6 +21,7 @@ use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as ServicesBackup;
+use MuckiFacilityPlugin\Services\RepositoryStats;
 use MuckiFacilityPlugin\tests\TestCaseBase\Defaults as TestCaseBaseDefaults;
 use MuckiFacilityPlugin\tests\TestCaseBase\InitBackup;
 use MuckiFacilityPlugin\tests\TestCaseBase\CreateBackup;
@@ -140,7 +141,8 @@ class BackupRepositoryTest extends TestCase
             $pluginSettingsMock,
             $pluginHelperMock,
             $this->createMock(ManageService::class),
-            $servicesCliOutputMock
+            $servicesCliOutputMock,
+            $this->createMock(RepositoryStats::class)
         );
 
         $servicesBackup->createBackup($backupRepositorySettings);

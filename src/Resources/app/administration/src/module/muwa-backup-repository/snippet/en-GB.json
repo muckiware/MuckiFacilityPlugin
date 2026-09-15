@@ -92,8 +92,10 @@
       "forgetYearlyLabel": "Delete yearly backups",
       "repositoryPathDescription": "The path to the backup repository. Enter here the absolute path to the backup repository. Note that this path cannot be changed after creation!",
       "repositoryPasswordDescription": "Remembering this password is very important! If you lose it, you won’t be able to get access to the data stored in the repository outside of the shop functionality. Note that this path cannot be changed after creation!",
-      "statsCreatedAtLabel": "As of",
+      "statsCreatedAtLabel": "Status Date",
       "statsHistoryLabel": "History",
+      "statsHistoryTabTable": "Table",
+      "statsHistoryTabDiagram": "Diagram",
       "statsEmptyTitle": "No status collected yet",
       "statsEmptySubline": "The status is collected at the end of every backup run. Alternatively via CLI: bin/console muckiware:repository:stats <id>",
       "statsNoValue": "–"
