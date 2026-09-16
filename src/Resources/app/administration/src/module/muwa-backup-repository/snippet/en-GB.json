@@ -85,6 +85,7 @@
       "pathsLabel": "Path",
       "hostnameLabel": "Hostname",
       "sizeLabel": "Size",
+      "totalFilesProcessedLabel": "Files in this Backup",
       "databaseTypeLabel": "Database dump type",
       "forgetDailyLabel": "Delete daily backups",
       "forgetWeeklyLabel": "Delete weekly backups",

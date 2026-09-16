@@ -6,3 +6,4 @@ var/cache/*
 /vendor/
 /src/Resources/public/
 /var/
+/.playwright-cli/

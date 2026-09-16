@@ -61,6 +61,7 @@ class BackupFileSnapshotsRepository
                 'paths' => implode(',', $snapshot['paths']),
                 'hostname' => $snapshot['hostname'],
                 'size' => \ByteUnits\Binary::bytes($snapshot['summary']['total_bytes_processed'])->asMetric()->format(),
+                'totalFilesProcessed' => (int) $snapshot['summary']['total_files_processed'],
                 'createdAt' => $this->pluginHelper->createDateTimeFromString($snapshot['time'])
             ];
         }

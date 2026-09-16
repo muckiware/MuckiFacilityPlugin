@@ -18,6 +18,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IdField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\IntField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\UpdatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
@@ -57,6 +58,7 @@ class BackupRepositorySnapshotsDefinition extends EntityDefinition
             (new StringField('paths', 'paths'))->addFlags(new ApiAware()),
             (new StringField('hostname', 'hostname'))->addFlags(new ApiAware()),
             (new StringField('size', 'size'))->addFlags(new ApiAware()),
+            (new IntField('total_files_processed', 'totalFilesProcessed'))->addFlags(new ApiAware()),
 
             new CreatedAtField(),
             new UpdatedAtField()

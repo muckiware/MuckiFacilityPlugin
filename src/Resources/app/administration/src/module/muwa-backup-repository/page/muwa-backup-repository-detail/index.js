@@ -312,6 +312,12 @@ Component.register('muwa-backup-repository-detail', {
                     allowResize: true
                 },
                 {
+                    property: 'totalFilesProcessed',
+                    label: 'muwa-backup-repository.detail.totalFilesProcessedLabel',
+                    allowResize: true,
+                    align: 'right'
+                },
+                {
                     property: 'createdAt',
                     label: 'muwa-backup-repository.detail.createdAtLabel',
                     allowResize: true,
