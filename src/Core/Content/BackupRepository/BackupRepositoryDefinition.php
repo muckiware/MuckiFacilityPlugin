@@ -29,6 +29,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
 
 class BackupRepositoryDefinition extends EntityDefinition
 {
@@ -75,6 +76,11 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new OneToManyAssociationField(
                 'backupRepositorySnapshots',
                 BackupRepositorySnapshotsDefinition::class,
+                'backup_repository_id'
+            )),
+            (new OneToManyAssociationField(
+                'backupRepositoryStats',
+                BackupRepositoryStatsDefinition::class,
                 'backup_repository_id'
             )),
 

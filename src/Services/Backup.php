@@ -29,6 +29,7 @@ use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
+use MuckiFacilityPlugin\Services\RepositoryStats;
 
 /**
  *
@@ -57,6 +58,7 @@ class Backup
      * @param Helper $pluginHelper
      * @param ManageRepository $manageService
      * @param CliOutput $servicesCliOutput
+     * @param RepositoryStats $repositoryStats
      */
     public function __construct(
         protected LoggerInterface $logger,
@@ -66,7 +68,8 @@ class Backup
         protected PluginSettings $pluginSettings,
         protected PluginHelper $pluginHelper,
         protected ManageService $manageService,
-        protected ServicesCliOutput $servicesCliOutput
+        protected ServicesCliOutput $servicesCliOutput,
+        protected RepositoryStats $repositoryStats
     )
     {
         $this->backupException = new \Exception();
@@ -146,6 +149,7 @@ class Backup
 
         $this->createCheckItem($createBackup);
         $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
+        $this->repositoryStats->collectAndSave($createBackup->getBackupRepositoryId());
     }
 
     /**

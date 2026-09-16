@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
+         bootstrap="tests/UnitTestBootstrap.php"
+         colors="true">
+    <testsuites>
+        <testsuite name="MuckiFacility Unit Tests">
+            <file>tests/Services/HelperTest.php</file>
+            <file>tests/Services/BackupTest.php</file>
+            <file>tests/Services/RepositoryStatsTest.php</file>
+            <file>tests/Services/SettingsTest.php</file>
+            <file>tests/Backup/BackupRunnerFactoryTest.php</file>
+            <file>tests/Backup/Database/CompleteFileRunnerTest.php</file>
+            <file>tests/Backup/Database/CompleteFilesRunnerTest.php</file>
+            <file>tests/Backup/Files/FilesRunnerTest.php</file>
+        </testsuite>
+    </testsuites>
+</phpunit>

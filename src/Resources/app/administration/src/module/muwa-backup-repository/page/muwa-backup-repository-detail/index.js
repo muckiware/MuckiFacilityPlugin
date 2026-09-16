@@ -75,12 +75,15 @@ Component.register('muwa-backup-repository-detail', {
             requestBackupProcess: '/_action/muwa/backup/process',
             requestRestoreProcess: '/_action/muwa/restore/process',
             requestRemoveSnapshots: '/_action/muwa/remove/snapshots',
-            requestRepositoryStats: '/_action/muwa/repository/stats',
             httpClient: null,
             backupRepositoryChecks: [],
             backupRepositorySnapshots: [],
             selectedSnapshots: [],
-            stats: null
+            backupRepositoryStats: [],
+            statsHistoryView: 'table',
+            historyFilterFrom: null,
+            historyFilterTo: null,
+            historyActivePreset: null
         };
     },
 
@@ -120,6 +123,18 @@ Component.register('muwa-backup-repository-detail', {
             return this.repositoryFactory.create('muwa_backup_repository_snapshots');
         },
 
+        backupRepositoryStatsRepository() {
+            return this.repositoryFactory.create('muwa_backup_repository_stats');
+        },
+
+        latestStats() {
+
+            if (this.backupRepositoryStats && this.backupRepositoryStats.length) {
+                return this.backupRepositoryStats[0];
+            }
+            return null;
+        },
+
         criteria() {
             const criteria = new Criteria();
             criteria.addAssociation('backupRepositoryChecks');
@@ -157,20 +172,98 @@ Component.register('muwa-backup-repository-detail', {
             ];
         },
 
-        statsColumns() {
+        currentStatsColumns() {
 
             return [
                 {
-                    property: 'label',
+                    property: 'name',
                     label: 'muwa-backup-repository.list.statsItemLabel',
                     allowResize: true,
-                    width: '30%',
+                    width: '50%',
                 },
                 {
                     property: 'value',
                     label: 'muwa-backup-repository.list.statsItemValueLabel',
                     allowResize: true,
-                    width: '70%',
+                    width: '50%',
+                }
+            ];
+        },
+
+        currentStatsItems() {
+
+            if (!this.latestStats) {
+                return [];
+            }
+
+            return [
+                {
+                    id: 'createdAt',
+                    name: this.$tc('muwa-backup-repository.detail.statsCreatedAtLabel'),
+                    value: this.dateFilter(this.latestStats.createdAt, { hour: '2-digit', minute: '2-digit' }),
+                },
+                {
+                    id: 'fileSystemSize',
+                    name: this.$tc('muwa-backup-repository.list.totalFileSystemSizeLabel'),
+                    value: this.formatBytes(this.latestStats.fileSystemSize),
+                },
+                {
+                    id: 'totalSize',
+                    name: this.$tc('muwa-backup-repository.list.totalFileRepositorySizeLabel'),
+                    value: this.formatBytes(this.latestStats.totalSize),
+                },
+                {
+                    id: 'snapshotsCount',
+                    name: this.$tc('muwa-backup-repository.list.totalSnapshotsLabel'),
+                    value: this.formatCount(this.latestStats.snapshotsCount),
+                },
+                {
+                    id: 'totalFileCount',
+                    name: this.$tc('muwa-backup-repository.list.totalFilesLabel'),
+                    value: this.formatCount(this.latestStats.totalFileCount),
+                },
+                {
+                    id: 'checkStatus',
+                    name: this.$tc('muwa-backup-repository.list.CheckStatusLabel'),
+                    value: this.latestStats.checkStatus || this.$tc('muwa-backup-repository.detail.statsNoValue'),
+                }
+            ];
+        },
+
+        statsHistoryColumns() {
+
+            return [
+                {
+                    property: 'createdAt',
+                    label: 'muwa-backup-repository.detail.statsCreatedAtLabel',
+                    allowResize: true,
+                    width: '20%',
+                },
+                {
+                    property: 'fileSystemSize',
+                    label: 'muwa-backup-repository.list.totalFileSystemSizeLabel',
+                    allowResize: true,
+                    width: '20%',
+                },
+                {
+                    property: 'totalSize',
+                    label: 'muwa-backup-repository.list.totalFileRepositorySizeLabel',
+                    allowResize: true,
+                    width: '20%',
+                },
+                {
+                    property: 'snapshotsCount',
+                    label: 'muwa-backup-repository.list.totalSnapshotsLabel',
+                    allowResize: true,
+                    align: 'right',
+                    width: '20%',
+                },
+                {
+                    property: 'totalFileCount',
+                    label: 'muwa-backup-repository.list.totalFilesLabel',
+                    allowResize: true,
+                    align: 'right',
+                    width: '20%',
                 }
             ];
         },
@@ -228,6 +321,100 @@ Component.register('muwa-backup-repository-detail', {
             ];
         },
 
+        historyFilterPresetOptions() {
+            // id/name for the 6.6 sw-select-field-deprecated renderer, value/label for 6.7's
+            // mt-select — see typeOptions() above for why both key sets are needed. Values
+            // are strings: select components round-trip native option values as strings.
+            return [
+                { id: '7', name: this.$tc('muwa-backup-repository.detail.historyFilterPreset7Days'), value: '7', label: this.$tc('muwa-backup-repository.detail.historyFilterPreset7Days') },
+                { id: '14', name: this.$tc('muwa-backup-repository.detail.historyFilterPreset14Days'), value: '14', label: this.$tc('muwa-backup-repository.detail.historyFilterPreset14Days') },
+                { id: '30', name: this.$tc('muwa-backup-repository.detail.historyFilterPreset30Days'), value: '30', label: this.$tc('muwa-backup-repository.detail.historyFilterPreset30Days') },
+            ];
+        },
+
+        historyFilterActive() {
+            return Boolean(this.historyFilterFrom || this.historyFilterTo);
+        },
+
+        statsHistorySeriesColors() {
+            // sw-chart's defaultOptions hard-code stroke.colors to a single brand color,
+            // which would paint every series line the same regardless of the series count.
+            // Overriding it here keeps the line colors in sync with the legend swatches.
+            return ['#008FFB', '#00E396'];
+        },
+
+        statsHistorySortedStats() {
+            // ascending (oldest first), the criteria sorts DESC for the table.
+            return [...this.backupRepositoryStats].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        },
+
+        statsHistoryCategories() {
+            return this.statsHistorySortedStats.map((stat) => new Date(stat.createdAt).getTime());
+        },
+
+        statsHistoryXAxisOptions() {
+            // type: 'category' + an explicit categories array (one entry per stat, built
+            // from statsHistoryCategories) places exactly one discrete tick per stat entry,
+            // matching the history table 1:1 — a continuous 'datetime' scale would instead
+            // generate its own evenly-spaced ticks and repeat the same date across several
+            // adjacent ticks whenever entries sit close together.
+            return {
+                type: 'category',
+                categories: this.statsHistoryCategories,
+                labels: { formatter: (value) => this.formatChartDate(value) },
+            };
+        },
+
+        statsHistorySizeSeries() {
+
+            return [
+                {
+                    name: this.$tc('muwa-backup-repository.list.totalFileSystemSizeLabel'),
+                    data: this.statsHistorySortedStats.map((stat) => stat.fileSystemSize),
+                },
+                {
+                    name: this.$tc('muwa-backup-repository.list.totalFileRepositorySizeLabel'),
+                    data: this.statsHistorySortedStats.map((stat) => stat.totalSize),
+                },
+            ];
+        },
+
+        statsHistorySizeChartOptions() {
+
+            return {
+                colors: this.statsHistorySeriesColors,
+                stroke: { colors: this.statsHistorySeriesColors },
+                xaxis: this.statsHistoryXAxisOptions,
+                yaxis: { labels: { formatter: (value) => this.formatBytes(value) } },
+                tooltip: { x: { formatter: (value, opts) => this.formatChartTooltipDate(value, opts) }, y: { formatter: (value) => this.formatBytes(value) } },
+            };
+        },
+
+        statsHistoryCountSeries() {
+
+            return [
+                {
+                    name: this.$tc('muwa-backup-repository.list.totalSnapshotsLabel'),
+                    data: this.statsHistorySortedStats.map((stat) => stat.snapshotsCount),
+                },
+                {
+                    name: this.$tc('muwa-backup-repository.list.totalFilesLabel'),
+                    data: this.statsHistorySortedStats.map((stat) => stat.totalFileCount),
+                },
+            ];
+        },
+
+        statsHistoryCountChartOptions() {
+
+            return {
+                colors: this.statsHistorySeriesColors,
+                stroke: { colors: this.statsHistorySeriesColors },
+                xaxis: this.statsHistoryXAxisOptions,
+                yaxis: { labels: { formatter: (value) => this.formatCount(value) } },
+                tooltip: { x: { formatter: (value, opts) => this.formatChartTooltipDate(value, opts) }, y: { formatter: (value) => this.formatCount(value) } },
+            };
+        },
+
         isV6600() {
             return this.V6_6_0_0;
         },
@@ -275,7 +462,7 @@ Component.register('muwa-backup-repository-detail', {
             this.getBackupRepository();
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
-            this.getBackupRepositoryStats();
+            this.fetchBackupRepositoryStats();
         },
 
         getBackupRepository() {
@@ -306,11 +493,92 @@ Component.register('muwa-backup-repository-detail', {
             return false
         },
 
+        onStatsHistoryTabChange(tabItem) {
+            this.statsHistoryView = tabItem.name;
+        },
+
+        onHistoryPresetSelect(value) {
+
+            if (!value) {
+                return;
+            }
+
+            // A rolling "now minus N days" window, not "local midnight minus N days":
+            // the browser's own timezone and the admin user's configured timezone
+            // (Shopware.Store.get('session').currentUser.timeZone) can differ, and
+            // truncating to midnight in the wrong one shifts the displayed date by a day.
+            const to = new Date();
+            const from = new Date(to.getTime() - Number(value) * 24 * 60 * 60 * 1000);
+
+            this.historyActivePreset = value;
+            this.historyFilterFrom = from.toISOString();
+            this.historyFilterTo = to.toISOString();
+            this.refetchActiveTabHistory();
+        },
+
+        onHistoryFilterFromChange(value) {
+            this.historyFilterFrom = value || null;
+            this.historyActivePreset = null;
+            this.refetchActiveTabHistory();
+        },
+
+        onHistoryFilterToChange(value) {
+            this.historyFilterTo = value || null;
+            this.historyActivePreset = null;
+            this.refetchActiveTabHistory();
+        },
+
+        onHistoryFilterReset() {
+            this.historyFilterFrom = null;
+            this.historyFilterTo = null;
+            this.historyActivePreset = null;
+            this.refetchActiveTabHistory();
+        },
+
+        refetchActiveTabHistory() {
+            // one shared date filter, re-targeted at whichever tab's entity is open —
+            // see the sidebar filter item, which is now permanently mounted for all
+            // three tabs instead of being toggled via v-if per tab.
+            if (this.tab === 'backupRepositoryChecks') {
+                this.fetchBackupRepositoryChecks();
+            } else if (this.tab === 'backupRepositorySnapshots') {
+                this.fetchBackupRepositorySnapshots();
+            } else if (this.tab === 'backupRepositoryStats') {
+                this.fetchBackupRepositoryStats();
+            }
+        },
+
+        applyHistoryDateFilter(criteria) {
+
+            if (!this.historyFilterActive) {
+                criteria.setLimit(10);
+                return criteria;
+            }
+
+            const range = {};
+            if (this.historyFilterFrom) {
+                range.gte = this.historyFilterFrom;
+            }
+            if (this.historyFilterTo) {
+                // the picker stores the start of the selected day; extend to its end
+                // so entries created later that same day are still included.
+                const inclusiveTo = new Date(this.historyFilterTo);
+                inclusiveTo.setHours(23, 59, 59, 999);
+                range.lte = inclusiveTo.toISOString();
+            }
+
+            criteria.addFilter(Criteria.range('createdAt', range));
+            // no fixed cap without a date filter's natural boundary — 500 is a
+            // generous safety net against an unbounded query, not an expected count.
+            criteria.setLimit(500);
+            return criteria;
+        },
+
         onRefresh() {
 
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
-            this.getBackupRepositoryStats();
+            this.fetchBackupRepositoryStats();
         },
 
         onClickSave() {
@@ -423,8 +691,7 @@ Component.register('muwa-backup-repository-detail', {
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
-            criteria.setLimit(10);
-            return criteria;
+            return this.applyHistoryDateFilter(criteria);
         },
 
         fetchBackupRepositorySnapshots() {
@@ -445,8 +712,7 @@ Component.register('muwa-backup-repository-detail', {
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
-            criteria.setLimit(10);
-            return criteria;
+            return this.applyHistoryDateFilter(criteria);
         },
 
         restoreSnapshot(item) {
@@ -524,22 +790,61 @@ Component.register('muwa-backup-repository-detail', {
             });
         },
 
-        getBackupRepositoryStats() {
+        fetchBackupRepositoryStats() {
+
+            const criteria = new Criteria();
+            criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
+            criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
+            this.applyHistoryDateFilter(criteria);
 
             this.isStatsLoading = true;
+            return this.backupRepositoryStatsRepository.search(criteria, Context.api).then((collection) => {
 
-            const apiRoute = `${this.requestRepositoryStats}/${this.$route.params.id}`;
-            this.httpClient.get(apiRoute, { headers: this.getApiHeader() }).then((collection) => {
-
-                this.stats = collection;
+                this.backupRepositoryStats = collection;
                 this.isStatsLoading = false;
-            }).catch((exception) => {
-
-                this.createNotificationError({
-                    title: this.$t('muwa-backup-repository.restore.error-message'),
-                    message: exception.response.data.errors[0].detail
-                });
+                return this.backupRepositoryStats;
             });
+        },
+
+        formatBytes(value) {
+
+            // Shopware.Utils.format.fileSize(bytes, locale = 'de-DE') — das locale-Argument wird
+            // bewusst weggelassen: Shopware.State ist in 6.7 deprecated, Shopware.Store gibt es in
+            // 6.6 nicht. Der Default deckt beide Majors ohne Versionszweig ab.
+            if (value === null || value === undefined) {
+                return this.$tc('muwa-backup-repository.detail.statsNoValue');
+            }
+            return Shopware.Utils.format.fileSize(value);
+        },
+
+        formatCount(value) {
+
+            if (value === null || value === undefined) {
+                return this.$tc('muwa-backup-repository.detail.statsNoValue');
+            }
+            return value.toLocaleString();
+        },
+
+        formatChartDate(value) {
+            // dateFilter defaults hour/minute to 'numeric' and only overrides options it
+            // receives explicitly — passing them as undefined is required to drop the
+            // time-of-day from the output, just setting year/month/day is not enough.
+            return this.dateFilter(Number(value), {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: undefined,
+                minute: undefined,
+            });
+        },
+
+        formatChartTooltipDate(value, opts) {
+            // ApexCharts does not reliably pass the hovered category's own value into
+            // tooltip.x.formatter the way it does for xaxis.labels.formatter — looking it
+            // up via dataPointIndex from our own categories list avoids that ambiguity.
+            const index = opts && typeof opts.dataPointIndex === 'number' ? opts.dataPointIndex : null;
+            const timestamp = index !== null ? this.statsHistoryCategories[index] : value;
+            return this.dateFilter(Number(timestamp), { hour: '2-digit', minute: '2-digit' });
         },
 
         itemsDeleteFinish() {

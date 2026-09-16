@@ -73,6 +73,10 @@ You can also create a backup in the administration panel.
 
 This action does not start the backup process immediately, it will be started as a background process. After a short while, you can see under the __checks__-tab the status of the backup checks, as well as the snapshots of each database and path item in the __Snapshots__-tab<br>
 
+At the end of every backup run, the repository statistics (total size, total file count,
+snapshots count, file system size) are collected and stored. You can see the latest values,
+plus a history of the last 10 collections, in the __Repository Status__-tab.
+
 
 ## Command Line Interface
 | Command                                                                      | Desc                                                          |
@@ -81,6 +85,7 @@ This action does not start the backup process immediately, it will be started as
 | ```bin/console muckiware:backup:create <backupRepositoryId>```               | Creates a new backup by backup repository configuration       |
 | ```bin/console muckiware:backup:forget <backupRepositoryId>```               | Removes snapshots of a backup repository by forget parameters |
 | ```bin/console muckiware:backup:snapshots <backupRepositoryId>```            | Gets a list of snapshots in a backup repository id            |
+| ```bin/console muckiware:repository:stats <backupRepositoryId>```            | Collects and persists the repository status (total size, file count, snapshots count, file system size) |
 | ```bin/console muckiware:backup:restore <backupRepositoryId> <snapshotId>``` | Restore data by backup repository id and snapshot id          |
 | ```bin/console muckiware:db:dump <Type of backup>```                         | Creates just a database dump by global plugin setups          |
 ### Cronjob
@@ -88,8 +93,11 @@ You can create a cronjob for to create a backup automatically. This should be th
 ```shell
 * 3 * * * php /var/www/html/bin/console muckiware:backup:create <backupRepositoryId>
 30 5 * * * php /var/www/html/bin/console muckiware:backup:forget <backupRepositoryId>
+0 6 * * * php /var/www/html/bin/console muckiware:repository:stats <backupRepositoryId>
 ```
-The first row creates a backup every day at 3:00 am. The second row removes old snapshots every day at 5:30 am.
+The first row creates a backup every day at 3:00 am. The second row removes old snapshots every day
+at 5:30 am. Removing snapshots does not refresh the persisted repository status by itself, so the
+third row collects a fresh status right after, at 6:00 am.
 
 ## Database dumps
 Backups via command line interface are possible with the following commands:

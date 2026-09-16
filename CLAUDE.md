@@ -20,7 +20,7 @@ Bug fixt, der auch andere Nutzer des Plugins betrifft, bumpt Version und `CHANGE
 
 | | |
 |---|---|
-| Composer-Paket | `muckiware/facility-plugin`, Version `v0.7.0` |
+| Composer-Paket | `muckiware/facility-plugin`, Version `v0.8.0` |
 | Plugin-Klasse | `MuckiFacilityPlugin\MuckiFacilityPlugin` |
 | Shopware im Projekt | `shopware/core` **v6.7.14.0** (Arbeitsprojekt `sw67`; das Repo liegt ggf. in mehreren Shops) |
 | Von Plugin unterstuetzt | Shopware 6.6.x + 6.7.x, PHP 8.2–8.4, restic >= 0.15 |
@@ -39,8 +39,15 @@ Admin (Vue) ──POST /api/_action/muwa/...──► Controller ──dispatch�
 CLI (muckiware:*) ─────────────────────────► Commands ─┬─► Services\Backup ─► BackupRunnerFactory ─► BackupInterface-Runner
                                                         ├─► Services\RestoreSnapshot ─► MuckiRestic\Library\Restore
                                                         ├─► Services\ManageRepository ─► MuckiRestic\Library\Manage
+                                                        ├─► Services\RepositoryStats ─► MuckiRestic\Library\Manage (restic stats) + Helper (Verzeichnisgroesse)
                                                         └─► Services\DbTableCleanup ─► TableCleanupRunnerFactory ─► TableCleanupInterface-Runner
 ```
+
+`Services\RepositoryStats::collectAndSave()` wird dreifach getriggert: synchron am Ende von
+`Services\Backup::createBackup()`, asynchron ueber `UpdateRepositoryStatsMessage` /
+`UpdateRepositoryStatsHandler` (dispatcht von `ManageController::removeSnapshots()`), und
+synchron ueber den CLI-Command `muckiware:repository:stats` — letzterer bewusst synchron, damit
+ein Cronjob auch ohne laufenden Messenger-Worker funktioniert.
 
 Zwei Factory-Patterns tragen die ganze Fachlogik — bei neuen Backup- oder Cleanup-Typen sind
 immer drei Stellen zu aendern: Enum + Factory + Runner.
@@ -102,6 +109,7 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 | `muwa_backup_repository` | Repository-Konfiguration (Pfad, Passwort, Hostname, Restore-Pfad, `db_dump_path`, `backup_paths` als JsonField, forget-Policy) | 1:n Checks, 1:n Snapshots |
 | `muwa_backup_repository_checks` | Ergebnis von `restic check` je Backup-Lauf | n:1 Repository |
 | `muwa_backup_repository_snapshots` | gespiegelte restic-Snapshot-Liste (snapshotId, shortId, paths, hostname, size) | n:1 Repository |
+| `muwa_backup_repository_stats` | Historie der Repository-Statistik je Backup-Lauf (Rohwerte in Bytes/Anzahl) | n:1 Repository |
 
 `repository_password` traegt `removeFlag(ApiAware::class)` — das Passwort darf nie ueber die
 Admin-API rausgehen. Bei Aenderungen an der Definition darauf achten.
@@ -121,7 +129,7 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `POST /api/_action/muwa/restore/process` | `RestoreSnapshotController` | Detail-Seite, Snapshot-Tab |
 | `POST /api/_action/muwa/manage/snapshots` | `ManageController::getSnapshots` | — |
 | `POST /api/_action/muwa/remove/snapshots` | `ManageController::removeSnapshots` | Snapshot-Tab |
-| `GET /api/_action/muwa/repository/stats/{id}` | `ManageController::getRepositoryStats` | Stats-Tab |
+| `GET /api/_action/muwa/repository/stats/{id}` | `ManageController::getRepositoryStats` | — (live `restic stats`, von der Administration nicht mehr aufgerufen; siehe Repository-Status-Tab) |
 
 ## CLI-Commands
 
@@ -130,6 +138,7 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `muckiware:backup:create` | `Commands\BackupCreate` | `backupRepositoryId` |
 | `muckiware:backup:check` | `Commands\BackupCheck` | `backupRepositoryId` |
 | `muckiware:backup:snapshots` | `Commands\ManageSnapshots` | `backupRepositoryId` |
+| `muckiware:repository:stats` | `Commands\RepositoryStats` | `backupRepositoryId` |
 | `muckiware:backup:forget` | `Commands\ManageForget` | `backupRepositoryId` |
 | `muckiware:backup:restore` | `Commands\RestoreSnapshot` | `backupRepositoryId`, `snapshotId` |
 | `muckiware:db:dump` | `Commands\Dump` | `backupType` (BackupTypes-Enum) |
@@ -147,6 +156,12 @@ implementieren `AsyncMessageInterface`. Handler: `CreateBackupHandler`, `Restore
 
 Passwoerter werden **nicht** in die Message serialisiert: der Handler laedt das Repository frisch
 und setzt das Passwort erst dann (`setRepositoryPassword()`). Dieses Muster beibehalten.
+
+`UpdateRepositoryStatsMessage` / `UpdateRepositoryStatsHandler` sind der dritte Trigger fuer
+`Services\RepositoryStats::collectAndSave()`, dispatcht von `ManageController::removeSnapshots()`.
+Die Message erbt **nicht** von `BackupRepositorySettings` — sie traegt nur die
+`backupRepositoryId` — und ist damit von der doppelten `CreateBackupMessage`-Typisierung
+(Auffaelligkeit 1) nicht betroffen.
 
 ## Konfiguration
 
@@ -177,6 +192,18 @@ composer run-script phpstan          # PHPStan Level 6, nur src/
 # aus dem Shop-Root
 ./vendor/bin/phpunit --configuration="custom/plugins/MuckiFacilityPlugin"
 ```
+
+**Achtung:** Der `phpunit.xml`-Pfad (Shopware-Test-Bootstrap) laeuft in `sw67` derzeit **nicht** —
+das Bootstrap scheitert mit `Unknown column 'language.translation_auto_update'`. Fuer echte
+Unit-Tests ohne Shopware-Bootstrap gibt es stattdessen `tests/UnitTestBootstrap.php` +
+`phpunit.unit.xml`:
+
+```bash
+ddev exec "cd custom/static-plugins/MuckiFacilityPlugin && /var/www/html/vendor/bin/phpunit -c phpunit.unit.xml"
+```
+
+Das ist der Weg, der in diesem Environment tatsaechlich funktioniert — bis der Bootstrap-Bug
+behoben ist, hier ansetzen statt eine Stunde mit `phpunit.xml` zu verlieren.
 
 `tests/` mischt echte Unit-Tests (`HelperTest`, `SettingsTest`, `BackupRunnerFactoryTest`) mit
 Integrationstests, die eine laufende Shopware-Instanz und ein reales restic-Binary brauchen

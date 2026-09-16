@@ -28,6 +28,7 @@ use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
+use MuckiFacilityPlugin\Services\RepositoryStats;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
 use MuckiFacilityPlugin\Core\BackupTypes;
@@ -45,7 +46,8 @@ class BackupTest extends TestCase
             $this->createMock(PluginSettings::class),
             $this->createMock(PluginHelper::class),
             $this->createMock(ManageService::class),
-            $this->createMock(ServicesCliOutput::class)
+            $this->createMock(ServicesCliOutput::class),
+            $this->createMock(RepositoryStats::class)
         );
 
         $prepareBackupPaths = $backupService->prepareBackupPaths(TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATHS);
@@ -90,7 +92,8 @@ class BackupTest extends TestCase
             $this->createMock(PluginSettings::class),
             $this->createMock(PluginHelper::class),
             $this->createMock(ManageService::class),
-            $this->createMock(ServicesCliOutput::class)
+            $this->createMock(ServicesCliOutput::class),
+            $this->createMock(RepositoryStats::class)
         );
 
         $prepareCreateBackup = $backupService->prepareCreateBackup($backupRepositoryId);
@@ -148,7 +151,8 @@ class BackupTest extends TestCase
             $this->createMock(PluginSettings::class),
             $this->createMock(PluginHelper::class),
             $this->createMock(ManageService::class),
-            $this->createMock(ServicesCliOutput::class)
+            $this->createMock(ServicesCliOutput::class),
+            $this->createMock(RepositoryStats::class)
         );
 
         $backupService->createBackup($createBackup);
@@ -158,5 +162,34 @@ class BackupTest extends TestCase
             $runnerCalls,
             'createBackup should not start a files backup when the repository has no backup paths configured'
         );
+    }
+
+    public function testCreateBackupCollectsRepositoryStats(): void
+    {
+        $backupRepositoryId = Uuid::randomHex();
+
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->expects(static::once())
+            ->method('collectAndSave')
+            ->with($backupRepositoryId);
+
+        $backupService = new BackupService(
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(BackupRunnerFactory::class),
+            $this->createMock(BackupRepository::class),
+            $this->createMock(BackupRepositoryChecks::class),
+            $this->createMock(PluginSettings::class),
+            $this->createMock(PluginHelper::class),
+            $this->createMock(ManageService::class),
+            $this->createMock(ServicesCliOutput::class),
+            $repositoryStats
+        );
+
+        $createBackup = new BackupRepositorySettings();
+        $createBackup->setBackupRepositoryId($backupRepositoryId);
+        $createBackup->setBackupType(BackupTypes::NONE_DATABASE->value);
+        $createBackup->setBackupPaths([]);
+
+        $backupService->createBackup($createBackup, false);
     }
 }

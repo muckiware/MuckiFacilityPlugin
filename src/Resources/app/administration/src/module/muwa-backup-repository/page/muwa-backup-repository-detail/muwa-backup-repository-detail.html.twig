@@ -45,6 +45,13 @@
                                 {{ $tc('muwa-backup-repository.tabs.config') }}
                             </sw-tabs-item>
                             <sw-tabs-item
+                                key="backupRepositoryStats"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryStats' } }"
+                            >
+                                {{ $tc('muwa-backup-repository.tabs.stats') }}
+                            </sw-tabs-item>
+                            <sw-tabs-item
                                 key="backupRepositoryChecks"
                                 :active-tab="active"
                                 :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryChecks' } }"
@@ -412,32 +419,114 @@
                         </template>
                     </sw-entity-listing>
 
-                    {# Tab Snapshots #}
+                    {# Tab Repository Status #}
                     <sw-card
-                        positionIdentifier="muwaBackupRepositoryStats"
-                        v-if="backupRepository && tab === 'backupRepositorySnapshots'"
+                        positionIdentifier="muwaBackupRepositoryStatsPanel"
+                        v-if="backupRepository && tab === 'backupRepositoryStats'"
                         :title="$tc('muwa-backup-repository.list.stats')"
+                        :isLoading="isStatsLoading"
                         :large="true"
                     >
-                        <template #grid>
+                        <template v-if="latestStats">
                             <sw-data-grid
-                                v-if="stats"
                                 :showSelection="false"
                                 :showActions="false"
-                                :dataSource="stats.data"
-                                :columns="statsColumns"
+                                :showSettings="false"
+                                :dataSource="currentStatsItems"
+                                :columns="currentStatsColumns"
                                 :plain-appearance="true"
-                                :is-loading="isStatsLoading"
-                            >
-                                <template #column-label="{ item }">
-                                    {{ $tc(item.label) }}
-                                </template>
-                                <template #column-value="{ item }">
-                                    {{ item.value }}
-                                </template>
-                            </sw-data-grid>
+                            />
                         </template>
+                        <sw-empty-state
+                            v-else-if="!isStatsLoading"
+                            :absolute="false"
+                            :title="$tc('muwa-backup-repository.detail.statsEmptyTitle')"
+                            :subline="$tc('muwa-backup-repository.detail.statsEmptySubline')"
+                        />
                     </sw-card>
+                    <sw-card
+                        positionIdentifier="muwaBackupRepositoryStatsHistory"
+                        v-if="backupRepository && tab === 'backupRepositoryStats'"
+                        :title="$tc('muwa-backup-repository.detail.statsHistoryLabel')"
+                        :large="true"
+                    >
+                        {% block muwa_backup_repository_stats_history_view_tabs %}
+                            <sw-tabs
+                                v-if="backupRepositoryStats.length"
+                                small
+                                default-item="table"
+                                position-identifier="muwa-backup-repository-stats-history"
+                                class="muwa-backup-repository-stats-history__tabs"
+                                @new-item-active="onStatsHistoryTabChange"
+                            >
+                                <template #default="{ active }">
+                                    <sw-tabs-item name="table" :active-tab="active">
+                                        {{ $tc('muwa-backup-repository.detail.statsHistoryTabTable') }}
+                                    </sw-tabs-item>
+                                    <sw-tabs-item name="diagram" :active-tab="active">
+                                        {{ $tc('muwa-backup-repository.detail.statsHistoryTabDiagram') }}
+                                    </sw-tabs-item>
+                                </template>
+                            </sw-tabs>
+                        {% endblock %}
+
+                        {% block muwa_backup_repository_stats_history_table %}
+                            <template v-if="backupRepositoryStats.length && statsHistoryView === 'table'" #grid>
+                                <sw-data-grid
+                                    :showSelection="false"
+                                    :showActions="false"
+                                    :showSettings="false"
+                                    :dataSource="backupRepositoryStats"
+                                    :columns="statsHistoryColumns"
+                                    :plain-appearance="true"
+                                    :is-loading="isStatsLoading"
+                                >
+                                    <template #column-createdAt="{ item }">
+                                        {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit' }) }}
+                                    </template>
+                                    <template #column-fileSystemSize="{ item }">
+                                        {{ formatBytes(item.fileSystemSize) }}
+                                    </template>
+                                    <template #column-totalSize="{ item }">
+                                        {{ formatBytes(item.totalSize) }}
+                                    </template>
+                                    <template #column-snapshotsCount="{ item }">
+                                        {{ formatCount(item.snapshotsCount) }}
+                                    </template>
+                                    <template #column-totalFileCount="{ item }">
+                                        {{ formatCount(item.totalFileCount) }}
+                                    </template>
+                                </sw-data-grid>
+                            </template>
+                        {% endblock %}
+
+                        {% block muwa_backup_repository_stats_history_diagram %}
+                            <template v-if="backupRepositoryStats.length && statsHistoryView === 'diagram'">
+                                <sw-chart
+                                    type="line"
+                                    class="muwa-backup-repository-stats-history__chart"
+                                    :series="statsHistorySizeSeries"
+                                    :options="statsHistorySizeChartOptions"
+                                />
+                                <sw-chart
+                                    type="line"
+                                    class="muwa-backup-repository-stats-history__chart"
+                                    :series="statsHistoryCountSeries"
+                                    :options="statsHistoryCountChartOptions"
+                                />
+                            </template>
+                        {% endblock %}
+
+                        {% block muwa_backup_repository_stats_history_empty_state %}
+                            <sw-empty-state
+                                v-if="!backupRepositoryStats.length && !isStatsLoading"
+                                :absolute="false"
+                                :title="$tc('muwa-backup-repository.detail.statsHistoryEmptyTitle')"
+                            />
+                        {% endblock %}
+                    </sw-card>
+
+                    {# Tab Snapshots #}
                     <sw-entity-listing
                         v-if="backupRepository && tab === 'backupRepositorySnapshots'"
                         :isLoading="isLoading"
@@ -557,7 +646,7 @@
         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
         {% block muwa_backup_repository_list_sidebar %}
             <template #sidebar>
-                <sw-sidebar class="muwa-backup-repository-list__sidebar" v-if="tab === 'backupRepositoryChecks' || tab === 'backupRepositorySnapshots'">
+                <sw-sidebar class="muwa-backup-repository-list__sidebar" v-if="tab === 'backupRepositoryChecks' || tab === 'backupRepositorySnapshots' || tab === 'backupRepositoryStats'">
                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                     {% block muwa_backup_repository_list_sidebar_refresh %}
                         <sw-sidebar-item
@@ -565,6 +654,59 @@
                                 :title="$tc('muwa-backup-repository.list.titleSidebarItemRefresh')"
                                 @click="onRefresh"
                         />
+                    {% endblock %}
+
+                    {% block muwa_backup_repository_list_sidebar_history_filter %}
+                        <sw-sidebar-item
+                            icon="regular-filter"
+                            :has-simple-badge="historyFilterActive"
+                            :title="$tc('muwa-backup-repository.detail.historyFilterSidebarTitle')"
+                            class="muwa-backup-repository-history-filter"
+                        >
+                            {# From 6.7 on sw-select-field renders mt-select, which binds via
+                               modelValue and ignores forwarded option slots — see the type
+                               select above for the same 6.6/6.7 split. #}
+                            <sw-select-field
+                                v-if="isV6700"
+                                :model-value="historyActivePreset"
+                                :options="historyFilterPresetOptions"
+                                :label="$tc('muwa-backup-repository.detail.historyFilterPresetLabel')"
+                                :placeholder="$tc('muwa-backup-repository.detail.historyFilterPresetPlaceholder')"
+                                @update:model-value="onHistoryPresetSelect"
+                            />
+                            <sw-select-field
+                                v-if="isV6600 && !isV6700"
+                                type="select"
+                                :value="historyActivePreset"
+                                :options="historyFilterPresetOptions"
+                                :label="$tc('muwa-backup-repository.detail.historyFilterPresetLabel')"
+                                :placeholder="$tc('muwa-backup-repository.detail.historyFilterPresetPlaceholder')"
+                                @update:value="onHistoryPresetSelect"
+                            />
+
+                            <sw-datepicker
+                                dateType="date"
+                                :label="$tc('muwa-backup-repository.detail.historyFilterFromLabel')"
+                                :value="historyFilterFrom"
+                                @update:value="onHistoryFilterFromChange"
+                            />
+                            <sw-datepicker
+                                dateType="date"
+                                :label="$tc('muwa-backup-repository.detail.historyFilterToLabel')"
+                                :value="historyFilterTo"
+                                @update:value="onHistoryFilterToChange"
+                            />
+
+                            <sw-button
+                                v-if="historyFilterActive"
+                                size="small"
+                                variant="ghost"
+                                block
+                                @click="onHistoryFilterReset"
+                            >
+                                {{ $tc('muwa-backup-repository.detail.historyFilterResetLabel') }}
+                            </sw-button>
+                        </sw-sidebar-item>
                     {% endblock %}
                 </sw-sidebar>
             </template>
