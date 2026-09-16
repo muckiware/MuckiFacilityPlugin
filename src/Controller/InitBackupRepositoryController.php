@@ -7,6 +7,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Write\WriteException;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
+use Shopware\Core\PlatformRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,6 +32,7 @@ class InitBackupRepositoryController extends AbstractController
     #[Route(
         path: '/api/_action/muwa/backup/repository/init',
         name: 'api.action.muwa.backup.repository.init',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:create']],
         methods: ['POST']
     )]
     public function initRepository(RequestDataBag $requestDataBag, Context $context): JsonResponse

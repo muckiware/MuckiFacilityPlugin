@@ -11,6 +11,7 @@
                     :isLoading="isLoading"
                     v-if="backupRepository && tab === 'backupRepositoryConfig'"
                     :processSuccess="processSuccess"
+                    :disabled="!acl.can('muwa_backup_repository.editor')"
                     variant="primary"
                     @process-finish="saveFinish"
                     @click="onClickSave"
@@ -21,7 +22,7 @@
                         variant="ghost"
                         class="sw-settings-search__search-index-rebuild-button"
                         :isLoading="isBackupProcessInProgress"
-                        :disabled="isBackupProcessDisabled"
+                        :disabled="isBackupProcessDisabled || !acl.can('muwa_backup_repository.editor')"
                         :process-success="isBackupProcessSuccess"
                         @update:process-success="createFinish"
                         @click="onBackupProcess"
@@ -536,6 +537,7 @@
                         :showActions="true"
                         :showSettings="false"
                         :show-selection="true"
+                        :allow-delete="acl.can('muwa_backup_repository.delete_snapshots')"
                         :sort-by="sortBy"
                         :sort-direction="sortDirection"
                         @selection-change="updateSelection"
@@ -572,6 +574,7 @@
                             {% block wuwa_backup_repository_list_content_listing_actions %}
                                 <sw-context-menu-item
                                     size="small"
+                                    :disabled="!acl.can('muwa_backup_repository.restore')"
                                     @click="restoreSnapshot(item)"
                                 >
                                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
@@ -585,7 +588,7 @@
                                 <sw-context-menu-item
                                     class="sw-customer-list__delete-action"
                                     variant="danger"
-                                    :disabled="false"
+                                    :disabled="!acl.can('muwa_backup_repository.delete_snapshots')"
                                     size="small"
                                     @click="onDelete(item.id)"
                                 >

@@ -137,5 +137,19 @@
       "delete-success-message": "The snapshot was deleted successfully.",
       "deletes-success-message": "The snapshots were deleted successfully."
     }
+  },
+  "sw-privileges": {
+    "permissions": {
+      "muwa_backup_repository": {
+        "label": "Backup repositories"
+      }
+    },
+    "additional_permissions": {
+      "muwa_backup_repository": {
+        "label": "Backup repositories",
+        "restore": "Restore a snapshot (overwrites files on the server)",
+        "delete_snapshots": "Delete snapshots from the repository (irreversible)"
+      }
+    }
   }
 }

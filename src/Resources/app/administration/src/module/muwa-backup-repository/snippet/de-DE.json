@@ -137,5 +137,19 @@
       "delete-success-message": "Der Snapshot wurde erfolgreich gelöscht.",
       "deletes-success-message": "Die Snapshots wurden erfolgreich gelöscht."
     }
+  },
+  "sw-privileges": {
+    "permissions": {
+      "muwa_backup_repository": {
+        "label": "Backup Repositories"
+      }
+    },
+    "additional_permissions": {
+      "muwa_backup_repository": {
+        "label": "Backup Repositories",
+        "restore": "Snapshot wiederherstellen (überschreibt Dateien auf dem Server)",
+        "delete_snapshots": "Snapshots aus dem Repository löschen (unwiderruflich)"
+      }
+    }
   }
 }

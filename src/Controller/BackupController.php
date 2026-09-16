@@ -13,6 +13,7 @@ namespace MuckiFacilityPlugin\Controller;
 
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
+use Shopware\Core\PlatformRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
@@ -44,6 +45,7 @@ class BackupController extends AbstractController
     #[Route(
         path: '/api/_action/muwa/backup/process',
         name: 'api.action.muwa.backup.process',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:backup']],
         methods: ['POST']
     )]
     public function process(RequestDataBag $requestDataBag, Context $context): Response

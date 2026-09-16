@@ -3,6 +3,7 @@ const { Component, Module, Feature } = Shopware;
 import './page/muwa-backup-repository-list';
 import './page/muwa-backup-repository-create';
 import './page/muwa-backup-repository-detail';
+import './acl';
 
 import deDE from './snippet/de-DE.json';
 import enGB from './snippet/en-GB.json';
@@ -27,14 +28,16 @@ Shopware.Module.register('muwa-backup-repository', {
             component: 'muwa-backup-repository-list',
             path: ':tab?',
             meta: {
-                parentPath: 'sw.settings.index.plugins'
+                parentPath: 'sw.settings.index.plugins',
+                privilege: 'muwa_backup_repository.viewer'
             }
         },
         create: {
             component: 'muwa-backup-repository-create',
             path: 'create',
             meta: {
-                parentPath: 'muwa.backup.repository.index'
+                parentPath: 'muwa.backup.repository.index',
+                privilege: 'muwa_backup_repository.creator'
             }
         },
         detail: {
@@ -49,7 +52,8 @@ Shopware.Module.register('muwa-backup-repository', {
                 },
             },
             meta: {
-                parentPath: 'muwa.backup.repository.index'
+                parentPath: 'muwa.backup.repository.index',
+                privilege: 'muwa_backup_repository.viewer'
             }
         }
     },
@@ -60,6 +64,7 @@ Shopware.Module.register('muwa-backup-repository', {
             group: 'plugins',
             icon: 'regular-save',
             backgroundEnabled: true,
+            privilege: 'muwa_backup_repository.viewer',
             label: 'muwa-backup-repository.general.mainMenuLabel',
         }
     ]

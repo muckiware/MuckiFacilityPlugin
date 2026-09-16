@@ -16,6 +16,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
+use Shopware\Core\PlatformRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
@@ -45,6 +46,7 @@ class ManageController extends AbstractController
     #[Route(
         path: '/api/_action/muwa/manage/snapshots',
         name: 'api.action.muwa.manage.snapshots',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:read']],
         methods: ['POST']
     )]
     public function getSnapshots(RequestDataBag $requestDataBag, Context $context): Response
@@ -61,6 +63,7 @@ class ManageController extends AbstractController
     #[Route(
         path: '/api/_action/muwa/remove/snapshots',
         name: 'api.action.muwa.remove.snapshots',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:snapshot_delete']],
         methods: ['POST']
     )]
     public function removeSnapshots(RequestDataBag $requestDataBag, Context $context): Response
@@ -84,6 +87,7 @@ class ManageController extends AbstractController
     #[Route(
         path: '/api/_action/muwa/repository/stats/{backupRepositoryId}',
         name: 'api.action.muwa.repository.stats',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:read']],
         methods: ['GET']
     )]
     public function getRepositoryStats(string $backupRepositoryId, Context $context): Response

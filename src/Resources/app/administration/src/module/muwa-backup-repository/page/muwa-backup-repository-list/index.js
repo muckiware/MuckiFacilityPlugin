@@ -11,7 +11,8 @@ Component.register('muwa-backup-repository-list', {
     template,
 
     inject: [
-        'repositoryFactory'
+        'repositoryFactory',
+        'acl'
     ],
 
     mixins: [

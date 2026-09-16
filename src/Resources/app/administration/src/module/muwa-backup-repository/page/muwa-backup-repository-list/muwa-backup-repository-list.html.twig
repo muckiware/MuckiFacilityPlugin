@@ -5,6 +5,7 @@
                 <sw-button
                     variant="primary"
                     position-identifier="muwa-backup-repository-create-button"
+                    :disabled="!acl.can('muwa_backup_repository.creator')"
                     :routerLink="{name: 'muwa.backup.repository.create'}"
                 >
                     {{ $tc('muwa-backup-repository.list.header.createButtonLabel') }}

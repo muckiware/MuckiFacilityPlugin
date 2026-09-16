@@ -15,6 +15,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
+use Shopware\Core\PlatformRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
@@ -42,6 +43,7 @@ class RestoreSnapshotController extends AbstractController
     #[Route(
         path: '/api/_action/muwa/restore/process',
         name: 'api.action.muwa.restore.process',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:restore']],
         methods: ['POST']
     )]
     public function process(RequestDataBag $requestDataBag, Context $context): Response

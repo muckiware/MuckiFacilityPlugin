@@ -13,6 +13,7 @@
             <file>tests/Backup/Database/CompleteFileRunnerTest.php</file>
             <file>tests/Backup/Database/CompleteFilesRunnerTest.php</file>
             <file>tests/Backup/Files/FilesRunnerTest.php</file>
+            <file>tests/Controller/RouteAclTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

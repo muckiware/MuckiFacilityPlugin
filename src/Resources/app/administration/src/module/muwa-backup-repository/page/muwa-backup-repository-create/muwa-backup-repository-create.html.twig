@@ -10,6 +10,7 @@
                         position-identifier="muwa-backup-repository"
                         :isLoading="isLoadingInit"
                         :processSuccess="processSuccess"
+                        :disabled="!acl.can('muwa_backup_repository.creator')"
                         variant="primary"
                         @process-finish="saveFinish"
                         @click="onClickInit"
