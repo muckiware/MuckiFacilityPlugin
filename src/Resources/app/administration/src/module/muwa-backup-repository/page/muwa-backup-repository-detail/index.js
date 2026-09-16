@@ -80,7 +80,10 @@ Component.register('muwa-backup-repository-detail', {
             backupRepositorySnapshots: [],
             selectedSnapshots: [],
             backupRepositoryStats: [],
-            statsHistoryView: 'table'
+            statsHistoryView: 'table',
+            historyFilterFrom: null,
+            historyFilterTo: null,
+            historyActivePreset: null
         };
     },
 
@@ -318,6 +321,21 @@ Component.register('muwa-backup-repository-detail', {
             ];
         },
 
+        historyFilterPresetOptions() {
+            // id/name for the 6.6 sw-select-field-deprecated renderer, value/label for 6.7's
+            // mt-select — see typeOptions() above for why both key sets are needed. Values
+            // are strings: select components round-trip native option values as strings.
+            return [
+                { id: '7', name: this.$tc('muwa-backup-repository.detail.historyFilterPreset7Days'), value: '7', label: this.$tc('muwa-backup-repository.detail.historyFilterPreset7Days') },
+                { id: '14', name: this.$tc('muwa-backup-repository.detail.historyFilterPreset14Days'), value: '14', label: this.$tc('muwa-backup-repository.detail.historyFilterPreset14Days') },
+                { id: '30', name: this.$tc('muwa-backup-repository.detail.historyFilterPreset30Days'), value: '30', label: this.$tc('muwa-backup-repository.detail.historyFilterPreset30Days') },
+            ];
+        },
+
+        historyFilterActive() {
+            return Boolean(this.historyFilterFrom || this.historyFilterTo);
+        },
+
         statsHistorySeriesColors() {
             // sw-chart's defaultOptions hard-code stroke.colors to a single brand color,
             // which would paint every series line the same regardless of the series count.
@@ -479,6 +497,83 @@ Component.register('muwa-backup-repository-detail', {
             this.statsHistoryView = tabItem.name;
         },
 
+        onHistoryPresetSelect(value) {
+
+            if (!value) {
+                return;
+            }
+
+            // A rolling "now minus N days" window, not "local midnight minus N days":
+            // the browser's own timezone and the admin user's configured timezone
+            // (Shopware.Store.get('session').currentUser.timeZone) can differ, and
+            // truncating to midnight in the wrong one shifts the displayed date by a day.
+            const to = new Date();
+            const from = new Date(to.getTime() - Number(value) * 24 * 60 * 60 * 1000);
+
+            this.historyActivePreset = value;
+            this.historyFilterFrom = from.toISOString();
+            this.historyFilterTo = to.toISOString();
+            this.refetchActiveTabHistory();
+        },
+
+        onHistoryFilterFromChange(value) {
+            this.historyFilterFrom = value || null;
+            this.historyActivePreset = null;
+            this.refetchActiveTabHistory();
+        },
+
+        onHistoryFilterToChange(value) {
+            this.historyFilterTo = value || null;
+            this.historyActivePreset = null;
+            this.refetchActiveTabHistory();
+        },
+
+        onHistoryFilterReset() {
+            this.historyFilterFrom = null;
+            this.historyFilterTo = null;
+            this.historyActivePreset = null;
+            this.refetchActiveTabHistory();
+        },
+
+        refetchActiveTabHistory() {
+            // one shared date filter, re-targeted at whichever tab's entity is open —
+            // see the sidebar filter item, which is now permanently mounted for all
+            // three tabs instead of being toggled via v-if per tab.
+            if (this.tab === 'backupRepositoryChecks') {
+                this.fetchBackupRepositoryChecks();
+            } else if (this.tab === 'backupRepositorySnapshots') {
+                this.fetchBackupRepositorySnapshots();
+            } else if (this.tab === 'backupRepositoryStats') {
+                this.fetchBackupRepositoryStats();
+            }
+        },
+
+        applyHistoryDateFilter(criteria) {
+
+            if (!this.historyFilterActive) {
+                criteria.setLimit(10);
+                return criteria;
+            }
+
+            const range = {};
+            if (this.historyFilterFrom) {
+                range.gte = this.historyFilterFrom;
+            }
+            if (this.historyFilterTo) {
+                // the picker stores the start of the selected day; extend to its end
+                // so entries created later that same day are still included.
+                const inclusiveTo = new Date(this.historyFilterTo);
+                inclusiveTo.setHours(23, 59, 59, 999);
+                range.lte = inclusiveTo.toISOString();
+            }
+
+            criteria.addFilter(Criteria.range('createdAt', range));
+            // no fixed cap without a date filter's natural boundary — 500 is a
+            // generous safety net against an unbounded query, not an expected count.
+            criteria.setLimit(500);
+            return criteria;
+        },
+
         onRefresh() {
 
             this.fetchBackupRepositoryChecks();
@@ -596,8 +691,7 @@ Component.register('muwa-backup-repository-detail', {
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
-            criteria.setLimit(10);
-            return criteria;
+            return this.applyHistoryDateFilter(criteria);
         },
 
         fetchBackupRepositorySnapshots() {
@@ -618,8 +712,7 @@ Component.register('muwa-backup-repository-detail', {
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
-            criteria.setLimit(10);
-            return criteria;
+            return this.applyHistoryDateFilter(criteria);
         },
 
         restoreSnapshot(item) {
@@ -702,7 +795,7 @@ Component.register('muwa-backup-repository-detail', {
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
-            criteria.setLimit(10);
+            this.applyHistoryDateFilter(criteria);
 
             this.isStatsLoading = true;
             return this.backupRepositoryStatsRepository.search(criteria, Context.api).then((collection) => {

@@ -446,12 +446,13 @@
                     </sw-card>
                     <sw-card
                         positionIdentifier="muwaBackupRepositoryStatsHistory"
-                        v-if="backupRepository && tab === 'backupRepositoryStats' && backupRepositoryStats.length"
+                        v-if="backupRepository && tab === 'backupRepositoryStats'"
                         :title="$tc('muwa-backup-repository.detail.statsHistoryLabel')"
                         :large="true"
                     >
                         {% block muwa_backup_repository_stats_history_view_tabs %}
                             <sw-tabs
+                                v-if="backupRepositoryStats.length"
                                 small
                                 default-item="table"
                                 position-identifier="muwa-backup-repository-stats-history"
@@ -470,7 +471,7 @@
                         {% endblock %}
 
                         {% block muwa_backup_repository_stats_history_table %}
-                            <template v-if="statsHistoryView === 'table'" #grid>
+                            <template v-if="backupRepositoryStats.length && statsHistoryView === 'table'" #grid>
                                 <sw-data-grid
                                     :showSelection="false"
                                     :showActions="false"
@@ -500,7 +501,7 @@
                         {% endblock %}
 
                         {% block muwa_backup_repository_stats_history_diagram %}
-                            <template v-if="statsHistoryView === 'diagram'">
+                            <template v-if="backupRepositoryStats.length && statsHistoryView === 'diagram'">
                                 <sw-chart
                                     type="line"
                                     class="muwa-backup-repository-stats-history__chart"
@@ -514,6 +515,14 @@
                                     :options="statsHistoryCountChartOptions"
                                 />
                             </template>
+                        {% endblock %}
+
+                        {% block muwa_backup_repository_stats_history_empty_state %}
+                            <sw-empty-state
+                                v-if="!backupRepositoryStats.length && !isStatsLoading"
+                                :absolute="false"
+                                :title="$tc('muwa-backup-repository.detail.statsHistoryEmptyTitle')"
+                            />
                         {% endblock %}
                     </sw-card>
 
@@ -645,6 +654,59 @@
                                 :title="$tc('muwa-backup-repository.list.titleSidebarItemRefresh')"
                                 @click="onRefresh"
                         />
+                    {% endblock %}
+
+                    {% block muwa_backup_repository_list_sidebar_history_filter %}
+                        <sw-sidebar-item
+                            icon="regular-filter"
+                            :has-simple-badge="historyFilterActive"
+                            :title="$tc('muwa-backup-repository.detail.historyFilterSidebarTitle')"
+                            class="muwa-backup-repository-history-filter"
+                        >
+                            {# From 6.7 on sw-select-field renders mt-select, which binds via
+                               modelValue and ignores forwarded option slots — see the type
+                               select above for the same 6.6/6.7 split. #}
+                            <sw-select-field
+                                v-if="isV6700"
+                                :model-value="historyActivePreset"
+                                :options="historyFilterPresetOptions"
+                                :label="$tc('muwa-backup-repository.detail.historyFilterPresetLabel')"
+                                :placeholder="$tc('muwa-backup-repository.detail.historyFilterPresetPlaceholder')"
+                                @update:model-value="onHistoryPresetSelect"
+                            />
+                            <sw-select-field
+                                v-if="isV6600 && !isV6700"
+                                type="select"
+                                :value="historyActivePreset"
+                                :options="historyFilterPresetOptions"
+                                :label="$tc('muwa-backup-repository.detail.historyFilterPresetLabel')"
+                                :placeholder="$tc('muwa-backup-repository.detail.historyFilterPresetPlaceholder')"
+                                @update:value="onHistoryPresetSelect"
+                            />
+
+                            <sw-datepicker
+                                dateType="date"
+                                :label="$tc('muwa-backup-repository.detail.historyFilterFromLabel')"
+                                :value="historyFilterFrom"
+                                @update:value="onHistoryFilterFromChange"
+                            />
+                            <sw-datepicker
+                                dateType="date"
+                                :label="$tc('muwa-backup-repository.detail.historyFilterToLabel')"
+                                :value="historyFilterTo"
+                                @update:value="onHistoryFilterToChange"
+                            />
+
+                            <sw-button
+                                v-if="historyFilterActive"
+                                size="small"
+                                variant="ghost"
+                                block
+                                @click="onHistoryFilterReset"
+                            >
+                                {{ $tc('muwa-backup-repository.detail.historyFilterResetLabel') }}
+                            </sw-button>
+                        </sw-sidebar-item>
                     {% endblock %}
                 </sw-sidebar>
             </template>

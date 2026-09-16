@@ -11,6 +11,17 @@ div.muwa-backup-repository-detail-backup-paths__description {
   margin-top: 30px;
 }
 
+.muwa-backup-repository-history-filter .sw-sidebar-item__scrollable-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  // the sidebar item stretches its content to 100% width, so a left/right
+  // margin here would push it past the panel's edge instead of inset it.
+  box-sizing: border-box;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
 div.muwa-backup-repository-detail-repository-password__description,
 div.muwa-backup-repository-detail-repository-path__description {
   margin-bottom: 60px;
