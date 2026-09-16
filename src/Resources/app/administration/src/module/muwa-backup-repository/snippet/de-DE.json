@@ -46,6 +46,7 @@
       "column-active": "Aktiv",
       "column-created-at": "Erstellt am",
       "column-updated-at": "Aktualisiert am",
+      "column-check-status": "Check Status",
       "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
       "totalFileSizeLabel": "Gesamt Dateigröße",
       "stats": "Repository Status",

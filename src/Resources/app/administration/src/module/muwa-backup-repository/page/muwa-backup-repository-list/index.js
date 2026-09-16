@@ -4,6 +4,8 @@ import './muwa-backup-repository-list.scss';
 const { Component, Mixin } = Shopware;
 const { Criteria } = Shopware.Data;
 
+const CHECK_STATUS_OK = 'no errors were found';
+
 Component.register('muwa-backup-repository-list', {
 
     template,
@@ -68,6 +70,12 @@ Component.register('muwa-backup-repository-list', {
                     label: this.$t('muwa-backup-repository.list.column-active'),
                     allowResize: true
                 }, {
+                    property: 'checkStatus',
+                    dataIndex: 'checkStatus',
+                    label: this.$t('muwa-backup-repository.list.column-check-status'),
+                    allowResize: true,
+                    sortable: false
+                }, {
                     property: 'createdAt',
                     dataIndex: 'createdAt',
                     label: this.$t('muwa-backup-repository.list.column-created-at'),
@@ -80,6 +88,20 @@ Component.register('muwa-backup-repository-list', {
                 }];
         },
 
+        getLatestCheck(item) {
+            if (!item.backupRepositoryChecks || item.backupRepositoryChecks.length === 0) {
+                return null;
+            }
+
+            return item.backupRepositoryChecks[0];
+        },
+
+        isCheckStatusOk(item) {
+            const latestCheck = this.getLatestCheck(item);
+
+            return latestCheck !== null && latestCheck.checkStatus === CHECK_STATUS_OK;
+        },
+
         getRepository() {
             return this.repositoryFactory.create('muwa_backup_repository');
         },
@@ -90,6 +112,8 @@ Component.register('muwa-backup-repository-list', {
             const criteria = new Criteria();
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             criteria.setTerm(this.term);
+            criteria.addAssociation('backupRepositoryChecks');
+            criteria.getAssociation('backupRepositoryChecks').addSorting(Criteria.sort('createdAt', 'DESC'));
 
             this.repository.search(criteria, Shopware.Context.api).then((response) => {
 

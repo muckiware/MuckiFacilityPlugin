@@ -85,6 +85,24 @@
                     <template #column-updatedAt="{ item }">
                         {{ dateFilter(item.updatedAt) }}
                     </template>
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block muwa_backup_repository_list_grid_columns_check_status %}
+                        <template #column-checkStatus="{ item }">
+                            <sw-icon
+                                    v-if="isCheckStatusOk(item)"
+                                    name="regular-checkmark-xs"
+                                    small
+                                    class="is--active"
+                            />
+                            <sw-icon
+                                    v-else
+                                    name="regular-times-s"
+                                    small
+                                    class="is--inactive"
+                            />
+                        </template>
+                    {% endblock %}
                     {% block muwa_backup_repository_list_grid_columns_actions %}
                         <template #delete-action="{ item }">
                             <sw-context-menu-item @click="deleteBackupRepository(item)" variant="danger">
