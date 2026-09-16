@@ -589,7 +589,7 @@
                                     size="small"
                                     @click="onDelete(item.id)"
                                 >
-                                    {{ $tc('muwa-backup-repository.list.deleteLabel') }}
+                                    {{ $tc('muwa-backup-repository.list.buttonDelete') }}
                                 </sw-context-menu-item>
                             {% endblock %}
                         </template>
@@ -607,7 +607,7 @@
 
                                 {% block wuwa_backup_repository_list_delete_modal_confirm_delete_text %}
                                 <p class="muwa-backup-repository-list__confirm-delete-text">
-                                {{ $tc('muwa-backup-repository.list.textDeleteSnapshotConfirm', 0, { snapshotShortId: `${item.snapshotShortId}` }) }}
+                                {{ $t('muwa-backup-repository.list.textDeleteSnapshotConfirm', { snapshotShortId: `${item.snapshotShortId}` }) }}
                             </p>
                             {% endblock %}
 
@@ -629,7 +629,7 @@
                                         size="small"
                                         @click="onConfirmDelete(item.id, item.snapshotId)"
                                         >
-                                        {{ $tc('sw-customer.list.buttonDelete') }}
+                                        {{ $tc('muwa-backup-repository.buttonDelete') }}
                                     </sw-button>
                                     {% endblock %}
                                 </template>

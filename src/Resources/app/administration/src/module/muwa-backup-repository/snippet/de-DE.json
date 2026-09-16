@@ -19,6 +19,7 @@
       "checks": "Checks",
       "snapshots": "Snapshots"
     },
+    "buttonDelete": "Löschen",
     "list": {
       "header": {
         "createButtonLabel": "Hinzufügen",
@@ -40,7 +41,7 @@
       "storageSizeLabel": "Speichergröße",
       "docsDeletedLabel": "gelöschte Dokumente",
       "restoreLabel": "Snapshot wiederherstellen",
-      "deleteLabel": "Snapshot löschen",
+      "buttonDelete": "Snapshot löschen",
       "column-internal-name": "Interner Name",
       "column-active": "Aktiv",
       "column-created-at": "Erstellt am",
