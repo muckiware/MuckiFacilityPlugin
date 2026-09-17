@@ -19,7 +19,9 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Inherited;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\WriteProtected;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IdField;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IntField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\JsonField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToManyAssociationField;
@@ -59,7 +61,8 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new StringField('type', 'type')),
             (new StringField('hostname', 'hostname'))->addFlags(new ApiAware())->addFlags(new ApiAware()),
             (new StringField('repository_path', 'repositoryPath'))->addFlags(new Required()),
-            (new StringField('repository_password', 'repositoryPassword'))->removeFlag(ApiAware::class),
+            (new StringField('repository_password', 'repositoryPassword', 512))->removeFlag(ApiAware::class)->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new StringField('password_source', 'passwordSource', 16))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
             (new StringField('restore_path', 'restorePath')),
             (new StringField('db_dump_path', 'dbDumpPath')),
             (new JsonField('backup_paths', 'backupPaths', [], [])),

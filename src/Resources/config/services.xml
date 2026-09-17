@@ -133,6 +133,22 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service class="MuckiFacilityPlugin\Commands\EncryptPasswords" id="muwa.command.backup.encrypt.passwords" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service class="MuckiFacilityPlugin\Commands\PasswordSourceCommand" id="muwa.command.backup.password.source" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service class="MuckiFacilityPlugin\Commands\RepositoryStats" id="muwa.command.repository.stats" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
@@ -150,10 +166,15 @@
             <argument type="service" id="muwa_backup_repository_snapshots.repository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
+        <service id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
+        <service id="MuckiFacilityPlugin\Services\Content\RepositoryPasswordResolver">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
+        </service>
         <service id="MuckiFacilityPlugin\Services\Content\BackupRepository" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="muwa_backup_repository.repository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\RepositoryPasswordResolver"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>

@@ -12,12 +12,16 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
+use MuckiFacilityPlugin\Core\PasswordSource;
+use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
 class InitBackupRepositoryController extends AbstractController
 {
+    private const DEFAULT_PASSWORD_SOURCE = PasswordSource::ENCRYPTED;
+
     /**
      * @internal
      */
@@ -27,6 +31,18 @@ class InitBackupRepositoryController extends AbstractController
     {}
 
     /**
+     * Legt das restic-Repository an und speichert erst danach den Datensatz.
+     *
+     * Reihenfolge ist Absicht:
+     * 1. Eingaben pruefen,
+     * 2. Passwort in die Speicherform bringen — schlaegt hier MUWA_FACILITY_SECRET fehl,
+     *    ist noch nichts passiert,
+     * 3. `restic init`,
+     * 4. Datensatz schreiben.
+     *
+     * Dadurch entsteht kein Repository-Eintrag ohne zugehoeriges restic-Repository und kein
+     * restic-Repository, dessen Passwort sich nicht ablegen laesst.
+     *
      * @throws WriteException|\Exception
      */
     #[Route(
@@ -37,27 +53,62 @@ class InitBackupRepositoryController extends AbstractController
     )]
     public function initRepository(RequestDataBag $requestDataBag, Context $context): JsonResponse
     {
-        if(!$this->checkInputPaths($requestDataBag)) {
-            throw new \Exception('Repository path and restore path must be different');
-        }
+        $this->assertValidInput($requestDataBag);
 
-        if(!$this->checkPassword($requestDataBag)) {
-            throw new \Exception('Passwords does not match');
-        }
+        $repositoryInitInputs = $this->createRepositoryInitInputs($requestDataBag);
+
+        $storedPassword = $this->backupRepositoryService->prepareStoredPassword(
+            $repositoryInitInputs->getRepositoryPassword(),
+            self::DEFAULT_PASSWORD_SOURCE
+        );
 
         try {
-            $initResult = $this->backupRepositoryService->initRepository(
-                $this->createRepositoryInitInputs($requestDataBag)
-            );
+            $initResult = $this->backupRepositoryService->initRepository($repositoryInitInputs);
         } catch (\Exception $e) {
-            throw new \Exception('Backup repository not found. Message: '.$e->getMessage());
+            throw new \Exception('Backup repository could not be initialized. Message: '.$e->getMessage());
         }
+
+        $this->backupRepositoryService->createBackupRepository(
+            $repositoryInitInputs,
+            $storedPassword,
+            self::DEFAULT_PASSWORD_SOURCE
+        );
 
         return new JsonResponse(array(
             'success' => true,
             'message' => 'Backup repository initialized',
             'data' => $initResult
         ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function assertValidInput(RequestDataBag $requestDataBag): void
+    {
+        if(!Uuid::isValid((string) $requestDataBag->get('id'))) {
+            throw new \Exception('Missing or invalid backup repository id');
+        }
+
+        if(trim((string) $requestDataBag->get('name')) === '') {
+            throw new \Exception('Name must not be empty');
+        }
+
+        if(trim((string) $requestDataBag->get('repositoryPath')) === '') {
+            throw new \Exception('Repository path must not be empty');
+        }
+
+        if(!$this->checkInputPaths($requestDataBag)) {
+            throw new \Exception('Repository path and restore path must be different');
+        }
+
+        if(trim((string) $requestDataBag->get('repositoryPassword')) === '') {
+            throw new \Exception('Repository password must not be empty');
+        }
+
+        if(!$this->checkPassword($requestDataBag)) {
+            throw new \Exception('Passwords does not match');
+        }
     }
 
     public function checkPassword(RequestDataBag $requestDataBag): bool
@@ -81,39 +132,65 @@ class InitBackupRepositoryController extends AbstractController
         return true;
     }
 
+    /**
+     * Fuellt das DTO vollstaendig.
+     *
+     * BackupRepositorySettings hat typisierte Properties ohne Defaultwerte — ein spaeterer
+     * Getter auf ein nicht gesetztes Feld waere ein \Error. Deshalb werden hier alle Felder
+     * belegt, die in den Datensatz wandern.
+     */
     public function createRepositoryInitInputs(RequestDataBag $requestDataBag): BackupRepositorySettings
     {
         $repositoryInitInputs = new BackupRepositorySettings();
-        if($requestDataBag->has('active')) {
-            $repositoryInitInputs->setActive($requestDataBag->get('active'));
+
+        $repositoryInitInputs->setBackupRepositoryId((string) $requestDataBag->get('id'));
+        $repositoryInitInputs->setActive((bool) $requestDataBag->get('active', false));
+        $repositoryInitInputs->setName((string) $requestDataBag->get('name'));
+        $repositoryInitInputs->setBackupType((string) $requestDataBag->get('type', ''));
+        $repositoryInitInputs->setRepositoryPath((string) $requestDataBag->get('repositoryPath'));
+        $repositoryInitInputs->setRepositoryPassword((string) $requestDataBag->get('repositoryPassword'));
+        $repositoryInitInputs->setRestorePath((string) $requestDataBag->get('restorePath', ''));
+        $repositoryInitInputs->setForgetDaily((int) $requestDataBag->get('forgetDaily', 0));
+        $repositoryInitInputs->setForgetWeekly((int) $requestDataBag->get('forgetWeekly', 0));
+        $repositoryInitInputs->setForgetMonthly((int) $requestDataBag->get('forgetMonthly', 0));
+        $repositoryInitInputs->setForgetYearly((int) $requestDataBag->get('forgetYearly', 0));
+        $repositoryInitInputs->setBackupPaths($this->createBackupPaths($requestDataBag));
+
+        $dbDumpPath = trim((string) $requestDataBag->get('dbDumpPath', ''));
+        $repositoryInitInputs->setDbDumpPath($dbDumpPath === '' ? null : $dbDumpPath);
+
+        $hostName = trim((string) $requestDataBag->get('hostname', ''));
+        if($hostName !== '') {
+            $repositoryInitInputs->setHostName($hostName);
         }
-        if($requestDataBag->has('name')) {
-            $repositoryInitInputs->setName($requestDataBag->get('name'));
-        }
-        if ($requestDataBag->has('forgetDaily')) {
-            $repositoryInitInputs->setForgetDaily($requestDataBag->get('forgetDaily'));
-        }
-        if ($requestDataBag->has('forgetWeekly')) {
-            $repositoryInitInputs->setForgetWeekly($requestDataBag->get('forgetWeekly'));
-        }
-        if ($requestDataBag->has('forgetMonthly')) {
-            $repositoryInitInputs->setForgetMonthly($requestDataBag->get('forgetMonthly'));
-        }
-        if ($requestDataBag->has('forgetYearly')) {
-            $repositoryInitInputs->setForgetYearly($requestDataBag->get('forgetYearly'));
-        }
-        if ($requestDataBag->has('type')) {
-            $repositoryInitInputs->setBackupType($requestDataBag->get('type'));
-        }
-        if ($requestDataBag->has('repositoryPath')) {
-            $repositoryInitInputs->setRepositoryPath($requestDataBag->get('repositoryPath'));
-        }
-        if ($requestDataBag->has('repositoryPassword')) {
-            $repositoryInitInputs->setRepositoryPassword($requestDataBag->get('repositoryPassword'));
-        }
-        if ($requestDataBag->has('restorePath')) {
-            $repositoryInitInputs->setRestorePath($requestDataBag->get('restorePath'));
-        }
+
         return $repositoryInitInputs;
+    }
+
+    /**
+     * @return array<int, BackupPathEntity>
+     */
+    protected function createBackupPaths(RequestDataBag $requestDataBag): array
+    {
+        $backupPathsInput = $requestDataBag->get('backupPaths');
+        if(!$backupPathsInput instanceof RequestDataBag) {
+            return [];
+        }
+
+        $backupPaths = [];
+        /** @var RequestDataBag $backupPath */
+        foreach ($backupPathsInput->getIterator() as $backupPath) {
+
+            $backupPathEntity = new BackupPathEntity();
+            $backupPathEntity->setId((string) $backupPath->get('id'));
+            $backupPathEntity->setBackupPath((string) $backupPath->get('backupPath'));
+            $backupPathEntity->setCompress((bool) $backupPath->get('compress', false));
+            $backupPathEntity->setPosition((int) $backupPath->get('position', 0));
+            $backupPathEntity->setIsDefault((bool) $backupPath->get('isDefault', false));
+
+            $backupPaths[] = $backupPathEntity;
+        }
+
+        return $backupPaths;
     }
 }
