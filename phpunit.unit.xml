@@ -14,6 +14,9 @@
             <file>tests/Backup/Database/CompleteFilesRunnerTest.php</file>
             <file>tests/Backup/Files/FilesRunnerTest.php</file>
             <file>tests/Controller/RouteAclTest.php</file>
+            <file>tests/Services/Crypto/SecretCipherTest.php</file>
+            <file>tests/Services/Content/RepositoryPasswordResolverTest.php</file>
+            <file>tests/Core/Content/BackupRepositoryDefinitionTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

@@ -15,6 +15,23 @@ Muckiware Facility Plugin for Shopware 6 Web shops for to maintenance and backup
 composer require muckiware/facility-plugin
 bin/console plugin:install -a MuckiFacilityPlugin
 ```
+
+### Repository password secret
+Repository passwords created through the administration are stored encrypted. The key is derived
+from the environment variable `MUWA_FACILITY_SECRET`, which you have to add to your `.env`:
+
+```shell
+echo "MUWA_FACILITY_SECRET=$(openssl rand -hex 32)" >> .env
+```
+
+> **Keep this value with your disaster recovery notes.** Without it, no encrypted repository
+> password can be read back — not even from a restored database. Restoring a shop onto a fresh
+> host with a newly generated secret means the repository passwords are lost, and with them
+> access to the backups.
+
+If you would rather keep no secret in the database at all, see
+[Password sources](#password-sources).
+
 ## General Configuration
 Plugin configuration under:<br>Settings -> Extensions -> My extensions -> MuckiFacilityPlugin -> Configure
 
@@ -88,6 +105,39 @@ plus a history of the last 10 collections, in the __Repository Status__-tab.
 | ```bin/console muckiware:repository:stats <backupRepositoryId>```            | Collects and persists the repository status (total size, file count, snapshots count, file system size) |
 | ```bin/console muckiware:backup:restore <backupRepositoryId> <snapshotId>``` | Restore data by backup repository id and snapshot id          |
 | ```bin/console muckiware:db:dump <Type of backup>```                         | Creates just a database dump by global plugin setups          |
+| ```bin/console muckiware:backup:encrypt-passwords [--dry-run]```             | Encrypts repository passwords that are still stored as plain text |
+| ```bin/console muckiware:backup:password-source <backupRepositoryId> <source> <value>``` | Sets the password source of a repository (`encrypted`, `env` or `file`) |
+
+### Password sources
+Every repository records where its password comes from. The column `repository_password` is read
+according to that source:
+
+| Source      | Content of the column          | Secret in the database |
+|:------------|:-------------------------------|:-----------------------|
+| `encrypted` | ciphertext, prefix `v1:`       | yes, encrypted         |
+| `env`       | name of an environment variable| no                     |
+| `file`      | path of a file                 | no                     |
+| `plain`     | the password itself (legacy)   | yes, readable          |
+
+Repositories created in the administration use `encrypted`. To keep no secret in the database at
+all, point a repository at an environment variable or a file:
+
+```shell
+bin/console muckiware:backup:password-source <backupRepositoryId> env MY_REPO_PASSWORD
+bin/console muckiware:backup:password-source <backupRepositoryId> file /run/secrets/repo-password
+```
+
+Both are verified when set, so an unreadable file or an empty variable fails right away instead of
+at the next backup. A password file should not be readable by anyone but the shop user
+(`chmod 600`), and it must live outside the document root.
+
+`plain` only exists for repositories created before passwords were encrypted. Move them over with:
+
+```shell
+bin/console muckiware:backup:encrypt-passwords --dry-run
+bin/console muckiware:backup:encrypt-passwords
+```
+
 ### Cronjob
 You can create a cronjob for to create a backup automatically. This should be the usual configuration for creating backups. The cronjob should be executed by the user which is running the shopware instance. The following command is an example for the cronjob configuration:
 ```shell

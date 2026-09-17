@@ -146,6 +146,15 @@ Component.register('muwa-backup-repository-create', {
             this.backupRepository.backupPaths= [];
         },
 
+        /**
+         * Legt das Repository an.
+         *
+         * Der Datensatz wird vom Endpunkt selbst geschrieben, nicht mehr hier per
+         * repository.save(): `repositoryPassword` und `passwordSource` sind WriteProtected auf
+         * den System-Scope und liessen sich ueber die DAL gar nicht mehr setzen. Ausserdem
+         * entsteht so kein Repository-Eintrag, wenn `restic init` fehlschlaegt — vorher lief
+         * das Speichern auch im Fehlerfall, weil es hinter dem .catch() haengte.
+         */
         onClickInit() {
 
             this.castValues();
@@ -158,42 +167,35 @@ Component.register('muwa-backup-repository-create', {
 
             this.httpClient.post(this.requestInitRepository, this.backupRepository, { headers: this.getApiHeader() }).then(() => {
 
+                this.isLoadingInit = false;
                 this.createNotificationSuccess({
                     title: this.$t('muwa-backup-repository.create.success-title'),
                     message: this.$t('muwa-backup-repository.create.success-message')
                 });
+                this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
 
             }).catch((exception) => {
 
                 console.error('Not possible to init the backup repository');
                 console.error(exception);
+                this.isLoadingInit = false;
                 this.createNotificationError({
                     title: this.$t('muwa-backup-repository.create.error-message'),
-                    message: exception.response.data.errors[0].detail
-                });
-
-            }).then(() => {
-
-                this.repository.save(this.backupRepository, Shopware.Context.api).then(() => {
-
-                    this.isLoadingInit = false;
-                    this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
-                    this.createNotificationSuccess({
-                        title: this.$t('muwa.backup.repository.create.success-title'),
-                        message: this.$t('muwa.backup.repository.create.success-message')
-                    });
-
-                }).catch((exception) => {
-
-                    console.error('Not possible to save the backup repository');
-                    console.error(exception);
-                    this.isLoading = false;
-                    this.createNotificationError({
-                        title: this.$t('muwa.backup.repository.create.error-message'),
-                        message: exception
-                    });
+                    message: this.getErrorMessage(exception)
                 });
             });
+        },
+
+        /**
+         * Holt die Detailmeldung aus einer API-Antwort. Bei Netzwerkfehlern gibt es keine
+         * response, ein direkter Zugriff auf errors[0].detail wuerde dann selbst werfen und
+         * die eigentliche Fehlermeldung verschlucken.
+         */
+        getErrorMessage(exception) {
+
+            const detail = exception?.response?.data?.errors?.[0]?.detail;
+
+            return detail || exception?.message || String(exception);
         },
 
         castValues() {

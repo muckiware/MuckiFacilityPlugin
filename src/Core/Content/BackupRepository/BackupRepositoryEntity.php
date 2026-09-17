@@ -16,12 +16,10 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityIdTrait;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Core\BackupTypes;
+use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Entity\ForgetTypes;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 
-/**
- *
- */
 class BackupRepositoryEntity extends Entity
 {
     use EntityIdTrait;
@@ -56,6 +54,11 @@ class BackupRepositoryEntity extends Entity
      * @var string
      */
     protected string $repositoryPassword;
+
+    /**
+     * @var string one of MuckiFacilityPlugin\Core\PasswordSource
+     */
+    protected string $passwordSource = PasswordSource::PLAIN->value;
 
     /**
      * @var string
@@ -196,6 +199,28 @@ class BackupRepositoryEntity extends Entity
     public function setRepositoryPassword(string $repositoryPassword): void
     {
         $this->repositoryPassword = $repositoryPassword;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPasswordSource(): string
+    {
+        return $this->passwordSource;
+    }
+
+    /**
+     * @param string $passwordSource
+     * @return void
+     */
+    public function setPasswordSource(string $passwordSource): void
+    {
+        $this->passwordSource = $passwordSource;
+    }
+
+    public function getPasswordSourceType(): PasswordSource
+    {
+        return PasswordSource::tryFrom($this->passwordSource) ?? PasswordSource::PLAIN;
     }
 
     /**

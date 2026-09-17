@@ -18,6 +18,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use MuckiRestic\Entity\Result\ResultEntity;
 
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
+use MuckiFacilityPlugin\Services\Content\RepositoryPasswordResolver;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as ServicesBackup;
@@ -71,6 +72,7 @@ class BackupRepositoryTest extends TestCase
             $this->createMock(LoggerInterface::class),
             $pluginSettingsMock,
             $this->createMock(EntityRepository::class),
+            $this->createMock(RepositoryPasswordResolver::class),
         );
 
         $backupRepositorySettings = InitBackup::getRepositoryInit();
