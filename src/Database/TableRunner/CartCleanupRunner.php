@@ -182,11 +182,11 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
         $this->cliOutput->writeNewLineCliOutput('Check cart items in temp table');
 
         $sql = '
-            SELECT * FROM `'.$tableName.'`;
+            SELECT COUNT(*) FROM `'.$tableName.'`;
         ';
 
         try {
-            $counter = $this->connection->executeQuery($sql)->rowCount();
+            $counter = (int) $this->connection->fetchOne($sql);
         } catch (Exception $e) {
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
