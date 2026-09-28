@@ -107,8 +107,8 @@ class SettingsTest extends TestCase
     public function testGetBackupPathWithRelativeOwnDumpPath(): void
     {
         static::assertSame(
-            self::PROJECT_DIR.'/custom/dump',
-            $this->createSettings()->getBackupPath(false, 'custom/dump'),
+            self::PROJECT_DIR.'/mnt-dumps/dump',
+            $this->createSettings()->getBackupPath(false, 'mnt-dumps/dump'),
             'A relative own dump path should be resolved against the project dir'
         );
     }
@@ -143,6 +143,119 @@ class SettingsTest extends TestCase
             self::PROJECT_DIR.'/var/db/backup',
             $this->createSettings($logger)->getBackupPath(false, $dumpPath),
             'A dangerous own dump path should fall back to the default backup path'
+        );
+    }
+
+    /**
+     * @dataProvider blockedDumpPathProvider
+     */
+    public function testGetBackupPathRejectsBlockedSystemOrProjectPath(string $dumpPath): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(static::once())->method('error');
+
+        static::assertSame(
+            self::PROJECT_DIR.'/var/db/backup',
+            $this->createSettings($logger)->getBackupPath(false, $dumpPath),
+            'A blocked system or project directory should fall back to the default backup path'
+        );
+    }
+
+    /**
+     * @return array<string, array<int, string>>
+     */
+    public static function blockedDumpPathProvider(): array
+    {
+        return [
+            // Absolute system directories: an admin can still type these regardless of where
+            // the project lives, so they are checked independently of PROJECT_DIR.
+            'etc' => ['/etc'],
+            'var log' => ['/var/log'],
+            'var backups' => ['/var/backups'],
+            // Sensitive subdirectories of the project itself.
+            'project public' => [self::PROJECT_DIR.'/public'],
+            'project vendor' => [self::PROJECT_DIR.'/vendor'],
+            // custom/ holds every installed plugin, including this one.
+            'project custom' => [self::PROJECT_DIR.'/custom'],
+            'project custom nested' => [self::PROJECT_DIR.'/custom/plugins/SomeOtherPlugin'],
+            // The project's own application log/cache, as opposed to the system-wide /var/log.
+            'project var log' => [self::PROJECT_DIR.'/var/log'],
+        ];
+    }
+
+    public function testGetBackupPathAllowsOwnDumpPathUnderVarDb(): void
+    {
+        // var/db is where the plugin's own default dump path lives — a second repository must
+        // still be able to use a sibling folder there.
+        static::assertSame(
+            self::PROJECT_DIR.'/var/db/second-repository',
+            $this->createSettings()->getBackupPath(false, 'var/db/second-repository'),
+            'A dump path under var/db must not be blocked'
+        );
+    }
+
+    public function testGetBackupPathRejectsOwnDumpPathInsideRepositoryPath(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(static::once())->method('error');
+
+        static::assertSame(
+            self::PROJECT_DIR.'/var/db/backup',
+            $this->createSettings($logger)->getBackupPath(
+                false,
+                '/mnt/repository/dump',
+                '/mnt/repository'
+            ),
+            'A dump path nested inside the repository path must fall back to the default'
+        );
+    }
+
+    public function testGetBackupPathRejectsRepositoryPathInsideOwnDumpPath(): void
+    {
+        // The reverse nesting is just as destructive: deleting the dump path would take the
+        // repository down with it.
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(static::once())->method('error');
+
+        static::assertSame(
+            self::PROJECT_DIR.'/var/db/backup',
+            $this->createSettings($logger)->getBackupPath(
+                false,
+                '/mnt/dump',
+                '/mnt/dump/repository'
+            ),
+            'A repository path nested inside the dump path must fall back to the default'
+        );
+    }
+
+    public function testGetBackupPathRejectsOwnDumpPathOverlappingRestorePath(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(static::once())->method('error');
+
+        static::assertSame(
+            self::PROJECT_DIR.'/var/db/backup',
+            $this->createSettings($logger)->getBackupPath(
+                false,
+                '/mnt/restore',
+                '/mnt/repository',
+                '/mnt/restore'
+            ),
+            'A dump path equal to the restore path must fall back to the default'
+        );
+    }
+
+    public function testGetBackupPathAllowsOwnDumpPathWhenItDoesNotOverlapRepositoryOrRestorePath(): void
+    {
+        static::assertSame(
+            '/mnt/dump',
+            $this->createSettings()->getBackupPath(
+                false,
+                '/mnt/dump',
+                '/mnt/repository',
+                '/mnt/restore'
+            ),
+            'A dump path that does not overlap repository or restore path must be used as is'
         );
     }
 

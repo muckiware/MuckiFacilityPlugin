@@ -81,25 +81,55 @@ class Helper
     }
 
     /**
+     * Recursively deletes a directory without following symlinks, even $dirPath itself.
+     *
      * @param string $dirPath
-     * @return void
+     * @return bool True when $dirPath does not exist afterwards
      */
-    public function deleteDirectory(string $dirPath): void
+    public function deleteDirectory(string $dirPath): bool
     {
-        if (is_dir($dirPath)) {
-            $files = scandir($dirPath);
-            foreach ($files as $file) {
-                if ($file !== '.' && $file !== '..') {
-                    $filePath = $dirPath . '/' . $file;
-                    if (is_dir($filePath)) {
-                        $this->deleteDirectory($filePath);
-                    } else {
-                        unlink($filePath);
-                    }
-                }
-            }
-            rmdir($dirPath);
+        if (is_link($dirPath)) {
+            return false;
         }
+        if (!is_dir($dirPath)) {
+            return true;
+        }
+
+        $basePath = realpath($dirPath);
+        if ($basePath === false) {
+            return false;
+        }
+
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dirPath, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($items as $item) {
+            $itemPath = $item->getPathname();
+
+            if (!$this->isWithinBasePath($basePath, $itemPath)) {
+                return false;
+            }
+
+            $removed = ($item->isLink() || !$item->isDir()) ? unlink($itemPath) : rmdir($itemPath);
+            if (!$removed) {
+                return false;
+            }
+        }
+
+        return rmdir($dirPath);
+    }
+
+    /**
+     * True when $itemPath's parent directory resolves to $basePath or somewhere below it.
+     */
+    private function isWithinBasePath(string $basePath, string $itemPath): bool
+    {
+        $parentPath = realpath(dirname($itemPath));
+
+        return $parentPath !== false
+            && ($parentPath === $basePath || str_starts_with($parentPath, $basePath.\DIRECTORY_SEPARATOR));
     }
 
     /**

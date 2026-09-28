@@ -172,8 +172,18 @@ class Backup
             $this->servicesCliOutput->printCliOutputNewline('run backup database...');
         }
 
-        $dbDumpPath = $this->pluginSettings->getBackupPath(false, $createBackup->getDbDumpPath());
-        $this->pluginHelper->deleteDirectory($dbDumpPath);
+        $dbDumpPath = $this->pluginSettings->getBackupPath(
+            false,
+            $createBackup->getDbDumpPath(),
+            $createBackup->hasRepositoryPath() ? $createBackup->getRepositoryPath() : null,
+            $createBackup->hasRestorePath() ? $createBackup->getRestorePath() : null
+        );
+        if(!$this->pluginHelper->deleteDirectory($dbDumpPath)) {
+            $this->logger->error(
+                'Database dump path could not be cleared before the dump, stale files may be included: '.$dbDumpPath,
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+        }
 
         $backupPath = new BackupPathEntity();
         $backupPath->setBackupPath($dbDumpPath);
@@ -190,7 +200,12 @@ class Backup
         $createBackup->setBackupType(BackupTypes::FILES->value);
         $this->startBackupRunner($createBackup, $isJsonOutput);
 
-        $this->pluginHelper->deleteDirectory($dbDumpPath);
+        if(!$this->pluginHelper->deleteDirectory($dbDumpPath)) {
+            $this->logger->error(
+                'Database dump path could not be cleared after the dump, stale files may end up in the next backup: '.$dbDumpPath,
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+        }
     }
 
     /**

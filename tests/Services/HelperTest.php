@@ -97,6 +97,79 @@ class HelperTest extends TestCase
         );
     }
 
+    public function testDeleteDirectoryRemovesNestedFilesAndDirectories(): void
+    {
+        $helperClass = new Helper();
+        $path = $this->createTempPath();
+        self::createTextFiles($path.'/nested', ['a', 'b']);
+
+        static::assertTrue($helperClass->deleteDirectory($path), 'A successful deletion should return true');
+        static::assertDirectoryDoesNotExist($path, 'The directory and its contents should be gone');
+    }
+
+    public function testDeleteDirectoryReturnsTrueWhenTheDirectoryDoesNotExist(): void
+    {
+        $helperClass = new Helper();
+
+        static::assertTrue(
+            $helperClass->deleteDirectory($this->createTempPath()),
+            'Nothing to delete should count as success'
+        );
+    }
+
+    public function testDeleteDirectoryRefusesToDeleteASymlinkDirectory(): void
+    {
+        // dbDumpPath itself must never be able to point at a symlink: dropping that symlink is
+        // easy to undo, but if the plugin followed it and cleared the target instead, an admin
+        // could point the dump path at a symlink to the restic repository, or to var/log/etc.,
+        // and every backup run would empty it before the deletion could even be noticed.
+        $helperClass = new Helper();
+        $targetPath = $this->createTempPath();
+        self::createTextFiles($targetPath, ['keep-me']);
+
+        // Not tracked via createTempPath(): is_dir()/rmdir() follow symlinks, so letting
+        // tearDown() run its own recursive delete on this path would walk into $targetPath
+        // instead of just removing the link. unlink() below is the symlink-safe way to remove it.
+        $symlinkPath = sys_get_temp_dir().'/muwa-helper-test-'.uniqid('', true);
+        static::assertTrue(symlink($targetPath, $symlinkPath), 'Test setup: creating the symlink must succeed');
+
+        try {
+            static::assertFalse(
+                $helperClass->deleteDirectory($symlinkPath),
+                'A symlink as the top-level path must be refused'
+            );
+            static::assertDirectoryExists($targetPath, 'The symlink target must be untouched');
+            static::assertFileExists($targetPath.'/file1.txt', 'Files inside the symlink target must survive');
+        } finally {
+            unlink($symlinkPath);
+        }
+    }
+
+    public function testDeleteDirectoryRemovesASymlinkInsideWithoutFollowingIt(): void
+    {
+        // A symlink found while walking the directory must be removed as a link, never
+        // recursed into - otherwise deleting a dump directory could delete an unrelated
+        // directory it happens to link to.
+        $helperClass = new Helper();
+        $externalTarget = $this->createTempPath();
+        self::createTextFiles($externalTarget, ['do-not-delete-me']);
+
+        $dumpPath = $this->createTempPath();
+        self::createDirectory($dumpPath);
+        static::assertTrue(
+            symlink($externalTarget, $dumpPath.'/linked-elsewhere'),
+            'Test setup: creating the symlink must succeed'
+        );
+
+        static::assertTrue($helperClass->deleteDirectory($dumpPath), 'Deletion should succeed');
+        static::assertDirectoryDoesNotExist($dumpPath, 'The dump directory itself should be gone');
+        static::assertDirectoryExists($externalTarget, 'The symlink target must survive untouched');
+        static::assertFileExists(
+            $externalTarget.'/file1.txt',
+            'Files inside the symlink target must not be deleted'
+        );
+    }
+
     private function createTempPath(): string
     {
         $tempPath = sys_get_temp_dir().'/muwa-helper-test-'.uniqid('', true);

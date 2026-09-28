@@ -54,6 +54,28 @@ All notable changes to this project will be documented in this file.
   behind the `.catch()`, so a failed init still produced a repository entry with no repository
   behind it.
 
+- The database dump path (`db_dump_path` on a repository) can no longer be pointed at the
+  repository's own storage or its restore path. That directory gets deleted recursively before
+  and after every database backup, and both fields sit on the same admin form, so a
+  copy-paste mistake was a realistic way to have a backup delete the very repository it was
+  writing to. Verified against a real repository: setting the dump path to a subfolder of the
+  repository path made the backup fall back to the default path and log the rejection, instead
+  of wiping the repository.
+- The dump path can also no longer be pointed at a number of sensitive system or project
+  directories — `/etc`, `/var/log`, the project's `public`, `vendor`, `custom` and `.git`
+  directories, among others. This is a blocklist of known-dangerous locations, not an
+  allowlist: absolute paths outside the project (e.g. an external backup mount) remain
+  supported, since that is an existing, deliberately tested capability of this field.
+- `Services\Helper::deleteDirectory()` no longer follows symlinks. It used to recurse into a
+  symlinked subdirectory as if it were a real one, so a symlink placed inside the dump
+  directory could make the cleanup delete files far outside of it; and calling it on a dump
+  path that was itself a symlink deleted through the link into its target. Both are refused
+  now: the top-level path is rejected outright if it is a symlink, and every entry the walk
+  finds is checked to still resolve inside the original directory before anything is removed.
+  The method now returns `bool` instead of `void`; both call sites in
+  `Services\Backup::runDatabaseBackup()` log an error when a deletion fails, instead of the
+  failure passing by unnoticed and a half-cleaned directory ending up in the next snapshot.
+
 ### Upgrade notes
 - Roles other than administrator lose access to the module until the new privileges are granted.
   Administrator accounts are unaffected.

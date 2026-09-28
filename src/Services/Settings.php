@@ -22,6 +22,26 @@ use MuckiFacilityPlugin\Core\ConfigPath;
 
 class Settings implements SettingsInterface
 {
+    /**
+     * Absolute system directories a database dump must never be written to and cleaned out of.
+     *
+     * @var array<int, string>
+     */
+    private const BLOCKED_ABSOLUTE_PATHS = [
+        '/etc', '/proc', '/sys', '/boot', '/root', '/bin', '/sbin', '/usr', '/lib', '/lib64',
+        '/dev', '/run',
+        '/var/log', '/var/lib', '/var/run', '/var/spool', '/var/cache', '/var/backups',
+    ];
+
+    /**
+     * Subdirectories of the project itself that must never be used, relative to the project dir.
+     *
+     * @var array<int, string>
+     */
+    private const BLOCKED_PROJECT_SUBDIRECTORIES = [
+        'public', 'vendor', 'config', 'bin', 'custom', '.git', 'var/log', 'var/cache',
+    ];
+
     public function __construct(
         protected SystemConfigService $config,
         protected KernelInterface $kernel,
@@ -63,10 +83,17 @@ class Settings implements SettingsInterface
      *
      * @param bool $useSubFolder Append a sub folder named by the current date
      * @param string|null $ownDumpPath Dump path configured on the backup repository
+     * @param string|null $repositoryPath The same repository's restic repository path
+     * @param string|null $restorePath The same repository's restore path
      */
-    public function getBackupPath(bool $useSubFolder=false, ?string $ownDumpPath=null): string
+    public function getBackupPath(
+        bool $useSubFolder=false,
+        ?string $ownDumpPath=null,
+        ?string $repositoryPath=null,
+        ?string $restorePath=null
+    ): string
     {
-        $backupPath = $this->resolveOwnDumpPath($ownDumpPath);
+        $backupPath = $this->resolveOwnDumpPath($ownDumpPath, $repositoryPath, $restorePath);
         if($backupPath === null) {
             return $this->getDefaultBackupPath($useSubFolder);
         }
@@ -110,7 +137,11 @@ class Settings implements SettingsInterface
      * The dump directory gets removed recursively before and after every database backup, so an
      * unsafe value has to fall back to the default path instead of being used.
      */
-    protected function resolveOwnDumpPath(?string $ownDumpPath): ?string
+    protected function resolveOwnDumpPath(
+        ?string $ownDumpPath,
+        ?string $repositoryPath = null,
+        ?string $restorePath = null
+    ): ?string
     {
         $ownDumpPath = trim((string) $ownDumpPath);
         if($ownDumpPath === '') {
@@ -149,6 +180,28 @@ class Settings implements SettingsInterface
             return null;
         }
 
+        // The dump path and the repository's own storage must not overlap in either direction:
+        // deleting the dump path would otherwise delete the backup repository itself (or the
+        // restore target), and both fields sit on the same admin form, so a copy-paste mistake
+        // is a realistic way to end up here.
+        foreach (array_filter([$repositoryPath, $restorePath]) as $protectedPath) {
+            if($this->pathsOverlap($resolvedDumpPath, rtrim($protectedPath, '/'))) {
+                $this->logger->error(
+                    'Own database dump path must not overlap with the repository or restore path, using default path instead: '.$resolvedDumpPath,
+                    PluginDefaults::DEFAULT_LOGGER_CONFIG
+                );
+                return null;
+            }
+        }
+
+        if($this->isBlockedPath($resolvedDumpPath, $projectDir)) {
+            $this->logger->error(
+                'Own database dump path must not be a system directory or a sensitive project directory, using default path instead: '.$resolvedDumpPath,
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+            return null;
+        }
+
         return $resolvedDumpPath;
     }
 
@@ -156,6 +209,38 @@ class Settings implements SettingsInterface
     {
         foreach (explode('/', $path) as $pathSegment) {
             if($pathSegment === '.' || $pathSegment === '..') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * True when either path is equal to or nested inside the other.
+     */
+    protected function pathsOverlap(string $pathA, string $pathB): bool
+    {
+        if($pathA === '' || $pathB === '') {
+            return false;
+        }
+
+        return $pathA === $pathB
+            || str_starts_with($pathA.'/', $pathB.'/')
+            || str_starts_with($pathB.'/', $pathA.'/');
+    }
+
+    protected function isBlockedPath(string $resolvedDumpPath, string $projectDir): bool
+    {
+        foreach (self::BLOCKED_ABSOLUTE_PATHS as $blockedPath) {
+            if($resolvedDumpPath === $blockedPath || str_starts_with($resolvedDumpPath.'/', $blockedPath.'/')) {
+                return true;
+            }
+        }
+
+        foreach (self::BLOCKED_PROJECT_SUBDIRECTORIES as $subdirectory) {
+            $blockedPath = $projectDir.'/'.$subdirectory;
+            if($resolvedDumpPath === $blockedPath || str_starts_with($resolvedDumpPath.'/', $blockedPath.'/')) {
                 return true;
             }
         }

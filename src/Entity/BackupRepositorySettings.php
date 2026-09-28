@@ -169,6 +169,17 @@ class BackupRepositorySettings
     }
 
     /**
+     * True once setRepositoryPath() has been called. repositoryPath is a typed property
+     * without a default, so getRepositoryPath() throws \Error before that — callers that
+     * cannot guarantee it was set (e.g. paths shared with tests building this DTO by hand)
+     * should check this first.
+     */
+    public function hasRepositoryPath(): bool
+    {
+        return isset($this->repositoryPath) && $this->repositoryPath !== '';
+    }
+
+    /**
      * @return string
      */
     public function getRepositoryPassword(): string
@@ -217,6 +228,16 @@ class BackupRepositorySettings
     public function setRestorePath(string $restorePath): void
     {
         $this->restorePath = $restorePath;
+    }
+
+    /**
+     * True once setRestorePath() has been called — see hasRepositoryPath() for why this
+     * exists. restorePath is only ever populated on the restore path today, never for a plain
+     * backup run.
+     */
+    public function hasRestorePath(): bool
+    {
+        return isset($this->restorePath) && $this->restorePath !== '';
     }
 
     /**

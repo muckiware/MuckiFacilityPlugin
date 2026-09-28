@@ -77,7 +77,12 @@ class CompleteFileRunner implements BackupInterface
 
     public function createBackupFileName(string $databaseName, bool $useSubFolder=false): string
     {
-        $backupPath = $this->pluginSettings->getBackupPath($useSubFolder, $this->createBackup->getDbDumpPath());
+        $backupPath = $this->pluginSettings->getBackupPath(
+            $useSubFolder,
+            $this->createBackup->getDbDumpPath(),
+            $this->createBackup->hasRepositoryPath() ? $this->createBackup->getRepositoryPath() : null,
+            $this->createBackup->hasRestorePath() ? $this->createBackup->getRestorePath() : null
+        );
         $backupDateTimeStamp = $this->pluginSettings->getDateTimestamp();
         $backupFileName = '';
 

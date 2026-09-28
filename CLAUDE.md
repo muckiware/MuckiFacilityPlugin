@@ -68,12 +68,30 @@ Files-Pfade sichern, Check-Item schreiben, Snapshots persistieren.
 
 **Dump-Pfad.** Pro Repository ueber `db_dump_path` / `dbDumpPath` konfigurierbar, Fallback ist
 `<projectDir>/var/db/backup` (`Defaults::DATABASE_BACKUP_PATH`). Aufgeloest wird in
-`Settings::getBackupPath(bool $useSubFolder, ?string $ownDumpPath)`: ein Wert mit fuehrendem
-Schraegstrich gilt absolut, jeder andere relativ zum Projektverzeichnis. `resolveOwnDumpPath()`
-verwirft unsichere Werte (leer, `/`, Segmente `.` oder `..`, das Projektverzeichnis selbst oder ein
-Elternverzeichnis davon) und faellt mit Log-Eintrag auf den Default zurueck. Das ist kein
-Schoenheitsthema: der Dump-Ordner wird vor **und** nach jedem DB-Backup per
-`Helper::deleteDirectory()` rekursiv geloescht.
+`Settings::getBackupPath(bool $useSubFolder, ?string $ownDumpPath, ?string $repositoryPath,
+?string $restorePath)`: ein Wert mit fuehrendem Schraegstrich gilt absolut, jeder andere relativ
+zum Projektverzeichnis. `resolveOwnDumpPath()` verwirft unsichere Werte und faellt mit
+Log-Eintrag auf den Default zurueck:
+
+- leer, `/`, Segmente `.` oder `..`, das Projektverzeichnis selbst oder ein Elternverzeichnis davon
+- Ueberschneidung mit `repositoryPath` oder `restorePath` desselben Repositories, in beide
+  Richtungen (`pathsOverlap()`) — beide Felder stehen im selben Admin-Formular, ein
+  Copy-Paste-Fehler wuerde sonst das restic-Repository selbst loeschen
+- eine feste Blockliste bekannter gefaehrlicher Systemverzeichnisse (`/etc`, `/var/log`, ...) und
+  sensibler Projekt-Unterordner (`public`, `vendor`, `custom`, `.git`, `var/log`, `var/cache`,
+  ...) — keine Allowlist: ein absoluter Pfad ausserhalb des Projekts (externer Backup-Mount)
+  bleibt bewusst erlaubt, das ist eine bestehende, in `SettingsTest.php` getestete Faehigkeit
+
+Die beiden neuen Parameter sind optional (Default `null`) und werden vom Aufrufer nur befuellt,
+wenn er sie hat — `CompleteFileRunner`/`CompleteFilesRunner`/`Services\Backup` nutzen dafuer
+`BackupRepositorySettings::hasRepositoryPath()` / `hasRestorePath()`, weil `restorePath` beim
+Backup-Lauf (anders als beim Restore) nie gesetzt wird und ein direkter Getter-Aufruf mit
+`\Error` abbrechen wuerde.
+
+Das ist kein Schoenheitsthema: der Dump-Ordner wird vor **und** nach jedem DB-Backup per
+`Helper::deleteDirectory()` rekursiv geloescht. Diese Methode folgt keinen Symlinks mehr (weder
+als Top-Level-Pfad noch beim Durchlaufen), gibt `bool` zurueck statt `void`, und beide Aufrufer
+in `runDatabaseBackup()` loggen einen Fehler, wenn sie `false` zurueckbekommt.
 
 **Falle: `backupPaths` wird mitten im Lauf ueberschrieben.** `runDatabaseBackup()` setzt
 `$createBackup->setBackupPaths([<Dump-Ordner>])` und den Typ auf `files`, damit derselbe
