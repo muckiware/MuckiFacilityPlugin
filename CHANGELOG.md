@@ -134,6 +134,10 @@ All notable changes to this project will be documented in this file.
   `log_entry` whenever the `log_entry` table had no `updated_at` column (a copy-paste bug in the
   branch that falls back to a `created_at`-only condition). `log_entry` itself never shrank, and
   `cart` lost rows the cart cleanup job was never asked to remove.
+- `numberOfValidDaysInCart` and `numberOfValidDaysInLogEntry` pointed at `LightsOn.Library.config.*`
+  instead of `MuckiFacilityPlugin.config.*` — a copy-paste from another plugin's namespace that made
+  both settings unreadable, so cleanup always used the 30-day fallback regardless of what was
+  configured. Added a regression test on `Core\ConfigPath` so this cannot silently regress again.
 
 ### Added
 - New tab "Repository Status" on the backup repository detail page, placed between

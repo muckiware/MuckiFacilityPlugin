@@ -272,10 +272,7 @@ Upstream-Bugs, sie gehoeren in einen Issue/PR gegen `muckiware/facility-plugin`.
    (`grep` bestaetigt: nur die Klassendefinition).
 2. `Settings::getLastValidDateForLogEntry()` ruft `getNumberOfValidDaysInCart()` auf, ignoriert
    also `numberOfValidDaysInLogEntry` komplett.
-3. `Core\ConfigPath::CONFIG_PATH_NUMBER_OF_VALID_DAYS_IN_CART` / `..._IN_LOG_ENTRY` zeigen auf
-   `LightsOn.Library.config.*` statt `MuckiFacilityPlugin.config.*`. Beide Cleanup-Einstellungen
-   greifen deshalb nie, es gilt immer der Fallback von 30 Tagen.
-4. `services.xml`: `MuckiFacilityPlugin\Services\SettingsInterface` ist Alias auf
+3. `services.xml`: `MuckiFacilityPlugin\Services\SettingsInterface` ist Alias auf
    `MuckiLogPlugin\Services\Settings` — falscher Namespace, anderes Plugin. Faellt derzeit nicht
    auf, weil alle Konsumenten die konkrete `Services\Settings` per Argument bekommen und Symfony
    den ungenutzten privaten Alias wegoptimiert. Sobald jemand per Autowiring auf das Interface
@@ -283,28 +280,28 @@ Upstream-Bugs, sie gehoeren in einen Issue/PR gegen `muckiware/facility-plugin`.
 
 **Code-Qualitaet**
 
-5. `Database\TableRunner\CleanupRunner` hat einen Konstruktor mit leerem Body und ohne
+4. `Database\TableRunner\CleanupRunner` hat einen Konstruktor mit leerem Body und ohne
    Constructor Promotion; `$this->connection` / `$this->cliOutput` in `copyTableItems()` existieren
    nur, weil die Subklassen die Properties promoten. `CartCleanupRunner` ruft `parent::__construct()`
    gar nicht auf, `LogEntryCleanupRunner` schon. Funktioniert, ist aber Zufall.
-6. `Subscriber\BackupRepositorySnapshotSubscriber::onBackupRepositorySnapshotDeleted()` ist ein
+5. `Subscriber\BackupRepositorySnapshotSubscriber::onBackupRepositorySnapshotDeleted()` ist ein
    No-Op mit auskommentiertem Rumpf. Der Subscriber ist registriert und tut nichts.
-7. `CompleteFileRunner`, `CompleteFilesRunner` und `Services\Backup` haben je eine eigene, identische
+6. `CompleteFileRunner`, `CompleteFilesRunner` und `Services\Backup` haben je eine eigene, identische
    `createBackupFileName()` / `prepareDbBackupFileName()` — dreifache Duplikation.
-8. `BackupInterface`-Methoden `saveBackupData()`, `removeBackupData()`, `getBackupData()` sind in
+7. `BackupInterface`-Methoden `saveBackupData()`, `removeBackupData()`, `getBackupData()` sind in
    allen Runnern leere `// TODO`-Stubs; `checkBackupData()` nur im `FilesRunner` implementiert.
-9. `BackupRepositoryEntity` hat Properties `entity` und `compress`, fuer die es in
+8. `BackupRepositoryEntity` hat Properties `entity` und `compress`, fuer die es in
    `BackupRepositoryDefinition` kein Feld gibt. `hostname` traegt zweimal `addFlags(new ApiAware())`.
-10. `Services\DbTableCleanup` injiziert die konkrete `Services\Settings`, alle anderen Konsumenten
-    das `SettingsInterface` — inkonsistent.
-11. Kein `declare(strict_types=1)`-Verstoss, aber durchgaengig kein `final`, kein `readonly`,
+9. `Services\DbTableCleanup` injiziert die konkrete `Services\Settings`, alle anderen Konsumenten
+   das `SettingsInterface` — inkonsistent.
+10. Kein `declare(strict_types=1)`-Verstoss, aber durchgaengig kein `final`, kein `readonly`,
     Properties `protected` statt `private`. Entspricht nicht den LightsOn-PHP-Standards — die hier
     aber auch nicht gelten (siehe Kopf). Der Stil ist konsistent, also nicht punktuell umstellen.
 
 **Repository-Hygiene**
 
-12. `bin/restic_0.17.3_linux_386` — ein 24 MB Linux-Binary ist versioniert (`git ls-files` bestaetigt).
-13. `var/` ist per `.gitignore` komplett ausgeschlossen und reine Ablage — nie als Quelle
+11. `bin/restic_0.17.3_linux_386` — ein 24 MB Linux-Binary ist versioniert (`git ls-files` bestaetigt).
+12. `var/` ist per `.gitignore` komplett ausgeschlossen und reine Ablage — nie als Quelle
     behandeln. Aktuell liegt dort nur `var/cache/`; die Integrationstests aus `tests/Integration/`
     legen bei jedem Lauf echte restic-Repositories und Restore-Ergebnisse daneben. Taucht dort eine
     Migration oder sonstiger PHP-Code auf, ist das eine verirrte Kopie, kein Stand, der nach `src/`
