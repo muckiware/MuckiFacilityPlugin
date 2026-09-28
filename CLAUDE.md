@@ -90,15 +90,45 @@ Zwei Konsequenzen fuer aehnliche Aenderungen: Runner-Properties, die erst in ein
 befuellt werden, brauchen einen Default (`= []`) — und `startBackupRunner()` / `checkBackup()`
 fangen nur `\Exception`, kein `\Error`, ein `\Error` reisst den ganzen Lauf ungeloggt ab.
 
+**`FilesRunner::prepareBackupClient()` setzt `setSkipPrepareBackup(true)`.** Ohne das ruft
+`MuckiRestic\Library\Backup\Local::createBackup()` vor jedem einzelnen `restic backup`-Aufruf
+`restic unlock` und `restic prune` auf. `createBackupData()` nutzt denselben Client fuer alle
+konfigurierten Pfade eines Backup-Laufs — bei N Pfaden liefe `prune` (die teuerste
+restic-Operation) N mal statt einmal pro Lauf, und `unlock` entfernt dabei bedingungslos **alle**
+Locks auf dem Repository, auch die eines echten, parallel laufenden Vorgangs (z. B. ein zweiter
+Backup-Lauf oder das taeglich per Cron laufende `muckiware:backup:forget`). Speicherplatz wird
+davon unabhaengig freigegeben: `restic forget` laeuft immer mit `--prune`
+(`MuckiRestic\Library\CommandLine\Commands\Forget`), und das Loeschen einzelner Snapshots aus der
+Administration ruft danach explizit `ManageRepository::cleanupRepository()` auf. Ein manuelles
+`restic unlock` nach einem nachweislich abgestuerzten Lauf gibt es im Plugin nicht als eigenen
+CLI-Befehl — bislang war das kein Problem, weil der automatische Unlock diesen Fall zufaellig mit
+abdeckte.
+
 ### Cleanup-Pfad
 `CleanupTables`-Enum → `TableCleanupRunnerFactory` → `CartCleanupRunner` / `LogEntryCleanupRunner`
 (beide erben von `CleanupRunner`, implementieren `TableCleanupInterface`).
 
 Strategie: `SHOW CREATE TABLE` → Temp-Tabelle anlegen → alte Rows in Originaltabelle loeschen →
-Rest in Temp kopieren → Originaltabelle `DROP` + neu anlegen → aus Temp zuruecckopieren → Temp
-droppen. Das gibt anders als ein reines `DELETE` den Speicher auf der Platte wieder frei, ist aber
-**destruktiv und nicht transaktional** — es gibt kein Rollback, wenn zwischen `DROP TABLE` und
-`INSERT` etwas schiefgeht. Vor Tests immer Dump ziehen.
+Rest in Temp kopieren → Temp per `RENAME TABLE original TO original_old, temp TO original`
+atomar an die Stelle der Originaltabelle setzen → `original_old` droppen. Das gibt anders als ein
+reines `DELETE` den Speicher auf der Platte wieder frei. Bis einschliesslich `facility-plugin
+v0.7.0` lief der letzte Schritt stattdessen ueber `DROP TABLE` + `CREATE TABLE` + Ruecckopieren —
+destruktiv und nicht transaktional, mit einem Fenster, in dem die Tabelle gar nicht existierte,
+wenn der Prozess dazwischen abgebrochen wurde. `RENAME TABLE` mit zwei Paaren ist dagegen eine
+einzige atomare Anweisung; es gibt kein Zwischenstadium und keinen Datenverlust bei einem Absturz
+mittendrin. Trotzdem bleibt das Prinzip: vor Aenderungen an diesem Pfad immer einen Dump ziehen.
+
+**Falle: `createTempTable()` darf nur den Tabellennamen ersetzen, nicht das ganze Statement.**
+`SHOW CREATE TABLE` liefert Index- und Constraint-Namen wie `idx.cart.created_at`, die den
+Tabellennamen als Teilstring enthalten. Ein blindes `str_replace('cart', 'cart_temp', $sql)`
+trifft auch diese Namen. Solange die Temp-Tabelle danach wieder verworfen wurde, war das
+folgenlos — seit dem Swap per `RENAME TABLE` wird die Temp-Tabelle aber zur Live-Tabelle, und der
+verunstaltete Name (`idx.cart_temp.created_at`) bliebe dauerhaft stehen. Schlimmer: `cart_temp`
+enthaelt selbst den Teilstring `cart`, sodass derselbe Fehler bei jedem weiteren Lauf einen
+zusaetzlichen `_temp`-Suffix anhaengen wuerde. Ersetzt wird deshalb gezielt nur
+`` CREATE TABLE `cart` `` durch `` CREATE TABLE `cart_temp` ``, siehe
+`CartCleanupRunner::createTempTable()` / `LogEntryCleanupRunner::createTempTable()` und
+`tests/Database/TableRunner/TempTableNamingTest.php`.
 
 ## Entities
 
@@ -339,6 +369,8 @@ muckiware/facility-plugin 6.8` laufen lassen — dort fallen die `sw-*`-Wrapper 
 - Services **immer** in `src/Resources/config/services.xml` eintragen — es gibt kein Autowiring
   in diesem Plugin.
 - Repository-Passwoerter nie loggen, nie in Messages serialisieren, nie `ApiAware` machen.
-- Cleanup-Code nur gegen eine Wegwerf-Datenbank testen (DROP TABLE ohne Transaktion).
+- Cleanup-Code nur gegen eine Wegwerf-Datenbank testen. Der Tabellentausch selbst ist seit dem
+  `RENAME TABLE`-Umbau atomar, `removeOldTableItems()` loescht aber weiterhin direkt und ohne
+  Rueckfrage aus der Live-Tabelle.
 - restic-Aufrufe laufen ausschliesslich ueber `muckiware/restic` (`Backup`, `Manage`, `Restore`)
   — keine eigenen `Process`/`exec`-Aufrufe hinzufuegen.

@@ -22,6 +22,15 @@ interface TableCleanupInterface
     public function createTempTable(string $sqlCreateStatement): bool;
     public function countTableItems(string $tableName): int;
     public function removeTableByName(string $tableName): void;
-    public function createNewTable(string $sqlCreateStatement): void;
     public function copyTableItems(string $sourceTableName, string $targetTableName): void;
+
+    /**
+     * Removes $oldTableName if it still exists from a previous, aborted run.
+     */
+    public function checkOldSwapTable(string $oldTableName): bool;
+
+    /**
+     * Atomically replaces $tableName with $tempTableName via RENAME TABLE.
+     */
+    public function swapWithTempTable(string $tableName, string $tempTableName, string $oldTableName): void;
 }

@@ -148,9 +148,10 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
     {
         $this->cliOutput->writeNewLineCliOutput('Create temp cart table');
 
+        // Only rename the table name, not index names containing "cart" (e.g. idx.cart.created_at).
         $sqlCart = str_replace(
-            'cart',
-            $this::CART_TEMP_TABLE_NAME,
+            'CREATE TABLE `cart`',
+            'CREATE TABLE `'.$this::CART_TEMP_TABLE_NAME.'`',
             $sqlCreateStatement
         );
 
@@ -216,22 +217,4 @@ class CartCleanupRunner extends CleanupRunner implements TableCleanupInterface
         }
     }
 
-    /**
-     * @throws TableCleanupFailedException
-     */
-    public function createNewTable(string $sqlCreateStatement): void
-    {
-        $this->cliOutput->writeNewLineCliOutput('Create new cart table');
-
-        try {
-
-            $this->connection->executeStatement($sqlCreateStatement);
-            $this->cliOutput->writeSameLineCliOutput('...done');
-
-        } catch (Exception $e) {
-
-            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new TableCleanupFailedException('Not possible to create new cart table');
-        }
-    }
 }

@@ -58,4 +58,28 @@ class FilesRunnerTest extends TestCase
             'getBackupResults should return an empty array when there is nothing to back up'
         );
     }
+
+    /**
+     * Without this, MuckiRestic\Library\Backup\Local::createBackup() runs `restic unlock` and
+     * `restic prune` before every single restic backup call. createBackupData() reuses one
+     * client across every configured backup path, so prune - the most expensive restic
+     * operation - would run once per path instead of once per backup job, and unlock removes
+     * ALL locks unconditionally, including one held by a genuinely running concurrent
+     * operation. Disk space is already reclaimed on its own schedule elsewhere - see the
+     * comment on FilesRunner::prepareBackupClient() for where.
+     */
+    public function testPrepareBackupClientSkipsImplicitUnlockAndPrune(): void
+    {
+        $createBackup = new BackupRepositorySettings();
+        $createBackup->setRepositoryPath('/tmp/muwa-repository');
+        $createBackup->setRepositoryPassword('test');
+
+        $filesRunner = $this->createFilesRunner($createBackup);
+        $backupClient = $filesRunner->prepareBackupClient();
+
+        static::assertTrue(
+            $backupClient->isSkipPrepareBackup(),
+            'FilesRunner must disable the implicit unlock+prune before every restic backup call'
+        );
+    }
 }
