@@ -110,7 +110,7 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
         } else {
             $sql = '
             DELETE FROM
-                `cart`
+                `log_entry`
             WHERE
 		            created_at <= ' . $this->connection->quote($lastValidDate) . '
         ';

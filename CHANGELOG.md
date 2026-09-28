@@ -130,6 +130,10 @@ All notable changes to this project will be documented in this file.
   another backup job or a scheduled `muckiware:backup:forget`. Disk space is already reclaimed
   on its own schedule: `restic forget` always runs with `--prune`, and single-snapshot deletion
   from the administration explicitly prunes afterward.
+- `bin/console muckiware:table:cleanup log_entry` deleted expired rows from `cart` instead of
+  `log_entry` whenever the `log_entry` table had no `updated_at` column (a copy-paste bug in the
+  branch that falls back to a `created_at`-only condition). `log_entry` itself never shrank, and
+  `cart` lost rows the cart cleanup job was never asked to remove.
 
 ### Added
 - New tab "Repository Status" on the backup repository detail page, placed between

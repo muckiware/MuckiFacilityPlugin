@@ -19,6 +19,7 @@
             <file>tests/Core/Content/BackupRepositoryDefinitionTest.php</file>
             <file>tests/Database/TableRunner/CleanupRunnerTest.php</file>
             <file>tests/Database/TableRunner/TempTableNamingTest.php</file>
+            <file>tests/Database/TableRunner/LogEntryCleanupRunnerTest.php</file>
             <file>tests/Services/DbTableCleanupTest.php</file>
         </testsuite>
     </testsuites>
