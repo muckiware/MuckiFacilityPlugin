@@ -30,16 +30,10 @@ class Migration1787320672 extends MigrationStep
      */
     public function update(Connection $connection): void
     {
-        $columnCheck = $connection->fetchNumeric('
-            SELECT count(*)
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE
-	            TABLE_NAME = \'muwa_backup_repository\'
-                AND
-                COLUMN_NAME = \'db_dump_path\'
-        ');
-        if(!empty($columnCheck) && (int) $columnCheck[0] === 0) {
-            $connection->executeStatement('ALTER TABLE `muwa_backup_repository` ADD COLUMN `db_dump_path` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL AFTER `restore_path`;');
+        if ($this->columnExists($connection, 'muwa_backup_repository', 'db_dump_path')) {
+            return;
         }
+
+        $connection->executeStatement('ALTER TABLE `muwa_backup_repository` ADD COLUMN `db_dump_path` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL AFTER `restore_path`;');
     }
 }

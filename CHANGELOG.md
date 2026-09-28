@@ -152,6 +152,12 @@ All notable changes to this project will be documented in this file.
   `muwa_backup_repository_stats`, `_snapshots` and `_checks` before `muwa_backup_repository`
   itself, in that order, since the first three carry a foreign key on it. Passing
   `--keep-user-data` is unaffected and still skips this entirely.
+- Four column migrations checked `INFORMATION_SCHEMA.COLUMNS` for an existing column without
+  filtering by `TABLE_SCHEMA`, which lists columns of every database on the server. On a host
+  running more than one shop, that check could find a same-named column in a different shop's
+  database and silently skip the `ALTER TABLE` in the current one. Replaced with
+  `MigrationStep::columnExists()`, which uses `SHOW COLUMNS` and is always scoped to the active
+  connection.
 
 ### Added
 - New tab "Repository Status" on the backup repository detail page, placed between

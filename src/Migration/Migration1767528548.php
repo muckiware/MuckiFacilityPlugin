@@ -30,16 +30,10 @@ class Migration1767528548 extends MigrationStep
      */
     public function update(Connection $connection): void
     {
-        $columnCheck = $connection->fetchNumeric('
-            SELECT count(*)
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE 
-	            TABLE_NAME = \'muwa_backup_repository\' 
-                AND 
-                COLUMN_NAME = \'hostname\'
-        ');
-        if(!empty($columnCheck) && (int) $columnCheck[0] === 0) {
-            $connection->executeStatement('ALTER TABLE `muwa_backup_repository` ADD COLUMN `hostname` VARCHAR(128) NULL DEFAULT NULL AFTER `type`;');
+        if ($this->columnExists($connection, 'muwa_backup_repository', 'hostname')) {
+            return;
         }
+
+        $connection->executeStatement('ALTER TABLE `muwa_backup_repository` ADD COLUMN `hostname` VARCHAR(128) NULL DEFAULT NULL AFTER `type`;');
     }
 }

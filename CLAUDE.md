@@ -326,6 +326,11 @@ Es gibt **keine** getrennten Branches — jede Aenderung muss in beiden Versione
 - `tablesExist()` immer mit Array aufrufen: `tablesExist([$tableName])`.
 - Ergebnisse von `fetchNumeric()`/`fetchOne()` nie per `===` gegen String-Literale pruefen —
   DBAL 3 und 4 liefern unterschiedliche Skalartypen. Vorher casten: `(int) $row[0] === 0`.
+- In Migrationen Spalten-Checks immer per `$this->columnExists($connection, $table, $column)`
+  (aus `MigrationStep`, ueber `AddColumnTrait`/`ColumnExistsTrait`) machen, nie per eigener
+  `INFORMATION_SCHEMA.COLUMNS`-Abfrage ohne `TABLE_SCHEMA` — die listet Spalten aller Datenbanken
+  auf dem Server und kann auf einem Mehr-Schema-Host ein `ALTER TABLE` in der falschen Datenbank
+  finden und das eigene faelschlich ueberspringen.
 
 ### Regeln fuer die Administration
 
