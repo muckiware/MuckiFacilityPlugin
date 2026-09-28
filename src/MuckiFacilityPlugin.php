@@ -4,19 +4,25 @@
  *
  * @category   SW6 Plugin
  * @package    MuckiFacility
- * @copyright  Copyright (c) 2024 by Muckiware
+ * @copyright  Copyright (c) 2024-2026 by Muckiware
  * @license    MIT
  * @author     Muckiware
  *
  */
 namespace MuckiFacilityPlugin;
 
+use Doctrine\DBAL\Connection;
 use Shopware\Core\Framework\Plugin;
 use Shopware\Core\Framework\Plugin\Context\ActivateContext;
 use Shopware\Core\Framework\Plugin\Context\DeactivateContext;
 use Shopware\Core\Framework\Plugin\Context\InstallContext;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
 use Shopware\Core\Framework\Plugin\Context\UpdateContext;
+
+use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
 
 /**
  * Add dependencies from composer
@@ -44,6 +50,23 @@ class MuckiFacilityPlugin extends Plugin
 
         if ($uninstallContext->keepUserData()) {
             return;
+        }
+
+        $this->dropPluginTables();
+    }
+
+    private function dropPluginTables(): void
+    {
+        /** @var Connection $connection */
+        $connection = $this->container->get(Connection::class);
+
+        foreach ([
+            BackupRepositoryStatsDefinition::ENTITY_NAME,
+            BackupRepositorySnapshotsDefinition::ENTITY_NAME,
+            BackupRepositoryChecksDefinition::ENTITY_NAME,
+            BackupRepositoryDefinition::ENTITY_NAME,
+        ] as $tableName) {
+            $connection->executeStatement('DROP TABLE IF EXISTS `'.$tableName.'`');
         }
     }
 

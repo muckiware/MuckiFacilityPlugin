@@ -381,3 +381,6 @@ muckiware/facility-plugin 6.8` laufen lassen — dort fallen die `sw-*`-Wrapper 
   Rueckfrage aus der Live-Tabelle.
 - restic-Aufrufe laufen ausschliesslich ueber `muckiware/restic` (`Backup`, `Manage`, `Restore`)
   — keine eigenen `Process`/`exec`-Aufrufe hinzufuegen.
+- `bin/console plugin:uninstall MuckiFacilityPlugin` droppt ohne `--keep-user-data` alle vier
+  `muwa_*`-Tabellen (`MuckiFacilityPlugin::dropPluginTables()`), Repository-Passwoerter
+  eingeschlossen. Vor einem Uninstall im Dev-Shop pruefen, ob das Flag gesetzt werden soll.

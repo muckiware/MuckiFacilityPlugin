@@ -145,6 +145,13 @@ All notable changes to this project will be documented in this file.
   have crashed the container. Now aliased to this plugin's own `Services\Settings`, verified against
   the real container (`debug:container --show-hidden`), with a regression test reading the alias
   from `services.xml` directly.
+- `bin/console plugin:uninstall MuckiFacilityPlugin` (without `--keep-user-data`) left all four
+  `muwa_*` tables in place, repository passwords (or, for `env`/`file` sources, the environment
+  variable name or file path pointing at them) included. `UninstallContext::keepUserData()` was
+  already checked, but the branch for "don't keep it" was empty. Now drops
+  `muwa_backup_repository_stats`, `_snapshots` and `_checks` before `muwa_backup_repository`
+  itself, in that order, since the first three carry a foreign key on it. Passing
+  `--keep-user-data` is unaffected and still skips this entirely.
 
 ### Added
 - New tab "Repository Status" on the backup repository detail page, placed between
