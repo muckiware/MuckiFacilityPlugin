@@ -16,6 +16,7 @@
             <file>tests/Controller/RouteAclTest.php</file>
             <file>tests/Services/Crypto/SecretCipherTest.php</file>
             <file>tests/Services/Content/RepositoryPasswordResolverTest.php</file>
+            <file>tests/Services/SettingsInterfaceAliasTest.php</file>
             <file>tests/Core/Content/BackupRepositoryDefinitionTest.php</file>
             <file>tests/Core/ConfigPathTest.php</file>
             <file>tests/Database/TableRunner/CleanupRunnerTest.php</file>

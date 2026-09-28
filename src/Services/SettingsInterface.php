@@ -13,8 +13,6 @@ namespace MuckiFacilityPlugin\Services;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
-use MuckiLogPlugin\Core\LogLevel;
-
 interface SettingsInterface
 {
     public function isEnabled(): bool;

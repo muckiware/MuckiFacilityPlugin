@@ -138,6 +138,13 @@ All notable changes to this project will be documented in this file.
   instead of `MuckiFacilityPlugin.config.*` — a copy-paste from another plugin's namespace that made
   both settings unreadable, so cleanup always used the 30-day fallback regardless of what was
   configured. Added a regression test on `Core\ConfigPath` so this cannot silently regress again.
+- `MuckiFacilityPlugin\Services\SettingsInterface` was aliased in `services.xml` to
+  `MuckiLogPlugin\Services\Settings` — another plugin's class, in a different namespace. It never
+  surfaced because every consumer takes the concrete `Services\Settings` by argument, so Symfony
+  optimized away the unused alias; anything requesting `SettingsInterface` through autowiring would
+  have crashed the container. Now aliased to this plugin's own `Services\Settings`, verified against
+  the real container (`debug:container --show-hidden`), with a regression test reading the alias
+  from `services.xml` directly.
 
 ### Added
 - New tab "Repository Status" on the backup repository detail page, placed between
