@@ -174,6 +174,9 @@ class FilesRunner implements BackupInterface
         $backupClient->setJsonOutput($isJsonOutput);
         $backupClient->setHostName($this->createBackup->getHostName());
 
+        // Otherwise restic would unlock+prune before every path; forget --prune already does that.
+        $backupClient->setSkipPrepareBackup(true);
+
         return $backupClient;
     }
 }

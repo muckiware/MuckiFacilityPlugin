@@ -36,22 +36,17 @@ class DbTableCleanup
             $this->logger->info('No items found in table: '.$tableNameForCleanup, PluginDefaults::DEFAULT_LOGGER_CONFIG);
             return true;
         }
-        $sqlCreateStatement = $this->prepareCleanup($runner);
 
-        if($sqlCreateStatement) {
+        if(!$this->prepareCleanup($runner)) {
 
-            $this->performCleanup($runner, $tableNameForCleanup, $sqlCreateStatement);
-            $runner->removeTableByName($runner->getTempTableName());
-        } else {
-
-            $this->logger->error('No SQL create statement found for table: '.$tableNameForCleanup, PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->logger->error('Cleanup could not be prepared for table: '.$tableNameForCleanup, PluginDefaults::DEFAULT_LOGGER_CONFIG);
             return false;
         }
 
-        return true;
+        return $this->performCleanup($runner, $tableNameForCleanup);
     }
 
-    public function prepareCleanup(TableCleanupInterface $runner): ?string
+    public function prepareCleanup(TableCleanupInterface $runner): bool
     {
         try {
 
@@ -64,29 +59,38 @@ class DbTableCleanup
         } catch (\Exception $e) {
 
             $this->logger->error('Error during prepare cleanup: '.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            return null;
+            return false;
         }
 
-        return $sqlCreateStatement;
+        return true;
     }
 
-    public function performCleanup(TableCleanupInterface $runner, string $tableNameForCleanup, string $sqlCreateStatement): bool
+    /**
+     * Copies the remaining rows into a temp table, then swaps it in for the live table.
+     */
+    public function performCleanup(TableCleanupInterface $runner, string $tableNameForCleanup): bool
     {
+        $tempTableName = $runner->getTempTableName();
+
         try {
 
-            $runner->copyTableItems($tableNameForCleanup, $runner->getTempTableName());
+            $runner->copyTableItems($tableNameForCleanup, $tempTableName);
 
-            if($runner->countTableItems($runner->getTempTableName()) >= 1) {
-                $runner->removeTableByName($tableNameForCleanup);
-                $runner->createNewTable($sqlCreateStatement);
-                $runner->copyTableItems($runner->getTempTableName(), $tableNameForCleanup);
+            if($runner->countTableItems($tempTableName) >= 1) {
+
+                $oldTableName = $tableNameForCleanup.'_old';
+                $runner->checkOldSwapTable($oldTableName);
+                $runner->swapWithTempTable($tableNameForCleanup, $tempTableName, $oldTableName);
+                $runner->removeTableByName($oldTableName);
             } else {
+
                 $this->logger->info('Found no items', PluginDefaults::DEFAULT_LOGGER_CONFIG);
+                $runner->removeTableByName($tempTableName);
             }
 
         } catch (\Exception $e) {
 
-            $this->logger->error('Error during prepare cleanup: '.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            $this->logger->error('Error during perform cleanup: '.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
             return false;
         }
 

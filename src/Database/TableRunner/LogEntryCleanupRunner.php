@@ -132,9 +132,10 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
     {
         $this->cliOutput->writeNewLineCliOutput('Create temp log_entry table');
 
+        // Only rename the table name, not index/constraint names containing "log_entry".
         $sqlCart = str_replace(
-            'log_entry',
-            $this::LOG_ENTRY_TEMP_TABLE_NAME,
+            'CREATE TABLE `log_entry`',
+            'CREATE TABLE `'.$this::LOG_ENTRY_TEMP_TABLE_NAME.'`',
             $sqlCreateStatement
         );
 
@@ -191,22 +192,6 @@ class LogEntryCleanupRunner extends CleanupRunner implements TableCleanupInterfa
 
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
             throw new TableCleanupFailedException('Not possible to remove '.$tableName.' table');
-        }
-    }
-
-    public function createNewTable(string $sqlCreateStatement): void
-    {
-        $this->cliOutput->writeNewLineCliOutput('Create new log_entry table');
-
-        try {
-
-            $this->connection->executeStatement($sqlCreateStatement);
-            $this->cliOutput->writeSameLineCliOutput('...done');
-
-        } catch (Exception $e) {
-
-            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            throw new TableCleanupFailedException('Not possible to create new log_entry table');
         }
     }
 

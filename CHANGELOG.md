@@ -84,6 +84,31 @@ All notable changes to this project will be documented in this file.
 
 - `repository_password` grows from `varchar(255)` to `varchar(512)` to make room for ciphertext.
 
+### Fixed
+- `bin/console muckiware:table:cleanup <cart|log_entry>` no longer has a window where the table
+  does not exist at all. The previous strategy copied the remaining rows into a temp table, then
+  ran `DROP TABLE` followed by `CREATE TABLE` and a copy back — a process kill, an out-of-memory
+  kill or a lost database connection between those two statements left the shop without a `cart`
+  (or `log_entry`) table, and every storefront request touching the cart failed until someone
+  restored it by hand. The temp table is now swapped in with a single `RENAME TABLE original TO
+  original_old, temp TO original` statement, which MySQL executes atomically — there is no
+  intermediate state, and a failure leaves the original table untouched.
+- Fixed a related latent bug this change would otherwise have made permanent: building the temp
+  table's `CREATE TABLE` statement replaced every occurrence of the table name in the source
+  schema, including inside index and constraint names such as `idx.cart.created_at`. That was
+  harmless as long as the temp table stayed temporary, but the new swap turns it into the live
+  table, which would have frozen the corrupted name in place — and since the temp table's own
+  name (`cart_temp`) still contains the substring `cart`, every further cleanup run would have
+  appended another `_temp`. The rename now targets only the `CREATE TABLE` header.
+- A files backup no longer runs `restic unlock` and `restic prune` before every single
+  configured backup path. `FilesRunner` reuses one restic client across all paths of a backup
+  job, so with N configured paths, prune — the most expensive restic operation — used to run N
+  times per job instead of once. Worse, `unlock` removes all locks on the repository
+  unconditionally, including one held by a genuinely running concurrent operation, such as
+  another backup job or a scheduled `muckiware:backup:forget`. Disk space is already reclaimed
+  on its own schedule: `restic forget` always runs with `--prune`, and single-snapshot deletion
+  from the administration explicitly prunes afterward.
+
 ### Added
 - New tab "Repository Status" on the backup repository detail page, placed between
   Configuration and Checks.
