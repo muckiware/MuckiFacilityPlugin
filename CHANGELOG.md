@@ -76,6 +76,13 @@ All notable changes to this project will be documented in this file.
   `Services\Backup::runDatabaseBackup()` log an error when a deletion fails, instead of the
   failure passing by unnoticed and a half-cleaned directory ending up in the next snapshot.
 
+**Security advisories:** [github.com/muckiware/MuckiFacilityPlugin/security/advisories](https://github.com/muckiware/MuckiFacilityPlugin/security/advisories)
+- [Missing ACL authorization on backup/restore/repository API routes](https://github.com/muckiware/MuckiFacilityPlugin/security/advisories)
+- [Restic repository passwords stored in plain text in the database](https://github.com/muckiware/MuckiFacilityPlugin/security/advisories)
+- [Repository password and password source writable via generic Admin API despite being hidden from reads](https://github.com/muckiware/MuckiFacilityPlugin/security/advisories)
+- [Database dump path could be pointed at the repository storage itself or at sensitive system/project directories](https://github.com/muckiware/MuckiFacilityPlugin/security/advisories)
+- [Arbitrary file deletion via symlink following in Services\Helper::deleteDirectory()](https://github.com/muckiware/MuckiFacilityPlugin/security/advisories)
+
 ### Upgrade notes
 - Roles other than administrator lose access to the module until the new privileges are granted.
   Administrator accounts are unaffected.
