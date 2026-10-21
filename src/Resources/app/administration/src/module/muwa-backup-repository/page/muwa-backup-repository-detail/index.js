@@ -237,6 +237,7 @@ Component.register('muwa-backup-repository-detail', {
                     property: 'createdAt',
                     label: 'muwa-backup-repository.detail.statsCreatedAtLabel',
                     allowResize: true,
+                    primary: true,
                     width: '20%',
                 },
                 {
@@ -275,6 +276,7 @@ Component.register('muwa-backup-repository-detail', {
                     property: 'checkStatus',
                     label: 'muwa-backup-repository.detail.checkStatusLabel',
                     allowResize: true,
+                    primary: true,
                     width: '80%',
                 },
                 {
@@ -294,7 +296,8 @@ Component.register('muwa-backup-repository-detail', {
                 {
                     property: 'snapshotShortId',
                     label: 'muwa-backup-repository.detail.snapshotShortIdStatusLabel',
-                    allowResize: true
+                    allowResize: true,
+                    primary: true
                 },
                 {
                     property: 'paths',

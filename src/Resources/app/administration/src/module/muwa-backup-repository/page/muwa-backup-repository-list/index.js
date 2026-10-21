@@ -64,7 +64,8 @@ Component.register('muwa-backup-repository-list', {
                     property: 'name',
                     dataIndex: 'name',
                     label: this.$t('muwa-backup-repository.list.column-internal-name'),
-                    allowResize: true
+                    allowResize: true,
+                    primary: true
                 }, {
                     property: 'active',
                     dataIndex: 'active',

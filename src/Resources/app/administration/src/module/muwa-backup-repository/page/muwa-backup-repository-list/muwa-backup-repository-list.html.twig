@@ -39,6 +39,7 @@
                         :showActions="true"
                         :showSelection="true"
                         :showSettings="true"
+                        identifier="muwa-backup-repository-list"
                 >
                     <template #column-name="{item}">
                         <router-link :to="{ name: 'muwa.backup.repository.detail', params: { id: item.id } }">

@@ -55,3 +55,10 @@ div.muwa-backup-repository-detail-repository-path__description {
         }
     }
 }
+
+/* sw-data-grid rendert die Tabellen-Einstellungen (Spalten ein-/ausblenden) nur in
+   der Aktionsspalte, also nur mit showActions. Read-only-Tabellen ohne Zeilenaktionen
+   blenden deshalb das leere Kontextmenue je Zeile aus. */
+.muwa-data-grid--settings-only .sw-data-grid__body .sw-data-grid__actions-menu {
+  display: none;
+}

@@ -403,9 +403,11 @@
                         :items="backupRepositoryChecks"
                         :repository="backupRepositoryChecksRepository"
                         :columns="backupChecksColumns"
-                        :showActions="false"
+                        :showActions="true"
                         :showSelection="false"
-                        :showSettings="false"
+                        :showSettings="true"
+                        identifier="muwa-backup-repository-checks"
+                        class="muwa-data-grid--settings-only"
                         :sort-by="sortBy"
                         :sort-direction="sortDirection"
                         :full-page="false"
@@ -418,6 +420,7 @@
                         <template #column-createdAt="{ item }">
                             {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
                         </template>
+                        <template #actions></template>
                     </sw-entity-listing>
 
                     {# Tab Repository Status #}
@@ -475,8 +478,10 @@
                             <template v-if="backupRepositoryStats.length && statsHistoryView === 'table'" #grid>
                                 <sw-data-grid
                                     :showSelection="false"
-                                    :showActions="false"
-                                    :showSettings="false"
+                                    :showActions="true"
+                                    :showSettings="true"
+                                    identifier="muwa-backup-repository-stats-history"
+                                    class="muwa-data-grid--settings-only"
                                     :dataSource="backupRepositoryStats"
                                     :columns="statsHistoryColumns"
                                     :plain-appearance="true"
@@ -535,7 +540,8 @@
                         :repository="backupRepositorySnapshotsRepository"
                         :columns="backupSnapshotsColumns"
                         :showActions="true"
-                        :showSettings="false"
+                        :showSettings="true"
+                        identifier="muwa-backup-repository-snapshots"
                         :show-selection="true"
                         :allow-delete="acl.can('muwa_backup_repository.delete_snapshots')"
                         :sort-by="sortBy"
