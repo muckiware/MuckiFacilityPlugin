@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Dashboard widget "Backup status": a card on the administration dashboard with the latest
+  repository status of every active backup repository — status date, repository size, number of
+  snapshots and the last `restic check` result as a coloured label (OK / error / no check). Same
+  data source as the "Repository status" tab (`muwa_backup_repository_stats`); the repository name
+  links to that tab.
+- Plugin setting `showDashboardWidget` (card "Dashboard", default off) to switch the widget on.
+  The widget also stays hidden for users without the `muwa_backup_repository.viewer` role.
+
 ## [0.7.0]
 
 ### Security

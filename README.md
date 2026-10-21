@@ -42,6 +42,7 @@ Plugin configuration under:<br>Settings -> Extensions -> My extensions -> MuckiF
 | Global backup settings -> Compress database backup file | Turn on/off compressen for db dump, for cli command ```bin/console muckiware:db:dump <Type of backup>```        |
 | Global backup settings -> Use own restic path           | Turn on/off own restic                                                                                          |
 | Global backup settings -> Own path to binary of restic                              | Enter the absolut path to binary file of restic. Example input: ```/var/www/html/bin/restic_0.17.3_linux_386``` |
+| Dashboard -> Show backup status on the dashboard        | Shows a card with the latest repository status (date, repository size, number of snapshots, check status) of every active backup repository on the administration dashboard. Off by default. Requires the `muwa_backup_repository.viewer` permission and `system_config:read`. |
 
 ## Respoitory Configuration
 First you will need a repository configuration for the backup. The repository configuration is the base for the backup process. The repository configuration contains the backup source and the backup target. The backup source is the path to the folder or file which should be backuped. The backup target is the path to the repository where the backup data should be restored.<br>

@@ -1,0 +1,55 @@
+{% block muwa_backup_status_dashboard_widget %}
+<sw-card
+    v-if="isVisible"
+    class="muwa-backup-status-dashboard-widget"
+    positionIdentifier="muwaBackupStatusDashboardWidget"
+    :title="$t('muwa-backup-repository.dashboard.title')"
+    :isLoading="isLoading"
+>
+    {% block muwa_backup_status_dashboard_widget_grid %}
+        <template v-if="statusItems.length" #grid>
+            <sw-data-grid
+                :showSelection="false"
+                :showActions="false"
+                :showSettings="false"
+                :dataSource="statusItems"
+                :columns="statusColumns"
+                :plain-appearance="true"
+            >
+                <template #column-name="{ item }">
+                    <router-link :to="{ name: 'muwa.backup.repository.detail', params: { id: item.id, tab: 'backupRepositoryStats' } }">
+                        {{ item.name }}
+                    </router-link>
+                </template>
+                <template #column-createdAt="{ item }">
+                    {{ item.createdAt ? dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit' }) : $t('muwa-backup-repository.detail.statsNoValue') }}
+                </template>
+                <template #column-totalSize="{ item }">
+                    {{ formatBytes(item.totalSize) }}
+                </template>
+                <template #column-snapshotsCount="{ item }">
+                    {{ formatCount(item.snapshotsCount) }}
+                </template>
+                <template #column-checkStatus="{ item }">
+                    <sw-label
+                        :variant="checkStatusVariant(item)"
+                        appearance="pill"
+                        :title="item.checkStatus || ''"
+                    >
+                        {{ checkStatusLabel(item) }}
+                    </sw-label>
+                </template>
+            </sw-data-grid>
+        </template>
+    {% endblock %}
+
+    {% block muwa_backup_status_dashboard_widget_empty_state %}
+        <sw-empty-state
+            v-if="!statusItems.length && !isLoading"
+            :absolute="false"
+            :title="$t('muwa-backup-repository.dashboard.emptyTitle')"
+            :subline="$t('muwa-backup-repository.dashboard.emptySubline')"
+        />
+    {% endblock %}
+</sw-card>
+{% endblock %}
