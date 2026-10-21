@@ -1,0 +1,7 @@
+{# The block exists unchanged in 6.6 and 6.7. The widget decides on its own whether it renders
+   (plugin config + ACL), so the dashboard itself stays untouched when it is switched off. #}
+{% block sw_dashboard_index_content_info_grid %}
+    {% parent %}
+
+    <muwa-backup-status-dashboard-widget />
+{% endblock %}

@@ -136,6 +136,15 @@
       "delete-success-title": "Snapshot gelöscht",
       "delete-success-message": "Der Snapshot wurde erfolgreich gelöscht.",
       "deletes-success-message": "Die Snapshots wurden erfolgreich gelöscht."
+    },
+    "dashboard": {
+      "title": "Backup-Status",
+      "repositoryLabel": "Repository",
+      "noStats": "Kein Status",
+      "noCheck": "Kein Check",
+      "checkOk": "OK",
+      "emptyTitle": "Keine aktiven Backup Repositories",
+      "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an."
     }
   },
   "sw-privileges": {

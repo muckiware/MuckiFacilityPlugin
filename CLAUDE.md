@@ -215,7 +215,10 @@ Die Message erbt **nicht** von `BackupRepositorySettings` — sie traegt nur die
 
 `src/Resources/config/config.xml` definiert:
 `active`, `activeDbBackup`, `compressDbBackup`, `useOwnResticPath`, `ownPathResticBinary`,
-`numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`.
+`numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`, `showDashboardWidget`.
+
+`showDashboardWidget` wird nur von der Administration gelesen (`systemConfigApiService`), nicht
+von PHP — deshalb gibt es dafuer keinen `ConfigPath`-Eintrag.
 
 Zugriff ausschliesslich ueber `Services\Settings` + `Core\ConfigPath`-Enum. `Settings` liest
 zusaetzlich `DATABASE_URL` via `EnvironmentHelper` und loest den Dump-Pfad auf — der haengt aber
@@ -229,6 +232,15 @@ Ein Modul: `src/Resources/app/administration/src/module/muwa-backup-repository`
 Klassisches Vue-2-Style-API (`Component.register`, `Mixin.getByName('listing')`,
 `this.$t(...)`) — kein Composition API, keine `sw-`Component-Overrides.
 Snippets liegen modul-lokal in `snippet/de-DE.json` / `en-GB.json`.
+
+**Dashboard-Widget.** `component/muwa-backup-status-dashboard-widget` zeigt pro aktivem Repository
+den neuesten `muwa_backup_repository_stats`-Eintrag (Association mit `setLimit(1)`) auf dem
+Dashboard. Eingehaengt per `Component.override('sw-dashboard-index')` in den Block
+`sw_dashboard_index_content_info_grid` (in 6.6 und 6.7 identisch). Das Widget blendet sich selbst
+aus, wenn `showDashboardWidget` nicht gesetzt ist oder die ACL-Rolle
+`muwa_backup_repository.viewer` fehlt. Check-Status-Faerbung: `no errors were found` → success,
+`error|fatal|fail` → danger, sonst info. Achtung: `system:config:set` ohne `--json` speichert den
+String `"true"` — das Widget akzeptiert beides.
 
 ## Tests & Statische Analyse
 

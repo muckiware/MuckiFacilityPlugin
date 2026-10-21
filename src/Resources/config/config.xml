@@ -28,6 +28,18 @@
         </input-field>
     </card>
     <card>
+        <title>Dashboard</title>
+        <title lang="de-DE">Dashboard</title>
+        <input-field type="bool">
+            <name>showDashboardWidget</name>
+            <label>Show backup status on the dashboard</label>
+            <label lang="de-DE">Backup-Status im Dashboard anzeigen</label>
+            <helpText>Shows the latest repository status of all active backup repositories on the administration dashboard.</helpText>
+            <helpText lang="de-DE">Zeigt den letzten Repository-Status aller aktiven Backup Repositories im Dashboard der Administration an.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+    </card>
+    <card>
         <title>Cleanup settings</title>
         <input-field type="int">
             <name>numberOfValidDaysInCart</name>
