@@ -62,7 +62,7 @@ Component.register('muwa-backup-status-dashboard-widget', {
                 return {
                     id: backupRepository.id,
                     name: backupRepository.name,
-                    createdAt: latestStats?.createdAt ?? null,
+                    lastBackupAt: latestStats?.createdAt ?? null,
                     totalSize: latestStats?.totalSize ?? null,
                     snapshotsCount: latestStats?.snapshotsCount ?? null,
                     checkStatus: latestStats?.checkStatus ?? null,
@@ -74,7 +74,7 @@ Component.register('muwa-backup-status-dashboard-widget', {
         statusColumns() {
             return [
                 { property: 'name', label: 'muwa-backup-repository.dashboard.repositoryLabel', primary: true },
-                { property: 'createdAt', label: 'muwa-backup-repository.detail.statsCreatedAtLabel' },
+                { property: 'lastBackupAt', label: 'muwa-backup-repository.dashboard.lastBackupAtLabel' },
                 { property: 'totalSize', label: 'muwa-backup-repository.list.totalFileRepositorySizeLabel' },
                 { property: 'snapshotsCount', label: 'muwa-backup-repository.list.totalSnapshotsLabel' },
                 { property: 'checkStatus', label: 'muwa-backup-repository.list.CheckStatusLabel' },

@@ -48,6 +48,7 @@
       "column-created-at": "Erstellt am",
       "column-updated-at": "Aktualisiert am",
       "column-check-status": "Check Status",
+      "column-last-backup-at": "Letzter Backup-Lauf",
       "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
       "totalFileSizeLabel": "Gesamt Dateigröße",
       "stats": "Repository Status",
@@ -141,6 +142,7 @@
     "dashboard": {
       "title": "Backup-Status",
       "repositoryLabel": "Repository",
+      "lastBackupAtLabel": "Letzter Backup-Lauf",
       "noStats": "Kein Status",
       "noCheck": "Kein Check",
       "checkOk": "OK",
