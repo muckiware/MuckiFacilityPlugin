@@ -15,70 +15,25 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\PlatformRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Messenger\Exception\ExceptionInterface;
-use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Routing\Attribute\Route;
 
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
-use MuckiFacilityPlugin\Entity\BackupPathEntity;
 
-/**
- *
- */
 #[Route(defaults: ['_routeScope' => ['api']])]
 class BackupController extends AbstractController
 {
-    /**
-     * @internal
-     */
-    public function __construct(
-        private readonly MessageBusInterface $messageBus
-    )
-    {}
-
-    /**
-     * @throws ExceptionInterface
-     */
+    public function __construct(private readonly MessageBusInterface $messageBus) {}
     #[Route(
         path: '/api/_action/muwa/backup/process',
         name: 'api.action.muwa.backup.process',
         defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:backup']],
         methods: ['POST']
     )]
-    public function process(RequestDataBag $requestDataBag, Context $context): Response
+    public function process(RequestDataBag $data, Context $context): Response
     {
-        $message = new CreateBackupMessage();
-        $message->setBackupRepositoryId($requestDataBag->get('id'));
-        $message->setBackupPaths($this->createBackupPaths($requestDataBag->get('backupPaths')));
-        $message->setRepositoryPath($requestDataBag->get('repositoryPath'));
-        $message->setBackupType($requestDataBag->get('type'));
-
-        $this->messageBus->dispatch($message);
-
+        $this->messageBus->dispatch(new CreateBackupMessage((string) $data->get('id')));
         return new Response('', Response::HTTP_NO_CONTENT);
-    }
-
-    /**
-     * @param RequestDataBag $requestDataBag
-     * @return array<BackupPathEntity>
-     */
-    protected function createBackupPaths(RequestDataBag $requestDataBag): array
-    {
-        $backupPaths = [];
-        /** @var RequestDataBag $backupPath */
-        foreach ($requestDataBag->getIterator() as $backupPath) {
-
-            $backupPathEntity = new BackupPathEntity();
-            $backupPathEntity->setId($backupPath->get('id'));
-            $backupPathEntity->setBackupPath($backupPath->get('backupPath'));
-            $backupPathEntity->setCompress($backupPath->get('compress'));
-            $backupPathEntity->setPosition($backupPath->get('position'));
-
-            $backupPaths[] = $backupPathEntity;
-        }
-        return $backupPaths;
     }
 }

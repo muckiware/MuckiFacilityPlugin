@@ -55,9 +55,8 @@ Component.register('muwa-backup-repository-detail', {
             V6_5_0_0: false,
             V6_6_0_0: false,
             V6_7_0_0: false,
-            backupRepository: {
-                backupPaths: []
-            },
+            backupRepository: { backupPaths: [] },
+            schedule: { enabled: false, cronExpression: '0 2 * * *', timezone: 'UTC', status: 'inactive', lastExecutionTime: null, nextExecutionTime: null, lastError: null },
             isLoading: false,
             isStatsLoading: false,
             showDeleteModal: false,
@@ -73,6 +72,7 @@ Component.register('muwa-backup-repository-detail', {
             isBackupProcessSuccess: false,
             isBackupProcessDisabled: true,
             requestBackupProcess: '/_action/muwa/backup/process',
+            requestSchedule: '/_action/muwa/backup',
             requestRestoreProcess: '/_action/muwa/restore/process',
             requestRemoveSnapshots: '/_action/muwa/remove/snapshots',
             httpClient: null,
@@ -138,6 +138,7 @@ Component.register('muwa-backup-repository-detail', {
         criteria() {
             const criteria = new Criteria();
             criteria.addAssociation('backupRepositoryChecks');
+            criteria.addAssociation('schedule');
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             return criteria;
         },
@@ -479,6 +480,7 @@ Component.register('muwa-backup-repository-detail', {
             this.repository.get(this.$route.params.id, Shopware.Context.api, this.criteria).then((entity) => {
 
                 this.backupRepository = entity;
+                if (entity.schedule) { this.schedule = entity.schedule; }
                 this.isLoading = false;
                 this.isBackupProcessInProgress = false;
                 this.isBackupProcessDisabled = false;
@@ -617,6 +619,21 @@ Component.register('muwa-backup-repository-detail', {
                     message: exception
                 });
             });
+        },
+
+        onScheduleSave() {
+            this.isLoading = true;
+            const payload = {
+                enabled: Boolean(this.schedule.enabled),
+                cronExpression: this.schedule.cronExpression,
+                timezone: this.schedule.timezone || 'UTC'
+            };
+            this.httpClient.put(`${this.requestSchedule}/${this.backupRepository.id}/schedule`, payload, { headers: this.getApiHeader() })
+                .then(() => { this.getBackupRepository(); this.isLoading = false; this.isSaveSuccessful = true; })
+                .catch((exception) => {
+                    this.isLoading = false;
+                    this.createNotificationError({ title: this.$t('muwa-backup-repository.schedule.error'), message: exception.response?.data?.errors?.[0]?.detail || exception.message });
+                });
         },
 
         onBackupProcess() {

@@ -1,6 +1,10 @@
 <?xml version="1.0" ?>
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
+        <service id="MuckiFacilityPlugin\Controller\ScheduleController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Schedule\ScheduleConfiguration"/>
+            <call method="setContainer"><argument type="service" id="service_container"/></call>
+        </service>
         <service id="MuckiFacilityPlugin\Controller\BackupController" public="true">
             <argument type="service" id="messenger.default_bus"/>
             <call method="setContainer">
@@ -29,6 +33,9 @@
             </call>
         </service>
 
+        <service id="MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition">
+            <tag name="shopware.entity.definition" entity="muwa_backup_schedule" />
+        </service>
         <service id="MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition">
             <tag name="shopware.entity.definition" entity="muwa_backup_repository" />
         </service>
@@ -76,6 +83,7 @@
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
+            <argument type="service" id="MuckiFacilityPlugin\Schedule\BackupExecution"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <tag name="console.command"/>
@@ -234,10 +242,7 @@
         </service>
 
         <service id="MuckiFacilityPlugin\MessageQueue\Handler\CreateBackupHandler">
-            <argument type="service" id="Psr\Log\LoggerInterface"/>
-            <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
-            <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
-            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Schedule\BackupExecution"/>
             <tag name="messenger.message_handler"/>
         </service>
         <service id="MuckiFacilityPlugin\MessageQueue\Handler\RestoreSnapshotHandler">
@@ -265,6 +270,28 @@
         <service id="MuckiFacilityPlugin\Subscriber\BackupRepositorySnapshotSubscriber">
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
             <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="MuckiFacilityPlugin\Schedule\ScheduleCalculator"/>
+        <service id="MuckiFacilityPlugin\Schedule\ScheduleConfiguration">
+            <argument type="service" id="Doctrine\DBAL\Connection"/><argument type="service" id="MuckiFacilityPlugin\Schedule\ScheduleCalculator"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Schedule\BackupExecution">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
+            <argument type="service" id="lock.factory"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Schedule\DueScheduleDispatcher">
+            <argument type="service" id="Doctrine\DBAL\Connection"/><argument type="service" id="messenger.default_bus"/><argument type="service" id="MuckiFacilityPlugin\Schedule\ScheduleCalculator"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Schedule\Handler\RunScheduledBackupHandler">
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument type="service" id="MuckiFacilityPlugin\Schedule\BackupExecution"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Schedule\Task\DispatchBackupSchedulesTask"><tag name="shopware.scheduled.task"/></service>
+        <service id="MuckiFacilityPlugin\Schedule\Task\DispatchBackupSchedulesTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/><argument type="service" id="logger"/><argument type="service" id="MuckiFacilityPlugin\Schedule\DueScheduleDispatcher"/>
+            <tag name="messenger.message_handler"/>
         </service>
     </services>
 </container>

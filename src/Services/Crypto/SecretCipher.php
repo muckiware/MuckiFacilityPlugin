@@ -12,7 +12,6 @@
 namespace MuckiFacilityPlugin\Services\Crypto;
 
 use Shopware\Core\DevOps\Environment\EnvironmentHelper;
-
 use MuckiFacilityPlugin\Exception\MissingFacilitySecretException;
 
 /**

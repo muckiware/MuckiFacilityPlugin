@@ -22,7 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
+use MuckiFacilityPlugin\MessageQueue\Message\RestoreSnapshotMessage;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
@@ -54,7 +54,7 @@ class RestoreSnapshotController extends AbstractController
 
         if($backupRepository) {
 
-            $message = new CreateBackupMessage();
+            $message = new RestoreSnapshotMessage();
             $message->setBackupRepositoryId($requestDataBag->get('backupRepositoryId'));
             $message->setRepositoryPath($backupRepository->getRepositoryPath());
             $message->setRestorePath($backupRepository->getRestorePath());

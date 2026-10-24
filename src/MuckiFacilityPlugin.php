@@ -23,6 +23,7 @@ use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
 
 /**
  * Add dependencies from composer
@@ -61,6 +62,7 @@ class MuckiFacilityPlugin extends Plugin
         $connection = $this->container->get(Connection::class);
 
         foreach ([
+            BackupScheduleDefinition::ENTITY_NAME,
             BackupRepositoryStatsDefinition::ENTITY_NAME,
             BackupRepositorySnapshotsDefinition::ENTITY_NAME,
             BackupRepositoryChecksDefinition::ENTITY_NAME,

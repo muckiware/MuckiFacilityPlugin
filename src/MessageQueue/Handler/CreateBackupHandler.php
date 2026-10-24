@@ -11,41 +11,16 @@
  */
 namespace MuckiFacilityPlugin\MessageQueue\Handler;
 
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\MessageQueue\Message\CreateBackupMessage;
-use MuckiFacilityPlugin\Services\Backup as BackupService;
-use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
-use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
-
+use MuckiFacilityPlugin\Schedule\BackupExecution;
 #[AsMessageHandler]
-class CreateBackupHandler
+final class CreateBackupHandler
 {
-    public function __construct(
-        protected LoggerInterface $logger,
-        protected BackupService $backupService,
-        protected ServicesCliOutput $servicesCliOutput,
-        protected BackupRepositoryService $backupRepositoryService
-    )
-    {}
+    public function __construct(private readonly BackupExecution $execution) {}
     public function __invoke(CreateBackupMessage $message): void
     {
-        $this->logger->debug(
-            'Backup process started. BackupRepositoryId: '.$message->getBackupRepositoryId(),
-            PluginDefaults::DEFAULT_LOGGER_CONFIG
-        );
-
-        $this->servicesCliOutput->setIsCli(false);
-        $message->setBackupPaths($this->backupService->prepareBackupPaths($message->getBackupPaths()));
-        $backupRepository = $this->backupRepositoryService->getBackupRepositoryById($message->getBackupRepositoryId());
-        $message->setRepositoryPassword($backupRepository->getRepositoryPassword());
-        $message->setDbDumpPath($backupRepository->getDbDumpPath());
-        $this->backupService->createBackup($message, false);
-        $this->logger->debug(
-            'Backup process done. BackupRepositoryId: '.$message->getBackupRepositoryId(),
-            PluginDefaults::DEFAULT_LOGGER_CONFIG
-        );
+        $this->execution->execute($message->repositoryId);
     }
 }

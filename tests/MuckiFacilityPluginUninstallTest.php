@@ -13,6 +13,7 @@ use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
 
 /**
  * Uninstalling without "keep data" used to leave all four `muwa_*` tables in place, repository
@@ -44,9 +45,10 @@ class MuckiFacilityPluginUninstallTest extends TestCase
         $dropPluginTables->setAccessible(true);
         $dropPluginTables->invoke($plugin);
 
-        self::assertCount(4, $executedStatements);
+        self::assertCount(5, $executedStatements);
 
         $expectedOrder = [
+            BackupScheduleDefinition::ENTITY_NAME,
             BackupRepositoryStatsDefinition::ENTITY_NAME,
             BackupRepositorySnapshotsDefinition::ENTITY_NAME,
             BackupRepositoryChecksDefinition::ENTITY_NAME,

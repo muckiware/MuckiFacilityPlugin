@@ -19,6 +19,7 @@ use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Entity\ForgetTypes;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
+use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleEntity;
 
 class BackupRepositoryEntity extends Entity
 {
@@ -368,4 +369,8 @@ class BackupRepositoryEntity extends Entity
     {
         $this->hostname = $hostname;
     }
+    protected ?BackupScheduleEntity $schedule = null;
+
+    public function getSchedule(): ?BackupScheduleEntity { return $this->schedule; }
+    public function setSchedule(?BackupScheduleEntity $schedule): void { $this->schedule = $schedule; }
 }
