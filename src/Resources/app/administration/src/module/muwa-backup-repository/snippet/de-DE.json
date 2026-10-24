@@ -151,6 +151,7 @@
       "title": "Automatische Sicherung",
       "enabled": "Aktiviert",
       "cronExpression": "Cron-Ausdruck",
+      "cronExpressionDescription": "┌───────────── Minute (0 - 59)\n│ ┌───────────── Stunde (0 - 23)\n│ │ ┌───────────── Tag des Monats (1 - 31)\n│ │ │ ┌───────────── Monat (1 - 12)\n│ │ │ │ ┌───────────── Wochentag (0 - 6)\n│ │ │ │ │\n* * * * *\n\nBeispiele:\n30 3 * * * → täglich um 03:30 Uhr\n30 */3 * * * → alle drei Stunden zur Minute 30",
       "timezone": "Zeitzone (IANA)",
       "status": "Status",
       "lastExecutionTime": "Letzte Ausführung",

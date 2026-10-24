@@ -88,6 +88,7 @@
                     <sw-card positionIdentifier="muwaBackupSchedule" v-if="backupRepository && tab === 'backupRepositorySchedule'" :title="$tc('muwa-backup-repository.schedule.title')">
                         <sw-switch-field v-if="isV6600" v-model:value="schedule.enabled" :label="$tc('muwa-backup-repository.schedule.enabled')" />
                         <sw-switch-field v-if="isV6500" v-model="schedule.enabled" :label="$tc('muwa-backup-repository.schedule.enabled')" />
+                        <pre class="muwa-backup-schedule__cron-description">{{ $tc('muwa-backup-repository.schedule.cronExpressionDescription') }}</pre>
                         <sw-text-field v-if="isV6600" v-model:value="schedule.cronExpression" :label="$tc('muwa-backup-repository.schedule.cronExpression')" required />
                         <sw-text-field v-if="isV6500" v-model="schedule.cronExpression" :label="$tc('muwa-backup-repository.schedule.cronExpression')" required />
                         <sw-single-select
