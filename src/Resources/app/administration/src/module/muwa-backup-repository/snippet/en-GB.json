@@ -149,6 +149,11 @@
       "emptyTitle": "No active backup repositories",
       "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories."
     },
+    "notification": {
+      "backupStarted": "Backup “{name}” started.",
+      "backupSucceeded": "Backup “{name}” completed successfully.",
+      "backupFailed": "Backup “{name}” failed: {error}"
+    },
     "schedule": {
       "title": "Automatic backup",
       "enabled": "Enabled",

@@ -149,6 +149,11 @@
       "emptyTitle": "Keine aktiven Backup Repositories",
       "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an."
     },
+    "notification": {
+      "backupStarted": "Backup „{name}“ wurde gestartet.",
+      "backupSucceeded": "Backup „{name}“ wurde erfolgreich abgeschlossen.",
+      "backupFailed": "Backup „{name}“ ist fehlgeschlagen: {error}"
+    },
     "schedule": {
       "title": "Automatische Sicherung",
       "enabled": "Aktiviert",
