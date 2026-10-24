@@ -15,6 +15,7 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\StorageAttributes;
+use Shopware\Core\Framework\Uuid\Uuid;
 
 use MuckiRestic\ResultParser\CheckResultParser;
 use MuckiRestic\Entity\Result\ResultEntity;
@@ -156,6 +157,15 @@ class Helper
     public function isValidShortId(string $input): bool
     {
         return preg_match('/^[a-zA-Z0-9]{8}$/', $input) === 1;
+    }
+
+    /**
+     * Normalizes a Shopware UUID for use with BINARY(16) database columns.
+     * Already-binary values are returned unchanged.
+     */
+    public function normalizeUuidToBytes(string $id): string
+    {
+        return strlen($id) === 32 && ctype_xdigit($id) ? Uuid::fromHexToBytes($id) : $id;
     }
 
     /**

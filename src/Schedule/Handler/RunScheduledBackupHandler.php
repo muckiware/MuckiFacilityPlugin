@@ -12,22 +12,23 @@
 namespace MuckiFacilityPlugin\Schedule\Handler;
 
 use Doctrine\DBAL\Connection;
-use Shopware\Core\Framework\Uuid\Uuid;
 
 use MuckiFacilityPlugin\Schedule\BackupExecution;
 use MuckiFacilityPlugin\Schedule\Exception\BackupAlreadyRunningException;
 use MuckiFacilityPlugin\Schedule\Message\RunScheduledBackupMessage;
+use MuckiFacilityPlugin\Services\Helper;
 
 final class RunScheduledBackupHandler
 {
     public function __construct(
         private readonly Connection $connection,
-        private readonly BackupExecution $execution
+        private readonly BackupExecution $execution,
+        private readonly Helper $helper
     ) {}
 
     public function __invoke(RunScheduledBackupMessage $message): void
     {
-        $id = $this->bytes($message->scheduleId);
+        $id = $this->helper->normalizeUuidToBytes($message->scheduleId);
         $row = $this->connection->fetchAssociative(
             'SELECT `run_token`, `status` FROM `muwa_backup_schedule` WHERE `id` = :id',
             ['id' => $id]
@@ -70,10 +71,5 @@ final class RunScheduledBackupHandler
     private function now(): string
     {
         return (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.v');
-    }
-
-    private function bytes(string $id): string
-    {
-        return strlen($id) === 32 && ctype_xdigit($id) ? Uuid::fromHexToBytes($id) : $id;
     }
 }

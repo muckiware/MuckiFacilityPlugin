@@ -281,11 +281,15 @@
             <argument type="service" id="lock.factory"/>
         </service>
         <service id="MuckiFacilityPlugin\Schedule\DueScheduleDispatcher">
-            <argument type="service" id="Doctrine\DBAL\Connection"/><argument type="service" id="messenger.default_bus"/><argument type="service" id="MuckiFacilityPlugin\Schedule\ScheduleCalculator"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="MuckiFacilityPlugin\Schedule\ScheduleCalculator"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
         <service id="MuckiFacilityPlugin\Schedule\Handler\RunScheduledBackupHandler">
             <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="service" id="MuckiFacilityPlugin\Schedule\BackupExecution"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
             <tag name="messenger.message_handler"/>
         </service>
         <service id="MuckiFacilityPlugin\Schedule\Task\DispatchBackupSchedulesTask"><tag name="shopware.scheduled.task"/></service>

@@ -6,6 +6,7 @@ use MuckiFacilityPlugin\Schedule\BackupExecution;
 use MuckiFacilityPlugin\Schedule\Exception\BackupAlreadyRunningException;
 use MuckiFacilityPlugin\Schedule\Handler\RunScheduledBackupHandler;
 use MuckiFacilityPlugin\Schedule\Message\RunScheduledBackupMessage;
+use MuckiFacilityPlugin\Services\Helper;
 use PHPUnit\Framework\TestCase;
 
 final class RunScheduledBackupHandlerTest extends TestCase
@@ -17,7 +18,7 @@ final class RunScheduledBackupHandlerTest extends TestCase
         $execution = $this->createMock(BackupExecution::class);
         $execution->expects(self::never())->method('execute');
 
-        (new RunScheduledBackupHandler($db, $execution))(
+        (new RunScheduledBackupHandler($db, $execution, new Helper()))(
             new RunScheduledBackupMessage('aa', 'bb', 'token')
         );
     }
@@ -39,7 +40,7 @@ final class RunScheduledBackupHandlerTest extends TestCase
         $execution = $this->createMock(BackupExecution::class);
         $execution->method('execute')->willThrowException(new BackupAlreadyRunningException());
 
-        (new RunScheduledBackupHandler($db, $execution))(
+        (new RunScheduledBackupHandler($db, $execution, new Helper()))(
             new RunScheduledBackupMessage('aa', 'bb', 'token')
         );
     }
@@ -61,7 +62,7 @@ final class RunScheduledBackupHandlerTest extends TestCase
         $execution = $this->createMock(BackupExecution::class);
         $execution->method('execute')->willThrowException(new \RuntimeException('boom'));
 
-        (new RunScheduledBackupHandler($db, $execution))(
+        (new RunScheduledBackupHandler($db, $execution, new Helper()))(
             new RunScheduledBackupMessage('aa', 'bb', 'token')
         );
     }
@@ -83,7 +84,7 @@ final class RunScheduledBackupHandlerTest extends TestCase
         $execution = $this->createMock(BackupExecution::class);
         $execution->expects(self::once())->method('execute')->with('bb');
 
-        (new RunScheduledBackupHandler($db, $execution))(
+        (new RunScheduledBackupHandler($db, $execution, new Helper()))(
             new RunScheduledBackupMessage('aa', 'bb', 'token')
         );
     }

@@ -16,13 +16,15 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 use MuckiFacilityPlugin\Schedule\Message\RunScheduledBackupMessage;
+use MuckiFacilityPlugin\Services\Helper;
 
 final class DueScheduleDispatcher
 {
     public function __construct(
         private readonly Connection $connection,
         private readonly MessageBusInterface $bus,
-        private readonly ScheduleCalculator $calculator
+        private readonly ScheduleCalculator $calculator,
+        private readonly Helper $helper
     ) {}
     public function dispatch(?\DateTimeImmutable $now = null): void
     {
@@ -39,14 +41,10 @@ SQL, ['now' => $now->format('Y-m-d H:i:s.v')]);
 UPDATE `muwa_backup_schedule` SET `status` = 'queued', `run_token` = :token,
 `next_execution_time` = :next, `updated_at` = :now
 WHERE `id` = :id AND `enabled` = 1 AND `status` IN ('scheduled', 'success', 'failed', 'skipped') AND `next_execution_time` <= :now
-SQL, ['token'=>$token, 'next'=>$next->format('Y-m-d H:i:s.v'), 'now'=>$now->format('Y-m-d H:i:s.v'), 'id'=>$this->bytes((string) $row['id'])]);
+SQL, ['token'=>$token, 'next'=>$next->format('Y-m-d H:i:s.v'), 'now'=>$now->format('Y-m-d H:i:s.v'), 'id'=>$this->helper->normalizeUuidToBytes((string) $row['id'])]);
             if ($claimed === 1) {
                 $this->bus->dispatch(new RunScheduledBackupMessage((string) $row['id'], (string) $row['repository_id'], $token));
             }
         }
-    }
-    private function bytes(string $id): string
-    {
-        return strlen($id) === 32 && ctype_xdigit($id) ? Uuid::fromHexToBytes($id) : $id;
     }
 }
