@@ -19,6 +19,15 @@
                     {{ $tc('muwa-backup-repository.list.header.saveButtonLabel') }}
                 </sw-button-process>
                 <sw-button-process
+                    position-identifier="muwa-backup-schedule"
+                    :isLoading="isLoading"
+                    v-if="backupRepository && tab === 'backupRepositorySchedule'"
+                    :processSuccess="isSaveSuccessful"
+                    :disabled="!acl.can('muwa_backup_repository.editor')"
+                    variant="primary"
+                    @click="onScheduleSave"
+                >{{ $tc('muwa-backup-repository.schedule.save') }}</sw-button-process>
+                <sw-button-process
                         variant="ghost"
                         class="sw-settings-search__search-index-rebuild-button"
                         :isLoading="isBackupProcessInProgress"
@@ -46,6 +55,11 @@
                                 {{ $tc('muwa-backup-repository.tabs.config') }}
                             </sw-tabs-item>
                             <sw-tabs-item
+                                key="backupRepositorySchedule"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositorySchedule' } }"
+                            >{{ $tc('muwa-backup-repository.tabs.schedule') }}</sw-tabs-item>
+                            <sw-tabs-item
                                 key="backupRepositoryStats"
                                 :active-tab="active"
                                 :route="{ name: 'muwa.backup.repository.detail', params: { id: backupRepository.id, tab: 'backupRepositoryStats' } }"
@@ -71,6 +85,35 @@
                 {% endblock %}
 
                 <sw-card-view>
+                    <sw-card positionIdentifier="muwaBackupSchedule" v-if="backupRepository && tab === 'backupRepositorySchedule'" :title="$tc('muwa-backup-repository.schedule.title')">
+                        <sw-switch-field v-if="isV6600" v-model:value="schedule.enabled" :label="$tc('muwa-backup-repository.schedule.enabled')" />
+                        <sw-switch-field v-if="isV6500" v-model="schedule.enabled" :label="$tc('muwa-backup-repository.schedule.enabled')" />
+                        <pre class="muwa-backup-schedule__cron-description">{{ $tc('muwa-backup-repository.schedule.cronExpressionDescription') }}</pre>
+                        <sw-text-field v-if="isV6600" v-model:value="schedule.cronExpression" :label="$tc('muwa-backup-repository.schedule.cronExpression')" required />
+                        <sw-text-field v-if="isV6500" v-model="schedule.cronExpression" :label="$tc('muwa-backup-repository.schedule.cronExpression')" required />
+                        <sw-single-select
+                            v-if="isV6600"
+                            v-model:value="schedule.timezone"
+                            name="sw-field--schedule-timezone"
+                            :options="timezoneOptions"
+                            :label="$tc('muwa-backup-repository.schedule.timezone')"
+                            :is-loading="timezoneOptions.length <= 0"
+                            required
+                        />
+                        <sw-single-select
+                            v-if="isV6500"
+                            v-model="schedule.timezone"
+                            name="sw-field--schedule-timezone"
+                            :options="timezoneOptions"
+                            :label="$tc('muwa-backup-repository.schedule.timezone')"
+                            :is-loading="timezoneOptions.length <= 0"
+                            required
+                        />
+                        <sw-text-field :value="schedule.status" :label="$tc('muwa-backup-repository.schedule.status')" disabled />
+                        <sw-text-field :value="schedule.lastExecutionTime" :label="$tc('muwa-backup-repository.schedule.lastExecutionTime')" disabled />
+                        <sw-text-field :value="schedule.nextExecutionTime" :label="$tc('muwa-backup-repository.schedule.nextExecutionTime')" disabled />
+                        <sw-textarea-field :value="schedule.lastError" :label="$tc('muwa-backup-repository.schedule.lastError')" disabled />
+                    </sw-card>
                     <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.generalLabel')">
                         <sw-switch-field
                             v-if="isV6600"

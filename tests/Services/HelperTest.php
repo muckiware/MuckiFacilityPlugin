@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MuckiFacilityPlugin\tests\Services;
 
 use PHPUnit\Framework\TestCase;
+use Shopware\Core\Framework\Uuid\Uuid;
 
 use MuckiFacilityPlugin\Services\Helper;
 use MuckiFacilityPlugin\Core\BackupTypes;
@@ -52,6 +53,20 @@ class HelperTest extends TestCase
 
         $isValidEmailResultsNoValid = $helperClass->isValidEmail('test_test.com');
         static::assertFalse($isValidEmailResultsNoValid, 'isValidEmailResult should be false. E-Mail not valid');
+    }
+
+    public function testNormalizeUuidToBytesConvertsHexAndPreservesBinaryValues(): void
+    {
+        $helper = new Helper();
+        $hexId = '0123456789abcdef0123456789abcdef';
+        $uppercaseHexId = strtoupper($hexId);
+        $binaryId = Uuid::fromHexToBytes($hexId);
+        $malformedId = 'not-a-valid-uuid';
+
+        static::assertSame($binaryId, $helper->normalizeUuidToBytes($hexId));
+        static::assertSame($binaryId, $helper->normalizeUuidToBytes($uppercaseHexId));
+        static::assertSame($binaryId, $helper->normalizeUuidToBytes($binaryId));
+        static::assertSame($malformedId, $helper->normalizeUuidToBytes($malformedId));
     }
 
     public function testEnsureDirectoryExistsCreatesMissingDirectories(): void

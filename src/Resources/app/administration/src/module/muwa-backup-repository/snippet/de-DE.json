@@ -1,6 +1,6 @@
 {
   "muwa-backup-repository": {
-    "general" : {
+    "general": {
       "mainMenuLabel": "Backup Repositories",
       "description": "Backup Repositories Verwaltung",
       "saveSuccessAlertTitle": "Erfolgreich gespeichert",
@@ -17,7 +17,8 @@
       "config": "Configuration",
       "stats": "Repository Status",
       "checks": "Checks",
-      "snapshots": "Snapshots"
+      "snapshots": "Snapshots",
+      "schedule": "Zeitplan"
     },
     "buttonDelete": "Löschen",
     "list": {
@@ -25,7 +26,7 @@
         "createButtonLabel": "Hinzufügen",
         "cancelButtonLabel": "Abbrechen",
         "saveButtonLabel": "Konfiguration speichern",
-        "createStructureLabel" : "Struktur hinzufügen"
+        "createStructureLabel": "Struktur hinzufügen"
       },
       "emptyListText": "Keine Such-Index Struktur Einträge vorhanden.",
       "nameLabel": "Name",
@@ -145,6 +146,19 @@
       "checkOk": "OK",
       "emptyTitle": "Keine aktiven Backup Repositories",
       "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an."
+    },
+    "schedule": {
+      "title": "Automatische Sicherung",
+      "enabled": "Aktiviert",
+      "cronExpression": "Cron-Ausdruck",
+      "cronExpressionDescription": "┌───────────── Minute (0 - 59)\n│ ┌───────────── Stunde (0 - 23)\n│ │ ┌───────────── Tag des Monats (1 - 31)\n│ │ │ ┌───────────── Monat (1 - 12)\n│ │ │ │ ┌───────────── Wochentag (0 - 6)\n│ │ │ │ │\n* * * * *\n\nBeispiele:\n30 3 * * * → täglich um 03:30 Uhr\n30 */3 * * * → alle drei Stunden zur Minute 30",
+      "timezone": "Zeitzone (IANA)",
+      "status": "Status",
+      "lastExecutionTime": "Letzte Ausführung",
+      "nextExecutionTime": "Nächste Ausführung",
+      "lastError": "Letzter Fehler",
+      "save": "Zeitplan speichern",
+      "error": "Zeitplan konnte nicht gespeichert werden"
     }
   },
   "sw-privileges": {

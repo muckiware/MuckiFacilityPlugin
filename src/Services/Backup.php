@@ -264,6 +264,7 @@ class Backup
 
             $this->setBackupException($e);
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            throw $e;
         }
     }
 

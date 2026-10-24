@@ -24,6 +24,7 @@
             <file>tests/Database/TableRunner/LogEntryCleanupRunnerTest.php</file>
             <file>tests/Services/DbTableCleanupTest.php</file>
             <file>tests/MuckiFacilityPluginUninstallTest.php</file>
+            <directory>tests/Schedule</directory>
         </testsuite>
     </testsuites>
 </phpunit>

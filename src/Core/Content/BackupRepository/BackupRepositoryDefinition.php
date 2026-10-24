@@ -25,6 +25,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IntField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\JsonField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToManyAssociationField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToOneAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\UpdatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
@@ -32,6 +33,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
 
 class BackupRepositoryDefinition extends EntityDefinition
 {
@@ -86,6 +88,10 @@ class BackupRepositoryDefinition extends EntityDefinition
                 BackupRepositoryStatsDefinition::class,
                 'backup_repository_id'
             )),
+
+            new OneToOneAssociationField(
+                'schedule', 'id', 'backup_repository_id', BackupScheduleDefinition::class, false
+            ),
 
             new CreatedAtField(),
             new UpdatedAtField()

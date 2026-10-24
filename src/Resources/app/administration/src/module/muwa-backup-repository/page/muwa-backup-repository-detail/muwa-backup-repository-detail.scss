@@ -11,6 +11,19 @@ div.muwa-backup-repository-detail-backup-paths__description {
   margin-top: 30px;
 }
 
+.muwa-backup-schedule__cron-description {
+  box-sizing: border-box;
+  margin: 0 0 20px;
+  padding: 16px;
+  overflow-x: auto;
+  border-radius: 4px;
+  background-color: #f0f2f5;
+  color: #52667a;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .muwa-backup-repository-history-filter .sw-sidebar-item__scrollable-container {
   display: flex;
   flex-direction: column;
