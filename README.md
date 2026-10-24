@@ -95,6 +95,36 @@ At the end of every backup run, the repository statistics (total size, total fil
 snapshots count, file system size) are collected and stored. You can see the latest values,
 plus a history of the last 10 collections, in the __Repository Status__-tab.
 
+## Scheduled backups
+Each backup repository can have its own automatic backup schedule. Open the repository in the
+administration and select the __Schedule__-tab. The following options and runtime information are
+available:
+
+| Option / value       | Description |
+|:---------------------|:------------|
+| Active               | Enables or disables automatic backups for this repository. |
+| Cron expression      | Defines when the backup is executed, for example `0 2 * * *` for every day at 02:00. |
+| Timezone (IANA)      | Timezone used to evaluate the cron expression, for example `Europe/Berlin` or `UTC`. Daylight-saving time is taken into account. |
+| Status               | Current state of the schedule: `inactive`, `scheduled`, `queued`, `running`, `success`, `failed` or `skipped`. |
+| Last execution       | Time of the latest completed execution. |
+| Next execution       | Time at which the next backup is due. |
+| Last error           | Error message from the latest failed or skipped execution. |
+
+Cron expressions and timezones are validated when the schedule is saved. Runtime timestamps are
+stored in UTC. If a backup is already running, another backup is not started; the scheduled run is
+marked as `skipped` instead.
+
+The scheduler uses Shopware's Scheduled Task and Message Queue systems. Both runners must therefore
+be active, for example as continuously running services:
+
+```shell
+bin/console scheduled-task:run
+bin/console messenger:consume async low_priority --time-limit=60
+```
+
+The task `mucki_facility.dispatch_backup_schedules` checks every 60 seconds for due schedules. Due
+backups are queued and executed asynchronously, so the configured time can differ from the actual
+start time by the polling and queue processing delay.
 
 ## Command Line Interface
 | Command                                                                      | Desc                                                          |
@@ -139,8 +169,10 @@ bin/console muckiware:backup:encrypt-passwords --dry-run
 bin/console muckiware:backup:encrypt-passwords
 ```
 
-### Cronjob
-You can create a cronjob for to create a backup automatically. This should be the usual configuration for creating backups. The cronjob should be executed by the user which is running the shopware instance. The following command is an example for the cronjob configuration:
+### External cronjob alternative
+The built-in scheduler described above is the recommended way to configure automatic backups per
+repository. Alternatively, you can invoke the CLI commands with an operating-system cronjob. The
+cronjob must run as the user that runs the Shopware instance. Example:
 ```shell
 * 3 * * * php /var/www/html/bin/console muckiware:backup:create <backupRepositoryId>
 30 5 * * * php /var/www/html/bin/console muckiware:backup:forget <backupRepositoryId>
