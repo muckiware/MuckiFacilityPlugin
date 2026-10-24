@@ -77,12 +77,13 @@ class BackupTest extends TestCase
     public function testPrepareCreateBackup(): void
     {
         $backupRepositoryId = Uuid::randomHex();
-        $backupRepository = $this->createMock(BackupRepository::class);
-        $backupRepository->method('getBackupRepositoryById')->willReturn(
-            CreateBackup::getBackupRepositoryEntity(
-                BackupTypes::FILES->value, $backupRepositoryId
-            )
+        $backupRepositoryEntity = CreateBackup::getBackupRepositoryEntity(
+            BackupTypes::FILES->value,
+            $backupRepositoryId
         );
+        $backupRepositoryEntity->setName('Daily backup');
+        $backupRepository = $this->createMock(BackupRepository::class);
+        $backupRepository->method('getBackupRepositoryById')->willReturn($backupRepositoryEntity);
 
         $backupService = new BackupService(
             $this->createMock(LoggerInterface::class),
@@ -108,6 +109,8 @@ class BackupTest extends TestCase
             $prepareCreateBackup->getBackupRepositoryId(),
             'BackupRepositoryId should be equal'
         );
+
+        static ::assertSame('Daily backup', $prepareCreateBackup->getName());
 
         static ::assertEquals(
             TestCaseBaseDefaults::DEFAULT_TEST_REPOSITORY_PASSWORD,

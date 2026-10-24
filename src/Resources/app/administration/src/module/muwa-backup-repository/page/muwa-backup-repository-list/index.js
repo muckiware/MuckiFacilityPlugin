@@ -78,6 +78,12 @@ Component.register('muwa-backup-repository-list', {
                     allowResize: true,
                     sortable: false
                 }, {
+                    property: 'lastBackupAt',
+                    dataIndex: 'lastBackupAt',
+                    label: this.$t('muwa-backup-repository.list.column-last-backup-at'),
+                    allowResize: true,
+                    sortable: false
+                }, {
                     property: 'createdAt',
                     dataIndex: 'createdAt',
                     label: this.$t('muwa-backup-repository.list.column-created-at'),
@@ -104,6 +110,14 @@ Component.register('muwa-backup-repository-list', {
             return latestCheck !== null && latestCheck.checkStatus === CHECK_STATUS_OK;
         },
 
+        getLatestStats(item) {
+            if (!item.backupRepositoryStats || item.backupRepositoryStats.length === 0) {
+                return null;
+            }
+
+            return item.backupRepositoryStats[0];
+        },
+
         getRepository() {
             return this.repositoryFactory.create('muwa_backup_repository');
         },
@@ -116,6 +130,9 @@ Component.register('muwa-backup-repository-list', {
             criteria.setTerm(this.term);
             criteria.addAssociation('backupRepositoryChecks');
             criteria.getAssociation('backupRepositoryChecks').addSorting(Criteria.sort('createdAt', 'DESC'));
+            criteria.getAssociation('backupRepositoryStats')
+                .addSorting(Criteria.sort('createdAt', 'DESC'))
+                .setLimit(1);
 
             this.repository.search(criteria, Shopware.Context.api).then((response) => {
 

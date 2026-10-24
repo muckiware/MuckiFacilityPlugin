@@ -279,6 +279,7 @@
         <service id="MuckiFacilityPlugin\Schedule\BackupExecution">
             <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
             <argument type="service" id="lock.factory"/>
+            <argument type="service" id="Shopware\Core\Framework\Notification\NotificationService"/>
         </service>
         <service id="MuckiFacilityPlugin\Schedule\DueScheduleDispatcher">
             <argument type="service" id="Doctrine\DBAL\Connection"/>
