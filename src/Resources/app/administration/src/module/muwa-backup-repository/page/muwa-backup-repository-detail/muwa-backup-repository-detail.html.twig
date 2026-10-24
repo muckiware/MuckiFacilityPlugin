@@ -90,8 +90,24 @@
                         <sw-switch-field v-if="isV6500" v-model="schedule.enabled" :label="$tc('muwa-backup-repository.schedule.enabled')" />
                         <sw-text-field v-if="isV6600" v-model:value="schedule.cronExpression" :label="$tc('muwa-backup-repository.schedule.cronExpression')" required />
                         <sw-text-field v-if="isV6500" v-model="schedule.cronExpression" :label="$tc('muwa-backup-repository.schedule.cronExpression')" required />
-                        <sw-text-field v-if="isV6600" v-model:value="schedule.timezone" :label="$tc('muwa-backup-repository.schedule.timezone')" required />
-                        <sw-text-field v-if="isV6500" v-model="schedule.timezone" :label="$tc('muwa-backup-repository.schedule.timezone')" required />
+                        <sw-single-select
+                            v-if="isV6600"
+                            v-model:value="schedule.timezone"
+                            name="sw-field--schedule-timezone"
+                            :options="timezoneOptions"
+                            :label="$tc('muwa-backup-repository.schedule.timezone')"
+                            :is-loading="timezoneOptions.length <= 0"
+                            required
+                        />
+                        <sw-single-select
+                            v-if="isV6500"
+                            v-model="schedule.timezone"
+                            name="sw-field--schedule-timezone"
+                            :options="timezoneOptions"
+                            :label="$tc('muwa-backup-repository.schedule.timezone')"
+                            :is-loading="timezoneOptions.length <= 0"
+                            required
+                        />
                         <sw-text-field :value="schedule.status" :label="$tc('muwa-backup-repository.schedule.status')" disabled />
                         <sw-text-field :value="schedule.lastExecutionTime" :label="$tc('muwa-backup-repository.schedule.lastExecutionTime')" disabled />
                         <sw-text-field :value="schedule.nextExecutionTime" :label="$tc('muwa-backup-repository.schedule.nextExecutionTime')" disabled />

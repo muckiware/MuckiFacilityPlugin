@@ -57,6 +57,7 @@ Component.register('muwa-backup-repository-detail', {
             V6_7_0_0: false,
             backupRepository: { backupPaths: [] },
             schedule: { enabled: false, cronExpression: '0 2 * * *', timezone: 'UTC', status: 'inactive', lastExecutionTime: null, nextExecutionTime: null, lastError: null },
+            timezoneOptions: [],
             isLoading: false,
             isStatsLoading: false,
             showDeleteModal: false,
@@ -469,6 +470,7 @@ Component.register('muwa-backup-repository-detail', {
             this.isLoading = true;
             this.isStatsLoading = true;
             this.isBackupProcessInProgress = true;
+            this.timezoneOptions = Shopware.Service('timezoneService').getTimezoneOptions();
             this.getBackupRepository();
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
