@@ -37,7 +37,7 @@ final class BackupExecutionTest extends TestCase
         (new BackupExecution($backup, $lockFactory, $notificationService))->execute('repository-id');
 
         self::assertCount(2, $notifications);
-        self::assertSame('info', $notifications[0]['status']);
+        self::assertSame('success', $notifications[0]['status']);
         self::assertSame([
             'source' => 'mucki-facility',
             'snippet' => 'muwa-backup-repository.notification.backupStarted',
@@ -103,7 +103,7 @@ final class BackupExecutionTest extends TestCase
         }
 
         self::assertCount(2, $notifications);
-        self::assertSame('info', $notifications[0]['status']);
+        self::assertSame('success', $notifications[0]['status']);
         self::assertSame([
             'source' => 'mucki-facility',
             'snippet' => 'muwa-backup-repository.notification.backupStarted',
