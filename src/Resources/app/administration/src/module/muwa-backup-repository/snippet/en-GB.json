@@ -128,6 +128,25 @@
     "backupPaths": {
       "deletePathLabel": "Delete path"
     },
+    "pathField": {
+      "openBrowser": "Browse server folders",
+      "chooseFolder": "Choose this folder",
+      "parentFolder": "Parent folder",
+      "noPermission": "no read permission",
+      "empty": "No subfolders",
+      "truncated": "List truncated – keep typing the path",
+      "loadError": "The folder could not be loaded.",
+      "invalidPath": "Invalid path or folder not readable",
+      "isLink": "Symbolic link",
+      "dumpPath": {
+        "rootDirectory": "The root directory cannot be used as dump path. The backup uses the default path var/db/backup instead.",
+        "relativeSegment": "The path must not contain \".\" or \"..\" segments. The backup uses the default path var/db/backup instead.",
+        "projectDirOrParent": "The shop directory or one of its parent directories cannot be used as dump path. The backup uses the default path var/db/backup instead.",
+        "overlapsRepositoryOrRestorePath": "The dump path overlaps with the repository path or the restore path. The backup uses the default path var/db/backup instead.",
+        "blockedPath": "This directory is protected and cannot be used as dump path. The backup uses the default path var/db/backup instead.",
+        "notWritable": "The folder (or its nearest existing parent folder) is not writable for the web server user. The backup may fall back to the default path var/db/backup."
+      }
+    },
     "restore": {
       "errorTitle": "Storage problem occurred",
       "error-message": "An error has occurred",

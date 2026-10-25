@@ -1,0 +1,163 @@
+{% block muwa_backup_repository_path_field %}
+<div class="muwa-backup-repository-path-field">
+    <div
+        ref="field"
+        class="muwa-backup-repository-path-field__field"
+        @focusin="openDropdown"
+        @click="openDropdown"
+        @focusout="onFocusOut"
+    >
+        <sw-text-field
+            :value="value"
+            :label="label"
+            :placeholder="placeholder"
+            :help-text="helpText"
+            :required="required"
+            :maxlength="maxlength || undefined"
+            :disabled="disabled"
+            :name="name"
+            @update:value="onInput"
+        >
+            <template
+                v-if="canBrowse"
+                #suffix
+            >
+                <sw-icon
+                    class="muwa-backup-repository-path-field__toggle"
+                    name="regular-folder"
+                    size="16px"
+                    :title="$t('muwa-backup-repository.pathField.openBrowser')"
+                />
+            </template>
+        </sw-text-field>
+    </div>
+
+    <p
+        v-if="dumpPathWarning"
+        class="muwa-backup-repository-path-field__warning"
+    >
+        {{ dumpPathWarning }}
+    </p>
+
+    <teleport to="body">
+        <div
+            v-if="isOpen"
+            ref="dropdown"
+            class="muwa-backup-repository-path-field__dropdown"
+            :style="dropdownStyle"
+            @focusout="onFocusOut"
+        >
+            <div
+                v-if="pathSegments.length > 0"
+                class="muwa-backup-repository-path-field__breadcrumb"
+            >
+                <template
+                    v-for="(segment, index) in pathSegments"
+                    :key="segment.path"
+                >
+                    <span
+                        v-if="index > 1"
+                        class="muwa-backup-repository-path-field__breadcrumb-separator"
+                    >/</span>
+                    <button
+                        type="button"
+                        class="muwa-backup-repository-path-field__breadcrumb-item"
+                        @click="loadDirectories(segment.path)"
+                    >
+                        {{ segment.label }}
+                    </button>
+                </template>
+            </div>
+
+            <div class="muwa-backup-repository-path-field__list">
+                <sw-loader
+                    v-if="isLoading"
+                    size="24px"
+                />
+
+                <div
+                    v-if="loadError"
+                    :title="loadErrorDetail"
+                    class="muwa-backup-repository-path-field__error"
+                >
+                    {{ loadError }}
+                </div>
+
+                <template v-if="listing">
+                    <button
+                        v-if="listing.parent !== null"
+                        type="button"
+                        class="muwa-backup-repository-path-field__row"
+                        :title="$t('muwa-backup-repository.pathField.parentFolder')"
+                        @click="loadDirectories(listing.parent)"
+                    >
+                        <sw-icon
+                            name="regular-long-arrow-up"
+                            size="16px"
+                        />
+                        <span class="muwa-backup-repository-path-field__row-name">..</span>
+                    </button>
+
+                    <button
+                        v-for="directory in listing.directories"
+                        :key="directory.path"
+                        type="button"
+                        class="muwa-backup-repository-path-field__row"
+                        :class="{
+                            'is--hidden': directory.hidden,
+                            'is--disabled': !directory.readable,
+                        }"
+                        :disabled="!directory.readable"
+                        @click="openDirectory(directory)"
+                    >
+                        <sw-icon
+                            :name="directory.readable ? 'regular-folder' : 'regular-lock'"
+                            size="16px"
+                        />
+                        <span class="muwa-backup-repository-path-field__row-name">{{ directory.name }}</span>
+                        <sw-icon
+                            v-if="directory.link"
+                            class="muwa-backup-repository-path-field__row-link"
+                            name="regular-link"
+                            size="12px"
+                            :title="$t('muwa-backup-repository.pathField.isLink')"
+                        />
+                        <span
+                            v-if="!directory.readable"
+                            class="muwa-backup-repository-path-field__row-hint"
+                        >
+                            ({{ $t('muwa-backup-repository.pathField.noPermission') }})
+                        </span>
+                    </button>
+
+                    <div
+                        v-if="!isLoading && listing.directories.length === 0"
+                        class="muwa-backup-repository-path-field__info"
+                    >
+                        {{ $t('muwa-backup-repository.pathField.empty') }}
+                    </div>
+
+                    <div
+                        v-if="listing.truncated"
+                        class="muwa-backup-repository-path-field__info is--warning"
+                    >
+                        {{ $t('muwa-backup-repository.pathField.truncated') }}
+                    </div>
+                </template>
+            </div>
+
+            <div class="muwa-backup-repository-path-field__footer">
+                <span class="muwa-backup-repository-path-field__current">{{ listing ? listing.path : '' }}</span>
+                <sw-button
+                    variant="primary"
+                    size="small"
+                    :disabled="!listing || isLoading"
+                    @click="chooseFolder"
+                >
+                    {{ $t('muwa-backup-repository.pathField.chooseFolder') }}
+                </sw-button>
+            </div>
+        </div>
+    </teleport>
+</div>
+{% endblock %}

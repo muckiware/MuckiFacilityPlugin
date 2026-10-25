@@ -97,26 +97,12 @@
                             </option>
                         </sw-select-field>
 
-                        <sw-text-field
-                                v-if="isV6600"
-                                :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
-                                v-model:value="backupRepository.repositoryPath"
-                                maxlength="255"
-                                validation="required"
-                                required
-                                :disabled="false"
-                        >
-                        </sw-text-field>
-                        <sw-text-field
-                                v-if="isV6500"
-                                :label="$tc('muwa-backup-repository.detail.repositoryPathLabel')"
-                                v-model="backupRepository.repositoryPath"
-                                maxlength="255"
-                                validation="required"
-                                required
-                                :disabled="false"
-                        >
-                        </sw-text-field>
+                        <muwa-backup-repository-path-field
+                            v-model:value="backupRepository.repositoryPath"
+                            :label="$t('muwa-backup-repository.detail.repositoryPathLabel')"
+                            maxlength="255"
+                            required
+                        />
                         {% block muwa_backup_repository_create_backup_repository_path_description %}
                             <div
                                 v-html="$tc('muwa-backup-repository.detail.repositoryPathDescription')"
@@ -173,43 +159,23 @@
                             ></div>
                         {% endblock %}
 
-                        <sw-text-field
-                                v-if="isV6600"
-                                :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
-                                v-model:value="backupRepository.restorePath"
-                                maxlength="255"
-                                validation="required"
-                                required
-                        >
-                        </sw-text-field>
-                        <sw-text-field
-                                v-if="isV6500"
-                                :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
-                                v-model="backupRepository.restorePath"
-                                maxlength="255"
-                                validation="required"
-                                required
-                        >
-                        </sw-text-field>
+                        <muwa-backup-repository-path-field
+                            v-model:value="backupRepository.restorePath"
+                            :label="$t('muwa-backup-repository.detail.restorePathLabel')"
+                            maxlength="255"
+                            required
+                        />
 
-                        <sw-text-field
-                                v-if="isV6600"
-                                :label="$tc('muwa-backup-repository.detail.dbDumpPathLabel')"
-                                :placeholder="$tc('muwa-backup-repository.detail.dbDumpPathPlaceholder')"
-                                :helpText="$tc('muwa-backup-repository.detail.dbDumpPathHelpText')"
-                                v-model:value="backupRepository.dbDumpPath"
-                                maxlength="255"
-                        >
-                        </sw-text-field>
-                        <sw-text-field
-                                v-if="isV6500"
-                                :label="$tc('muwa-backup-repository.detail.dbDumpPathLabel')"
-                                :placeholder="$tc('muwa-backup-repository.detail.dbDumpPathPlaceholder')"
-                                :helpText="$tc('muwa-backup-repository.detail.dbDumpPathHelpText')"
-                                v-model="backupRepository.dbDumpPath"
-                                maxlength="255"
-                        >
-                        </sw-text-field>
+                        <muwa-backup-repository-path-field
+                            v-model:value="backupRepository.dbDumpPath"
+                            :label="$t('muwa-backup-repository.detail.dbDumpPathLabel')"
+                            :placeholder="$t('muwa-backup-repository.detail.dbDumpPathPlaceholder')"
+                            :help-text="$t('muwa-backup-repository.detail.dbDumpPathHelpText')"
+                            maxlength="255"
+                            check-dump-path
+                            :repository-path="backupRepository.repositoryPath"
+                            :restore-path="backupRepository.restorePath"
+                        />
 
                     </sw-card>
 
@@ -247,17 +213,9 @@
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                 {% block wuwa_backup_repository_backup_paths_grid_data_type_column %}
                                     <template #column-backupPath="{ item, itemIndex }">
-                                        <sw-text-field
-                                                v-if="isV6600"
-                                                v-model:value="item.backupPath"
-                                                :name="`backupPath-${itemIndex}`"
-                                                :disabled="false"
-                                        />
-                                        <sw-text-field
-                                                v-if="isV6500"
-                                                v-model="item.backupPath"
-                                                :name="`backupPath-${itemIndex}`"
-                                                :disabled="false"
+                                        <muwa-backup-repository-path-field
+                                            v-model:value="item.backupPath"
+                                            :name="`backupPath-${itemIndex}`"
                                         />
                                     </template>
                                 {% endblock %}

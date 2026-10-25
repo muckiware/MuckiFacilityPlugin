@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
+use MuckiFacilityPlugin\Core\DumpPathRejection;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 interface SettingsInterface
@@ -19,6 +20,8 @@ interface SettingsInterface
     public function isCompressDbBackupEnabled(): bool;
     public function getDatabaseUrl(): string;
     public function getBackupPath(bool $useSubFolder=false, ?string $ownDumpPath=null, ?string $repositoryPath=null, ?string $restorePath=null): string;
+    public function getOwnDumpPathRejection(?string $ownDumpPath, ?string $repositoryPath=null, ?string $restorePath=null): ?DumpPathRejection;
+    public function resolveDumpPathValue(string $ownDumpPath): string;
     public function getDateTimestamp(): string;
     public function getDatestamp(): string;
     public function hasOwnResticBinaryPath(): bool;

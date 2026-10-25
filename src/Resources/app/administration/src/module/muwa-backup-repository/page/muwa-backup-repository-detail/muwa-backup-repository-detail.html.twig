@@ -209,43 +209,23 @@
                         >
                         </sw-text-field>
 
-                        <sw-text-field
-                            v-if="isV6600"
-                            :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
+                        <muwa-backup-repository-path-field
                             v-model:value="backupRepository.restorePath"
+                            :label="$t('muwa-backup-repository.detail.restorePathLabel')"
                             maxlength="255"
-                            validation="required"
                             required
-                        >
-                        </sw-text-field>
-                        <sw-text-field
-                            v-if="isV6500"
-                            :label="$tc('muwa-backup-repository.detail.restorePathLabel')"
-                            v-model="backupRepository.restorePath"
-                            maxlength="255"
-                            validation="required"
-                            required
-                        >
-                        </sw-text-field>
+                        />
 
-                        <sw-text-field
-                            v-if="isV6600"
-                            :label="$tc('muwa-backup-repository.detail.dbDumpPathLabel')"
-                            :placeholder="$tc('muwa-backup-repository.detail.dbDumpPathPlaceholder')"
-                            :helpText="$tc('muwa-backup-repository.detail.dbDumpPathHelpText')"
+                        <muwa-backup-repository-path-field
                             v-model:value="backupRepository.dbDumpPath"
+                            :label="$t('muwa-backup-repository.detail.dbDumpPathLabel')"
+                            :placeholder="$t('muwa-backup-repository.detail.dbDumpPathPlaceholder')"
+                            :help-text="$t('muwa-backup-repository.detail.dbDumpPathHelpText')"
                             maxlength="255"
-                        >
-                        </sw-text-field>
-                        <sw-text-field
-                            v-if="isV6500"
-                            :label="$tc('muwa-backup-repository.detail.dbDumpPathLabel')"
-                            :placeholder="$tc('muwa-backup-repository.detail.dbDumpPathPlaceholder')"
-                            :helpText="$tc('muwa-backup-repository.detail.dbDumpPathHelpText')"
-                            v-model="backupRepository.dbDumpPath"
-                            maxlength="255"
-                        >
-                        </sw-text-field>
+                            check-dump-path
+                            :repository-path="backupRepository.repositoryPath"
+                            :restore-path="backupRepository.restorePath"
+                        />
                         <sw-text-field
                                 v-if="isV6600"
                                 :label="$tc('muwa-backup-repository.detail.hostnameLabel')"
@@ -300,17 +280,9 @@
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                 {% block wuwa_backup_repository_backup_paths_grid_data_type_column %}
                                     <template #column-backupPath="{ item, itemIndex }">
-                                        <sw-text-field
-                                            v-if="isV6600"
+                                        <muwa-backup-repository-path-field
                                             v-model:value="item.backupPath"
                                             :name="`backupPath-${itemIndex}`"
-                                            :disabled="false"
-                                        />
-                                        <sw-text-field
-                                            v-if="isV6500"
-                                            v-model="item.backupPath"
-                                            :name="`backupPath-${itemIndex}`"
-                                            :disabled="false"
                                         />
                                     </template>
                                 {% endblock %}

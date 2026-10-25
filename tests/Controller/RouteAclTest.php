@@ -9,6 +9,7 @@ use Shopware\Core\PlatformRequest;
 use Symfony\Component\Routing\Attribute\Route;
 
 use MuckiFacilityPlugin\Controller\BackupController;
+use MuckiFacilityPlugin\Controller\FilesystemController;
 use MuckiFacilityPlugin\Controller\InitBackupRepositoryController;
 use MuckiFacilityPlugin\Controller\ManageController;
 use MuckiFacilityPlugin\Controller\RestoreSnapshotController;
@@ -63,6 +64,16 @@ class RouteAclTest extends TestCase
                 ManageController::class,
                 'getRepositoryStats',
                 ['muwa_backup_repository:read'],
+            ],
+            'filesystem directories' => [
+                FilesystemController::class,
+                'listDirectories',
+                ['muwa_backup_repository:update'],
+            ],
+            'filesystem check dump path' => [
+                FilesystemController::class,
+                'checkDumpPath',
+                ['muwa_backup_repository:update'],
             ],
         ];
     }

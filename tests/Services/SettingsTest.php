@@ -18,6 +18,7 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 use MuckiFacilityPlugin\Services\Settings as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
+use MuckiFacilityPlugin\Core\DumpPathRejection;
 
 class SettingsTest extends TestCase
 {
@@ -332,6 +333,67 @@ class SettingsTest extends TestCase
             $settingsClass->getDefaultBackupPath(),
             'The default backup path should still be returned when it cannot be created'
         );
+    }
+
+    public function testGetOwnDumpPathRejectionReturnsNullForEmptyValue(): void
+    {
+        $settings = $this->createSettings();
+
+        $this->assertNull($settings->getOwnDumpPathRejection(''));
+        $this->assertNull($settings->getOwnDumpPathRejection('   '));
+        $this->assertNull($settings->getOwnDumpPathRejection(null));
+    }
+
+    /**
+     * @dataProvider rejectionProvider
+     */
+    public function testGetOwnDumpPathRejectionReturnsReason(
+        string $path,
+        ?string $repositoryPath,
+        DumpPathRejection $expected
+    ): void {
+        $this->assertSame($expected, $this->createSettings()->getOwnDumpPathRejection($path, $repositoryPath));
+    }
+
+    public static function rejectionProvider(): array
+    {
+        return [
+            'root' => ['/', null, DumpPathRejection::ROOT_DIRECTORY],
+            'relative segment' => ['/var/db/../etc', null, DumpPathRejection::RELATIVE_SEGMENT],
+            'project parent' => ['/var/www', null, DumpPathRejection::PROJECT_DIR_OR_PARENT],
+            'system dir' => ['/etc/backup', null, DumpPathRejection::BLOCKED_PATH],
+            'sensitive project dir' => ['vendor/x', null, DumpPathRejection::BLOCKED_PATH],
+            'overlap' => ['/mnt/repo/dump', '/mnt/repo', DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH],
+        ];
+    }
+
+    public function testGetOwnDumpPathRejectionDetectsOverlapWithRestorePath(): void
+    {
+        $this->assertSame(
+            DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH,
+            $this->createSettings()->getOwnDumpPathRejection('/mnt/restore/dump', null, '/mnt/restore')
+        );
+    }
+
+    public function testGetOwnDumpPathRejectionReturnsNullForAllowedPath(): void
+    {
+        $this->assertNull($this->createSettings()->getOwnDumpPathRejection('/mnt/backup/dump'));
+    }
+
+    public function testGetOwnDumpPathRejectionDoesNotLog(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('error');
+
+        $this->assertSame(DumpPathRejection::BLOCKED_PATH, $this->createSettings($logger)->getOwnDumpPathRejection('/etc'));
+    }
+
+    public function testResolveDumpPathValue(): void
+    {
+        $settings = $this->createSettings();
+
+        $this->assertSame('/var/www/html/var/db/x', $settings->resolveDumpPathValue('var/db/x/'));
+        $this->assertSame('/mnt/a', $settings->resolveDumpPathValue(' /mnt/a '));
     }
 
     private function createSettings(?LoggerInterface $logger = null): PluginSettings
