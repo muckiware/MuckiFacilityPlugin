@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Install PHP
-        uses: shivammathur/setup-php@master
+        uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xdebug, curl, dom, fileinfo, gd, iconv, intl, json, xml, mbstring, pdo, phar, zip, sodium, pdo_mysql
@@ -55,13 +55,13 @@ jobs:
         run: php -m
 
       - name: "checkout Shopware"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           repository: shopware/production
           ref: ${{ matrix.shopware-versions }}
 
       - name: "Checkout ${{ env.COMPOSER_NAME }}"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           path: custom/plugins/${{ env.MODULE_NAME }}
 
@@ -70,7 +70,7 @@ jobs:
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: "Cache Composer dependencies"
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ matrix.operating-system }}-${{ matrix.php-versions }}-${{ matrix.shopware-versions }}-${{ hashFiles('**/composer.lock') }}
