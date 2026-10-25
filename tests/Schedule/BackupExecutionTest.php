@@ -3,10 +3,10 @@ namespace MuckiFacilityPlugin\tests\Schedule;
 
 use MuckiFacilityPlugin\Schedule\BackupExecution;
 use MuckiFacilityPlugin\Schedule\Exception\BackupAlreadyRunningException;
+use MuckiFacilityPlugin\Services\AdminNotification;
 use MuckiFacilityPlugin\Services\Backup;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\Notification\NotificationService;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\SharedLockInterface;
 
@@ -27,7 +27,7 @@ final class BackupExecutionTest extends TestCase
         $lockFactory->expects(self::once())->method('createLock')->with('mucki-facility.backup', null)->willReturn($lock);
 
         $notifications = [];
-        $notificationService = $this->createMock(NotificationService::class);
+        $notificationService = $this->createMock(AdminNotification::class);
         $notificationService->expects(self::exactly(2))
             ->method('createNotification')
             ->willReturnCallback(static function (array $data, Context $context) use (&$notifications): void {
@@ -66,7 +66,7 @@ final class BackupExecutionTest extends TestCase
         $lock->method('acquire')->with(false)->willReturn(false);
         $lockFactory = $this->createMock(LockFactory::class);
         $lockFactory->method('createLock')->with('mucki-facility.backup', null)->willReturn($lock);
-        $notificationService = $this->createMock(NotificationService::class);
+        $notificationService = $this->createMock(AdminNotification::class);
         $notificationService->expects(self::never())->method('createNotification');
 
         $this->expectException(BackupAlreadyRunningException::class);
@@ -88,7 +88,7 @@ final class BackupExecutionTest extends TestCase
         $lockFactory->method('createLock')->willReturn($lock);
 
         $notifications = [];
-        $notificationService = $this->createMock(NotificationService::class);
+        $notificationService = $this->createMock(AdminNotification::class);
         $notificationService->expects(self::exactly(2))
             ->method('createNotification')
             ->willReturnCallback(static function (array $data, Context $context) use (&$notifications): void {

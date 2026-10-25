@@ -12,19 +12,19 @@
 namespace MuckiFacilityPlugin\Schedule;
 
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\Notification\NotificationService;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Lock\LockFactory;
 
 use MuckiFacilityPlugin\Schedule\Exception\BackupAlreadyRunningException;
 use MuckiFacilityPlugin\Services\Backup;
+use MuckiFacilityPlugin\Services\AdminNotification;
 
 class BackupExecution
 {
     public function __construct(
         private readonly Backup $backup,
         private readonly LockFactory $lockFactory,
-        private readonly NotificationService $notificationService
+        private readonly AdminNotification $adminNotification
     ) {}
 
     public function execute(string $repositoryId): void
@@ -79,7 +79,7 @@ class BackupExecution
             'parameters' => $parameters,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        $this->notificationService->createNotification([
+        $this->adminNotification->createNotification([
             'id' => Uuid::randomHex(),
             'status' => $status,
             'message' => $message,

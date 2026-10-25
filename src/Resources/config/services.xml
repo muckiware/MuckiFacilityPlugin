@@ -276,10 +276,13 @@
         <service id="MuckiFacilityPlugin\Schedule\ScheduleConfiguration">
             <argument type="service" id="Doctrine\DBAL\Connection"/><argument type="service" id="MuckiFacilityPlugin\Schedule\ScheduleCalculator"/>
         </service>
+        <service id="MuckiFacilityPlugin\Services\AdminNotification">
+            <argument type="service" id="notification.repository"/>
+        </service>
         <service id="MuckiFacilityPlugin\Schedule\BackupExecution">
             <argument type="service" id="MuckiFacilityPlugin\Services\Backup"/>
             <argument type="service" id="lock.factory"/>
-            <argument type="service" id="Shopware\Core\Framework\Notification\NotificationService"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\AdminNotification"/>
         </service>
         <service id="MuckiFacilityPlugin\Schedule\DueScheduleDispatcher">
             <argument type="service" id="Doctrine\DBAL\Connection"/>
