@@ -13,6 +13,23 @@
     }
 }
 
+// Inside the Backup Paths grid the field's bottom margin and the compress switch's top margin
+// push both out of line; drop them so path field, switch and row actions share one centre line.
+.sw-data-grid__cell-content {
+    .muwa-backup-repository-path-field .mt-field,
+    .muwa-backup-repository-path-field .sw-field {
+        margin-bottom: 0;
+    }
+}
+
+.sw-data-grid__cell--compress {
+    .mt-switch,
+    .sw-field--switch {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+}
+
 // Teleported to <body> and positioned fixed so grid rows / cards cannot clip it.
 .muwa-backup-repository-path-field__dropdown {
     position: fixed;
