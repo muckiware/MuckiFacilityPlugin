@@ -66,8 +66,10 @@ You can define for each path item a compress option. If the compress option is a
 ### Delete of snapshots
 You can remove old snapshots of a repository with the command.
 ```shell
-bin/console muckiware:backup:snapshots --delete <backupRepositoryId>
+bin/console muckiware:backup:snapshots <backupRepositoryId> --remove <snapshotIds>
 ```
+The snapshot ids are passed as comma separated list to the `--remove` option, for example
+`--remove 8888ec40,79766175`.
 This setup defines the daily, weekly, month or yearly values for this remove process. More details about the keep-parameters you can find in the restic documentation https://restic.readthedocs.io/en/latest/060_forget.html#removing-snapshots-according-to-a-policy
 
 ### Initial Backup
@@ -228,6 +230,111 @@ The maximum number of days that should remain in the cart table can be set in th
 ```shell
 bin/console muckiware:table:cleanup log_entry
 ```
+
+# Events
+The plugin dispatches events over the Symfony event dispatcher at fixed points of the backup
+lifecycle and the repository management. Other plugins can subscribe to them, for example to ship
+backup results to an external monitoring system, to start follow-up jobs after a successful backup,
+or to log repository maintenance.
+
+## Backup lifecycle events
+All event classes live in the namespace `MuckiFacilityPlugin\Events`. Listen for the event name
+shown in the first column.
+
+| Event name                                   | Event class                      | Fired when                                                                                                                                                                                                                                                                                                                    | Payload |
+|:---------------------------------------------|:---------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|
+| `mucki_facility.backup.before_create`        | `BeforeBackupCreatedEvent`        | A backup run starts, after the optional pre-backup command and before the database and file backups.                                                                                                                                                                                                                          | `getBackupSettings(): BackupRepositorySettings` |
+| `mucki_facility.database_dump.before_create` | `BeforeDatabaseDumpCreatedEvent` | Immediately before the database dump is created. Only for the backup types `completeDatabaseSingleFile` and `completeDatabaseSeparateFiles`, also for a standalone dump via `bin/console muckiware:db:dump <backupType>`.                                                                                                       | `getBackupSettings(): BackupRepositorySettings` |
+| `mucki_facility.database_dump.after_create`  | `AfterDatabaseDumpCreatedEvent`  | A database dump was created successfully, with the results of this dump.                                                                                                                                                                                                                                                       | `getBackupSettings(): BackupRepositorySettings`<br>`getResults(): array<ResultEntity>` |
+| `mucki_facility.backup.after_create`         | `AfterBackupCreatedEvent`        | All database and file backups of the run are finished. Fires before the backup check, the snapshot import, the statistics collection and the optional post-backup command.                                                                                                                                                   | `getBackupSettings(): BackupRepositorySettings`<br>`getResults(): array<ResultEntity>` (all results of the run) |
+| `mucki_facility.backup.after_check`          | `AfterBackupCheckedEvent`        | The backup check at the end of a backup run produced a check result, which is also persisted as check item.                                                                                                                                                                                                                    | `getBackupRepository(): BackupRepositoryEntity`<br>`getCheckResult(): string` |
+
+`AfterBackupCheckedEvent` fires only as part of a complete backup run (administration, scheduler or
+`bin/console muckiware:backup:create <backupRepositoryId>`), not for the standalone check via
+`bin/console muckiware:backup:check <backupRepositoryId>`.
+
+## Repository management events
+
+| Event name                                 | Event class                    | Fired when                                                                                                                                                                                    | Payload |
+|:-------------------------------------------|:--------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|
+| `mucki_facility.repository.after_cleanup`  | `AfterRepositoryCleanedUpEvent` | After a prune run on a repository (administration).                                                                                                                                            | `getBackupRepository(): BackupRepositoryEntity`<br>`getOutput(): string` |
+| `mucki_facility.snapshot.after_delete`     | `AfterSnapshotDeletedEvent`     | After a single snapshot was removed from the repository.                                                                                                                                      | `getBackupRepositoryId(): string`<br>`getSnapshotId(): string`<br>`getOutput(): string` |
+| `mucki_facility.snapshots.after_delete`    | `AfterSnapshotsDeletedEvent`    | After a batch of snapshots was removed, for example via `bin/console muckiware:backup:snapshots <backupRepositoryId> --remove <snapshotIds>` (snapshot ids as comma separated list). A batch removal also fires `mucki_facility.snapshot.after_delete` for every single snapshot. | `getBackupRepository(): BackupRepositoryEntity`<br>`getSnapshotIds(): array<int, string>`<br>`getOutput(): string` |
+| `mucki_facility.snapshots.after_forget`    | `AfterSnapshotsForgottenEvent`  | After snapshots were removed by the keep-policy, for example via `bin/console muckiware:backup:forget <backupRepositoryId>`.                                                                   | `getBackupRepository(): BackupRepositoryEntity`<br>`getOutput(): string` |
+
+## Payload classes
+
+| Class                                                                  | Description |
+|:------------------------------------------------------------------------|:------------|
+| `MuckiFacilityPlugin\Entity\BackupRepositorySettings`                   | Settings of the current run, for example `getBackupRepositoryId()`, `getName()`, `getBackupType()`, `getRepositoryPath()`, `getBackupPaths()`, `getDbDumpPath()`. |
+| `MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity` | The persisted repository configuration. |
+| `MuckiRestic\Entity\Result\ResultEntity`                                | One result of a restic execution, for example `getOutput()`, `getCommandLine()`, `getStatus()`, `getDuration()`. |
+
+## Snapshot entity events (DAL)
+Shopware fires the standard DAL events for the snapshot entity `muwa_backup_repository_snapshots`.
+The event names are available as constants in `MuckiFacilityPlugin\Events\BackupRepositorySnapshotsEvents`:
+
+| Event name                                | Event class         | Fired when |
+|:------------------------------------------|:--------------------|:-----------|
+| `muwa_backup_repository_snapshots.written` | `EntityWrittenEvent` | Snapshot records are written, for example when a finished backup run imports the snapshots of the repository. |
+| `muwa_backup_repository_snapshots.deleted` | `EntityDeletedEvent` | Snapshot records are deleted in the shop database. |
+| `muwa_backup_repository_snapshots.loaded`  | `EntityLoadedEvent` | Snapshot records are read over the DAL. |
+
+## Listener example
+Subscriber class in your own plugin:
+
+```php
+<?php declare(strict_types=1);
+
+namespace MyOwnPlugin\Subscriber;
+
+use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+class BackupEventSubscriber implements EventSubscriberInterface
+{
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            AfterBackupCreatedEvent::NAME => 'onAfterBackupCreated',
+        ];
+    }
+
+    public function onAfterBackupCreated(AfterBackupCreatedEvent $event): void
+    {
+        $repositoryName = $event->getBackupSettings()->getName();
+
+        foreach ($event->getResults() as $result) {
+            $output = $result->getOutput();
+            // send the result to an external system, write a log entry, ...
+        }
+    }
+}
+```
+
+Registration in the `services.xml` of your plugin:
+
+```xml
+<service id="MyOwnPlugin\Subscriber\BackupEventSubscriber">
+    <tag name="kernel.event_subscriber"/>
+</service>
+```
+
+Alternatively, a single listener method on any service:
+
+```xml
+<service id="MyOwnPlugin\Notifier\BackupFinishedNotifier">
+    <tag name="kernel.event_listener" event="mucki_facility.backup.after_create" method="onAfterBackupCreated"/>
+</service>
+```
+
+## Notes for listeners
+- Backups started in the administration or by the scheduler run as message queue tasks. In that
+  case the events fire inside the `messenger:consume` worker process, not in the process that
+  triggered the run. A backup by console command fires the events in the CLI process.
+- All events are dispatched synchronously, a slow listener delays the backup run.
+- The events are notifications only: they cannot cancel or modify a run.
+- Treat the payload objects as read-only; they are the instances of the current run.
 
 # Testing
 ## phpstan
