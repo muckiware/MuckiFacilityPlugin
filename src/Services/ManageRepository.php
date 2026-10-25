@@ -14,8 +14,13 @@ namespace MuckiFacilityPlugin\Services;
 use League\Flysystem\FilesystemException;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use MuckiRestic\Library\Manage;
+use MuckiFacilityPlugin\Events\AfterRepositoryCleanedUpEvent;
+use MuckiFacilityPlugin\Events\AfterSnapshotDeletedEvent;
+use MuckiFacilityPlugin\Events\AfterSnapshotsDeletedEvent;
+use MuckiFacilityPlugin\Events\AfterSnapshotsForgottenEvent;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
@@ -32,6 +37,7 @@ class ManageRepository
         protected BackupRepositoryChecks $backupRepositoryChecks,
         protected PluginSettings $pluginSettings,
         protected PluginHelper $pluginHelper,
+        protected EventDispatcherInterface $eventDispatcher,
     )
     {}
 
@@ -75,7 +81,16 @@ class ManageRepository
             $result[] = $this->removeSnapshotById($backupRepositoryId, $snapshotId, $isJsonOutput);
         }
 
-        return implode("\n", $result);
+        $output = implode("\n", $result);
+        $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+        if($backupRepository !== null) {
+            $this->eventDispatcher->dispatch(
+                new AfterSnapshotsDeletedEvent($backupRepository, $snapshotIds, $output),
+                AfterSnapshotsDeletedEvent::NAME
+            );
+        }
+
+        return $output;
     }
 
     public function removeSnapshotById(string $backupRepositoryId, string $snapshotId, bool $isJsonOutput=true): string
@@ -83,7 +98,7 @@ class ManageRepository
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
         try {
 
-            $manageClient = Manage::create();
+            $manageClient = $this->createManageClient();
             if($this->pluginSettings->hasOwnResticBinaryPath()) {
                 $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
             }
@@ -92,13 +107,24 @@ class ManageRepository
             $manageClient->setJsonOutput($isJsonOutput);
             $manageClient->setSnapshotId($snapshotId);
 
-            return $manageClient->removeSnapshotById()->getOutput();
+            $output = $manageClient->removeSnapshotById()->getOutput() ?? '';
+            $this->eventDispatcher->dispatch(
+                new AfterSnapshotDeletedEvent($backupRepositoryId, $snapshotId, $output),
+                AfterSnapshotDeletedEvent::NAME
+            );
+
+            return $output;
 
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
 
         return '';
+    }
+
+    protected function createManageClient(): Manage
+    {
+        return Manage::create();
     }
 
     /**
@@ -203,7 +229,7 @@ class ManageRepository
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
         try {
 
-            $manageClient = Manage::create();
+            $manageClient = $this->createManageClient();
             if($this->pluginSettings->hasOwnResticBinaryPath()) {
                 $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
             }
@@ -211,7 +237,13 @@ class ManageRepository
             $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $manageClient->setJsonOutput($isJsonOutput);
 
-            return $manageClient->executePrune()->getOutput();
+            $output = $manageClient->executePrune()->getOutput() ?? '';
+            $this->eventDispatcher->dispatch(
+                new AfterRepositoryCleanedUpEvent($backupRepository, $output),
+                AfterRepositoryCleanedUpEvent::NAME
+            );
+
+            return $output;
 
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
@@ -225,7 +257,7 @@ class ManageRepository
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
         try {
 
-            $manageClient = Manage::create();
+            $manageClient = $this->createManageClient();
             if($this->pluginSettings->hasOwnResticBinaryPath()) {
                 $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
             }
@@ -237,7 +269,13 @@ class ManageRepository
             $manageClient->setKeepMonthly($backupRepository->getForgetMonthly());
             $manageClient->setKeepYearly($backupRepository->getForgetYearly());
 
-            return $manageClient->removeSnapshots()->getOutput();
+            $output = $manageClient->removeSnapshots()->getOutput() ?? '';
+            $this->eventDispatcher->dispatch(
+                new AfterSnapshotsForgottenEvent($backupRepository, $output),
+                AfterSnapshotsForgottenEvent::NAME
+            );
+
+            return $output;
 
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);

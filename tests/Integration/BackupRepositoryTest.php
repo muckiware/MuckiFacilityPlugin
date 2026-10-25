@@ -15,6 +15,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use MuckiRestic\Entity\Result\ResultEntity;
 
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
@@ -144,7 +145,8 @@ class BackupRepositoryTest extends TestCase
             $pluginHelperMock,
             $this->createMock(ManageService::class),
             $servicesCliOutputMock,
-            $this->createMock(RepositoryStats::class)
+            $this->createMock(RepositoryStats::class),
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $servicesBackup->createBackup($backupRepositorySettings);
@@ -181,7 +183,8 @@ class BackupRepositoryTest extends TestCase
             $this->createMock(BackupFileSnapshotsRepository::class),
             $this->createMock(BackupRepositoryChecks::class),
             $pluginSettingsMock,
-            $this->createMock(PluginHelper::class)
+            $this->createMock(PluginHelper::class),
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $snapshots = json_decode($manageService->getSnapshots($backupRepositoryId), true);

@@ -11,12 +11,17 @@
  */
 namespace MuckiFacilityPlugin\Services;
 
-use MuckiRestic\Entity\Result\ResultEntity;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Events\AfterBackupCheckedEvent;
+use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
+use MuckiFacilityPlugin\Events\AfterDatabaseDumpCreatedEvent;
+use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
+use MuckiFacilityPlugin\Events\BeforeDatabaseDumpCreatedEvent;
 use MuckiFacilityPlugin\Core\ConfigPath;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
@@ -30,6 +35,7 @@ use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 use MuckiFacilityPlugin\Services\RepositoryStats;
+use MuckiRestic\Entity\Result\ResultEntity;
 
 /**
  *
@@ -69,7 +75,8 @@ class Backup
         protected PluginHelper $pluginHelper,
         protected ManageService $manageService,
         protected ServicesCliOutput $servicesCliOutput,
-        protected RepositoryStats $repositoryStats
+        protected RepositoryStats $repositoryStats,
+        protected EventDispatcherInterface $eventDispatcher
     )
     {
         $this->backupException = new \Exception();
@@ -133,6 +140,11 @@ class Backup
      */
     public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
+        $this->eventDispatcher->dispatch(
+            new BeforeBackupCreatedEvent($createBackup),
+            BeforeBackupCreatedEvent::NAME
+        );
+
         $cachePaths = $createBackup->getBackupPaths();
 
         //Backup database
@@ -146,6 +158,11 @@ class Backup
         if(!empty($cachePaths)) {
             $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
         }
+
+        $this->eventDispatcher->dispatch(
+            new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
+            AfterBackupCreatedEvent::NAME
+        );
 
         $this->createCheckItem($createBackup);
         $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
@@ -253,12 +270,36 @@ class Backup
      */
     public function startBackupRunner(BackupRepositorySettings $createBackup, bool $isJsonOutput): void
     {
+        $isDatabaseDump = in_array(
+            $createBackup->getBackupType(),
+            [
+                BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value,
+                BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value,
+            ],
+            true
+        );
+
         try {
+            if($isDatabaseDump) {
+                $this->eventDispatcher->dispatch(
+                    new BeforeDatabaseDumpCreatedEvent($createBackup),
+                    BeforeDatabaseDumpCreatedEvent::NAME
+                );
+            }
+
             $backupRunner = $this->backupRunnerFactory->createBackupRunner($createBackup);
             $backupRunner->createBackupData($isJsonOutput);
 
-            $this->addAllResult($backupRunner->getBackupResults());
+            $backupResults = $backupRunner->getBackupResults();
+            $this->addAllResult($backupResults);
             $this->setBackup($backupRunner);
+
+            if($isDatabaseDump) {
+                $this->eventDispatcher->dispatch(
+                    new AfterDatabaseDumpCreatedEvent($createBackup, $backupResults),
+                    AfterDatabaseDumpCreatedEvent::NAME
+                );
+            }
 
         } catch (\Exception $e) {
 
@@ -279,11 +320,27 @@ class Backup
         }
         $this->checkBackup($createBackup);
 
+        $lastCheckResult = null;
         /** @var ResultEntity $result */
         foreach ($this->getAllResults() as $result) {
 
             $checkResults = $this->pluginHelper->getCheckResults($result->getOutput());
-            $this->backupRepositoryChecks->saveNewCheck($createBackup->getBackupRepositoryId(), end($checkResults));
+            $checkResult = end($checkResults);
+            if(!is_string($checkResult)) {
+                continue;
+            }
+            $this->backupRepositoryChecks->saveNewCheck($createBackup->getBackupRepositoryId(), $checkResult);
+            $lastCheckResult = $checkResult;
+        }
+
+        $backupRepository = $this->backupRepository->getBackupRepositoryById(
+            $createBackup->getBackupRepositoryId()
+        );
+        if($backupRepository !== null && is_string($lastCheckResult)) {
+            $this->eventDispatcher->dispatch(
+                new AfterBackupCheckedEvent($backupRepository, $lastCheckResult),
+                AfterBackupCheckedEvent::NAME
+            );
         }
     }
 

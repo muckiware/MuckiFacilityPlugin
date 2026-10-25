@@ -210,6 +210,7 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
+            <argument type="service" id="event_dispatcher"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\RepositoryStats" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -275,6 +276,7 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <argument type="service" id="event_dispatcher"/>
         </service>
 
         <service id="MuckiFacilityPlugin\Subscriber\BackupRepositorySnapshotSubscriber">

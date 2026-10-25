@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 use MuckiFacilityPlugin\tests\TestCaseBase\Defaults as TestCaseBaseDefaults;
@@ -47,7 +48,8 @@ class BackupTest extends TestCase
             $this->createMock(PluginHelper::class),
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
-            $this->createMock(RepositoryStats::class)
+            $this->createMock(RepositoryStats::class),
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $prepareBackupPaths = $backupService->prepareBackupPaths(TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATHS);
@@ -94,7 +96,8 @@ class BackupTest extends TestCase
             $this->createMock(PluginHelper::class),
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
-            $this->createMock(RepositoryStats::class)
+            $this->createMock(RepositoryStats::class),
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $prepareCreateBackup = $backupService->prepareCreateBackup($backupRepositoryId);
@@ -155,7 +158,8 @@ class BackupTest extends TestCase
             $this->createMock(PluginHelper::class),
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
-            $this->createMock(RepositoryStats::class)
+            $this->createMock(RepositoryStats::class),
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $backupService->createBackup($createBackup);
@@ -185,7 +189,8 @@ class BackupTest extends TestCase
             $this->createMock(PluginHelper::class),
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
-            $repositoryStats
+            $repositoryStats,
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $createBackup = new BackupRepositorySettings();
