@@ -88,6 +88,11 @@ wenn er sie hat — `CompleteFileRunner`/`CompleteFilesRunner`/`Services\Backup`
 Backup-Lauf (anders als beim Restore) nie gesetzt wird und ein direkter Getter-Aufruf mit
 `\Error` abbrechen wuerde.
 
+**Gemeinsame Regelquelle.** `Settings::getOwnDumpPathRejection()` (liefert `?Core\DumpPathRejection`)
+ist die einzige Stelle fuer die Dump-Pfad-Regeln: `resolveOwnDumpPath()` (Fallback im Backup) und
+`DirectoryBrowser::checkDumpPath()` (Warnung in der Administration) nutzen sie beide. Regeln nur
+dort aendern, sonst laufen Backup-Verhalten und Admin-Warnung auseinander.
+
 Das ist kein Schoenheitsthema: der Dump-Ordner wird vor **und** nach jedem DB-Backup per
 `Helper::deleteDirectory()` rekursiv geloescht. Diese Methode folgt keinen Symlinks mehr (weder
 als Top-Level-Pfad noch beim Durchlaufen), gibt `bool` zurueck statt `void`, und beide Aufrufer
@@ -178,6 +183,13 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `POST /api/_action/muwa/manage/snapshots` | `ManageController::getSnapshots` | — |
 | `POST /api/_action/muwa/remove/snapshots` | `ManageController::removeSnapshots` | Snapshot-Tab |
 | `GET /api/_action/muwa/repository/stats/{id}` | `ManageController::getRepositoryStats` | — (live `restic stats`, von der Administration nicht mehr aufgerufen; siehe Repository-Status-Tab) |
+| `POST /api/_action/muwa/filesystem/directories` | `FilesystemController::listDirectories` | Ordner-Browser (Pfad-Felder), ACL `muwa_backup_repository:update` |
+| `POST /api/_action/muwa/filesystem/check-dump-path` | `FilesystemController::checkDumpPath` | Live-Warnung am Dump-Pfad, ACL `muwa_backup_repository:update` |
+
+Die beiden `filesystem`-Routes antworten bei ungueltiger Eingabe mit 400 `MUWA_INVALID_PATH`.
+`Services\DirectoryBrowser` ist rein lesend und listet nur Ordner: logische Pfade ohne
+`realpath()`, bei nicht existierendem Pfad der naechste vorhandene Elternordner, die Liste wird auf
+`MAX_ENTRIES` (1000) gekuerzt (`truncated`-Flag), Namen die kein gueltiges UTF-8 sind werden uebersprungen.
 
 ## CLI-Commands
 
@@ -241,6 +253,13 @@ aus, wenn `showDashboardWidget` nicht gesetzt ist oder die ACL-Rolle
 `muwa_backup_repository.viewer` fehlt. Check-Status-Faerbung: `no errors were found` → success,
 `error|fatal|fail` → danger, sonst info. Achtung: `system:config:set` ohne `--json` speichert den
 String `"true"` — das Widget akzeptiert beides.
+
+**Ordner-Browser.** `component/muwa-backup-repository-path-field` haengt unter dem Textfeld ein
+Dropdown (teleported, `position: fixed`) zur Ordnerauswahl und ruft die `filesystem`-Routes auf.
+Am Dump-Pfad zeigt es live die Warnung (abgelehnt / nicht beschreibbar). Nur fuer Rolle `editor`
+(`update`-Recht). Einsatz: Create-Seite — Repository Path, Restore Path, Database dump path,
+Backup Paths; Detail-Tab Configuration — Restore Path, Database dump path, Backup Paths. Der
+Repository Path bleibt auf der Detail-Seite gesperrt.
 
 ## Tests & Statische Analyse
 

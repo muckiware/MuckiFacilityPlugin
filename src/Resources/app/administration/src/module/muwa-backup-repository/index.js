@@ -11,6 +11,7 @@ import deDE from './snippet/de-DE.json';
 import enGB from './snippet/en-GB.json';
 
 Shopware.Component.register('muwa-backup-repository-entity-path-select', () => import('./component/muwa-backup-repository-entity-path-select'));
+Shopware.Component.register('muwa-backup-repository-path-field', () => import('./component/muwa-backup-repository-path-field'));
 
 Shopware.Module.register('muwa-backup-repository', {
 

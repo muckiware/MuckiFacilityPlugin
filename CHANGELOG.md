@@ -12,6 +12,15 @@ All notable changes to this project will be documented in this file.
   links to that tab.
 - Plugin setting `showDashboardWidget` (card "Dashboard", default off) to switch the widget on.
   The widget also stays hidden for users without the `muwa_backup_repository.viewer` role.
+- Server folder browser for the path fields in the administration: Repository Path (create page
+  only; it stays locked on the detail page), Restore Path, Database dump path and Backup Paths
+  open a dropdown under the field to pick a folder. Read-only and folders only — it shows what
+  the PHP process is allowed to read. The Database dump path additionally shows a live warning
+  when the path would be rejected (fallback to the default) or is not writable.
+- Two new API routes behind the browser, both requiring `muwa_backup_repository:update`:
+  `POST /api/_action/muwa/filesystem/directories` and
+  `POST /api/_action/muwa/filesystem/check-dump-path`. Invalid input returns 400
+  `MUWA_INVALID_PATH`.
 
 ## [0.7.0]
 

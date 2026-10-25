@@ -19,6 +19,7 @@ use Shopware\Core\DevOps\Environment\EnvironmentHelper;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Core\ConfigPath;
+use MuckiFacilityPlugin\Core\DumpPathRejection;
 
 class Settings implements SettingsInterface
 {
@@ -28,8 +29,7 @@ class Settings implements SettingsInterface
      * @var array<int, string>
      */
     private const BLOCKED_ABSOLUTE_PATHS = [
-        '/etc', '/proc', '/sys', '/boot', '/root', '/bin', '/sbin', '/usr', '/lib', '/lib64',
-        '/dev', '/run',
+        '/etc', '/proc', '/sys', '/boot', '/root', '/bin', '/sbin', '/usr', '/lib', '/lib64', '/dev', '/run',
         '/var/log', '/var/lib', '/var/run', '/var/spool', '/var/cache', '/var/backups',
     ];
 
@@ -143,6 +143,60 @@ class Settings implements SettingsInterface
         ?string $restorePath = null
     ): ?string
     {
+        if(trim((string) $ownDumpPath) === '') {
+            return null;
+        }
+
+        $resolvedDumpPath = $this->resolveDumpPathValue((string) $ownDumpPath);
+        $rejection = $this->getOwnDumpPathRejection($ownDumpPath, $repositoryPath, $restorePath);
+        if($rejection === null) {
+            return $resolvedDumpPath;
+        }
+
+        $this->logger->error($this->getRejectionLogMessage($rejection, $resolvedDumpPath, rtrim(trim((string) $ownDumpPath), '/')), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+
+        return null;
+    }
+
+    protected function getRejectionLogMessage(DumpPathRejection $rejection, string $resolvedDumpPath, string $configuredValue): string
+    {
+        return match ($rejection) {
+            DumpPathRejection::ROOT_DIRECTORY =>
+                'Own database dump path must not be the root directory, using default path instead',
+            DumpPathRejection::RELATIVE_SEGMENT =>
+                'Own database dump path must not contain relative path segments, using default path instead: '.$configuredValue,
+            DumpPathRejection::PROJECT_DIR_OR_PARENT =>
+                'Own database dump path must not be the project dir or a parent of it, using default path instead: '.$resolvedDumpPath,
+            DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH =>
+                'Own database dump path must not overlap with the repository or restore path, using default path instead: '.$resolvedDumpPath,
+            DumpPathRejection::BLOCKED_PATH =>
+                'Own database dump path must not be a system directory or a sensitive project directory, using default path instead: '.$resolvedDumpPath,
+        };
+    }
+
+    /**
+     * Trims the value, strips trailing slashes and resolves relative values against the project dir.
+     */
+    public function resolveDumpPathValue(string $ownDumpPath): string
+    {
+        $ownDumpPath = rtrim(trim($ownDumpPath), '/');
+        if(str_starts_with($ownDumpPath, '/')) {
+            return $ownDumpPath;
+        }
+
+        return rtrim($this->kernel->getProjectDir(), '/').'/'.$ownDumpPath;
+    }
+
+    /**
+     * Returns why a configured dump path would be rejected, or null when it is allowed or empty
+     * (an empty value means the default path applies). Does not log.
+     */
+    public function getOwnDumpPathRejection(
+        ?string $ownDumpPath,
+        ?string $repositoryPath = null,
+        ?string $restorePath = null
+    ): ?DumpPathRejection
+    {
         $ownDumpPath = trim((string) $ownDumpPath);
         if($ownDumpPath === '') {
             return null;
@@ -150,34 +204,18 @@ class Settings implements SettingsInterface
 
         $ownDumpPath = rtrim($ownDumpPath, '/');
         if($ownDumpPath === '') {
-            $this->logger->error(
-                'Own database dump path must not be the root directory, using default path instead',
-                PluginDefaults::DEFAULT_LOGGER_CONFIG
-            );
-            return null;
+            return DumpPathRejection::ROOT_DIRECTORY;
         }
 
         if($this->hasRelativePathSegment($ownDumpPath)) {
-            $this->logger->error(
-                'Own database dump path must not contain relative path segments, using default path instead: '.$ownDumpPath,
-                PluginDefaults::DEFAULT_LOGGER_CONFIG
-            );
-            return null;
+            return DumpPathRejection::RELATIVE_SEGMENT;
         }
 
         $projectDir = rtrim($this->kernel->getProjectDir(), '/');
-        if(str_starts_with($ownDumpPath, '/')) {
-            $resolvedDumpPath = $ownDumpPath;
-        } else {
-            $resolvedDumpPath = $projectDir.'/'.$ownDumpPath;
-        }
+        $resolvedDumpPath = $this->resolveDumpPathValue($ownDumpPath);
 
         if(str_starts_with($projectDir.'/', $resolvedDumpPath.'/')) {
-            $this->logger->error(
-                'Own database dump path must not be the project dir or a parent of it, using default path instead: '.$resolvedDumpPath,
-                PluginDefaults::DEFAULT_LOGGER_CONFIG
-            );
-            return null;
+            return DumpPathRejection::PROJECT_DIR_OR_PARENT;
         }
 
         // The dump path and the repository's own storage must not overlap in either direction:
@@ -186,23 +224,15 @@ class Settings implements SettingsInterface
         // is a realistic way to end up here.
         foreach (array_filter([$repositoryPath, $restorePath]) as $protectedPath) {
             if($this->pathsOverlap($resolvedDumpPath, rtrim($protectedPath, '/'))) {
-                $this->logger->error(
-                    'Own database dump path must not overlap with the repository or restore path, using default path instead: '.$resolvedDumpPath,
-                    PluginDefaults::DEFAULT_LOGGER_CONFIG
-                );
-                return null;
+                return DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH;
             }
         }
 
         if($this->isBlockedPath($resolvedDumpPath, $projectDir)) {
-            $this->logger->error(
-                'Own database dump path must not be a system directory or a sensitive project directory, using default path instead: '.$resolvedDumpPath,
-                PluginDefaults::DEFAULT_LOGGER_CONFIG
-            );
-            return null;
+            return DumpPathRejection::BLOCKED_PATH;
         }
 
-        return $resolvedDumpPath;
+        return null;
     }
 
     protected function hasRelativePathSegment(string $path): bool

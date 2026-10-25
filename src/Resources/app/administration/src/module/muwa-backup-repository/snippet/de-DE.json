@@ -128,6 +128,25 @@
     "backupPaths": {
       "deletePathLabel": "Pfad entfernen"
     },
+    "pathField": {
+      "openBrowser": "Ordner auf dem Server durchsuchen",
+      "chooseFolder": "Diesen Ordner wählen",
+      "parentFolder": "Übergeordneter Ordner",
+      "noPermission": "keine Leserechte",
+      "empty": "Keine Unterordner",
+      "truncated": "Liste gekürzt – Pfad weiter eintippen",
+      "loadError": "Der Ordner konnte nicht geladen werden.",
+      "invalidPath": "Pfad ungültig oder Ordner nicht lesbar",
+      "isLink": "Symbolischer Link",
+      "dumpPath": {
+        "rootDirectory": "Das Wurzelverzeichnis kann nicht als Dump-Pfad verwendet werden. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
+        "relativeSegment": "Der Pfad darf keine Segmente \".\" oder \"..\" enthalten. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
+        "projectDirOrParent": "Das Shop-Verzeichnis oder eines seiner Elternverzeichnisse kann nicht als Dump-Pfad verwendet werden. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
+        "overlapsRepositoryOrRestorePath": "Der Dump-Pfad überschneidet sich mit dem Repository-Pfad oder dem Restore-Pfad. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
+        "blockedPath": "Dieses Verzeichnis ist geschützt und kann nicht als Dump-Pfad verwendet werden. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
+        "notWritable": "Der Ordner (bzw. sein nächster existierender Elternordner) ist für den Webserver-User nicht beschreibbar. Das Backup fällt dann ggf. auf den Standardpfad var/db/backup zurück."
+      }
+    },
     "restore": {
       "errorTitle": "Speicherproblem aufgetreten",
       "error-message": "Ein Fehler ist aufgetreten",
