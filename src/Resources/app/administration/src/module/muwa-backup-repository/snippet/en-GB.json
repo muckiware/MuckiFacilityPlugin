@@ -48,6 +48,7 @@
       "column-created-at": "Created at",
       "column-updated-at": "Updated at",
       "column-check-status": "Check Status",
+      "column-last-backup-at": "Last backup run",
       "textDeleteSnapshotConfirm": "Are you sure you want to delete the snapshot \"{snapshotShortId}\"?",
       "totalFileSizeLabel": "Total File Size",
       "stats": "Repository Status",
@@ -141,11 +142,17 @@
     "dashboard": {
       "title": "Backup status",
       "repositoryLabel": "Repository",
+      "lastBackupAtLabel": "Last backup run",
       "noStats": "No status",
       "noCheck": "No check",
       "checkOk": "OK",
       "emptyTitle": "No active backup repositories",
       "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories."
+    },
+    "notification": {
+      "backupStarted": "Backup “{name}” started.",
+      "backupSucceeded": "Backup “{name}” completed successfully.",
+      "backupFailed": "Backup “{name}” failed: {error}"
     },
     "schedule": {
       "title": "Automatic backup",
