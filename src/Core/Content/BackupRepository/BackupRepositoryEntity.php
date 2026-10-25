@@ -71,6 +71,18 @@ class BackupRepositoryEntity extends Entity
      */
     protected ?string $dbDumpPath = null;
 
+    protected string $preBackupCommandType = 'none';
+
+    protected string $preBackupCommand = '';
+
+    protected bool $preBackupFailOnError = true;
+
+    protected string $postBackupCommandType = 'none';
+
+    protected string $postBackupCommand = '';
+
+    protected bool $postBackupFailOnError = true;
+
     /**
      * @var array<BackupPathEntity>
      */
@@ -256,6 +268,66 @@ class BackupRepositoryEntity extends Entity
     public function setDbDumpPath(?string $dbDumpPath): void
     {
         $this->dbDumpPath = $dbDumpPath;
+    }
+
+    public function getPreBackupCommandType(): string
+    {
+        return $this->preBackupCommandType;
+    }
+
+    public function setPreBackupCommandType(string $preBackupCommandType): void
+    {
+        $this->preBackupCommandType = $preBackupCommandType;
+    }
+
+    public function getPreBackupCommand(): string
+    {
+        return $this->preBackupCommand;
+    }
+
+    public function setPreBackupCommand(string $preBackupCommand): void
+    {
+        $this->preBackupCommand = $preBackupCommand;
+    }
+
+    public function isPreBackupFailOnError(): bool
+    {
+        return $this->preBackupFailOnError;
+    }
+
+    public function setPreBackupFailOnError(bool $preBackupFailOnError): void
+    {
+        $this->preBackupFailOnError = $preBackupFailOnError;
+    }
+
+    public function getPostBackupCommandType(): string
+    {
+        return $this->postBackupCommandType;
+    }
+
+    public function setPostBackupCommandType(string $postBackupCommandType): void
+    {
+        $this->postBackupCommandType = $postBackupCommandType;
+    }
+
+    public function getPostBackupCommand(): string
+    {
+        return $this->postBackupCommand;
+    }
+
+    public function setPostBackupCommand(string $postBackupCommand): void
+    {
+        $this->postBackupCommand = $postBackupCommand;
+    }
+
+    public function isPostBackupFailOnError(): bool
+    {
+        return $this->postBackupFailOnError;
+    }
+
+    public function setPostBackupFailOnError(bool $postBackupFailOnError): void
+    {
+        $this->postBackupFailOnError = $postBackupFailOnError;
     }
 
     /**

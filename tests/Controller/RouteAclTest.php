@@ -70,6 +70,11 @@ class RouteAclTest extends TestCase
                 'listDirectories',
                 ['muwa_backup_repository:update'],
             ],
+            'filesystem files' => [
+                FilesystemController::class,
+                'listFiles',
+                ['muwa_backup_repository:update'],
+            ],
             'filesystem check dump path' => [
                 FilesystemController::class,
                 'checkDumpPath',

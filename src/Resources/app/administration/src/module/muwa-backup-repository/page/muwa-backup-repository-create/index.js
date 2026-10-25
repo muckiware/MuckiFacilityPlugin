@@ -27,6 +27,11 @@ Component.register('muwa-backup-repository-create', {
                 { value: 'completeDatabaseSingleFile', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSingleFile') },
                 { value: 'completeDatabaseSeparateFiles', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSeparateFiles') }
             ],
+            backupCommandTypes: [
+                { value: 'none', label: this.$tc('muwa-backup-repository.commands.types.none') },
+                { value: 'batch', label: this.$tc('muwa-backup-repository.commands.types.batch') },
+                { value: 'php', label: this.$tc('muwa-backup-repository.commands.types.php') }
+            ],
             processSuccess: false,
             httpClient: null,
             requestInitRepository: '/_action/muwa/backup/repository/init'
@@ -109,6 +114,17 @@ Component.register('muwa-backup-repository-create', {
             });
         },
 
+        backupCommandTypeOptions() {
+            return this.backupCommandTypes.map((option) => {
+                return {
+                    id: option.value,
+                    name: option.label,
+                    value: option.value,
+                    label: option.label,
+                };
+            });
+        },
+
         getBackupPaths() {
             return this.backupRepository.backupPaths;
         },
@@ -143,6 +159,12 @@ Component.register('muwa-backup-repository-create', {
             this.backupRepository.forgetWeekly = 5;
             this.backupRepository.forgetMonthly = 12;
             this.backupRepository.forgetYearly = 35;
+            this.backupRepository.preBackupCommandType = 'none';
+            this.backupRepository.preBackupCommand = '';
+            this.backupRepository.preBackupFailOnError = true;
+            this.backupRepository.postBackupCommandType = 'none';
+            this.backupRepository.postBackupCommand = '';
+            this.backupRepository.postBackupFailOnError = true;
             this.backupRepository.backupPaths= [];
         },
 

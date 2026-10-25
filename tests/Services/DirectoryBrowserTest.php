@@ -57,6 +57,30 @@ class DirectoryBrowserTest extends TestCase
         static::assertFalse($result['truncated']);
     }
 
+    public function testListFilesReturnsReadableShellScriptsOnly(): void
+    {
+        file_put_contents($this->root . '/before.sh', '#!/bin/bash');
+        file_put_contents($this->root . '/ignored.php', '<?php');
+
+        $result = $this->browser->listFiles($this->root, ['sh']);
+
+        static::assertSame(['before.sh'], array_column($result['files'], 'name'));
+        static::assertSame($this->root . '/before.sh', $result['files'][0]['path']);
+        static::assertTrue($result['files'][0]['readable']);
+        static::assertSame(['A'], array_column($result['directories'], 'name'));
+    }
+
+    public function testListFilesUsesParentWhenCurrentValueIsAFile(): void
+    {
+        $file = $this->root . '/before.sh';
+        file_put_contents($file, '#!/bin/bash');
+
+        $result = $this->browser->listFiles($file, ['sh']);
+
+        static::assertSame($this->root, $result['path']);
+        static::assertSame(['before.sh'], array_column($result['files'], 'name'));
+    }
+
     public function testListSkipsDirectoriesWithInvalidUtf8Names(): void
     {
         if (@mkdir($this->root . "/B\xfccher") === false) {

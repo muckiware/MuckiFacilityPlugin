@@ -69,6 +69,52 @@ class DirectoryBrowser
     }
 
     /**
+     * @param list<string> $extensions
+     * @return array{
+     *     path: string,
+     *     parent: ?string,
+     *     directories: list<array{name: string, path: string, readable: bool, hidden: bool, link: bool}>,
+     *     files: list<array{name: string, path: string, readable: bool, hidden: bool, link: bool}>,
+     *     truncated: bool
+     * }
+     */
+    public function listFiles(?string $path, array $extensions): array
+    {
+        $listing = $this->listDirectories($path);
+        $extensions = array_values(array_filter(array_map(
+            static fn (mixed $extension): string => strtolower(ltrim((string) $extension, '.')),
+            $extensions
+        ), static fn (string $extension): bool => preg_match('/^[a-z0-9]+$/', $extension) === 1));
+
+        $names = [];
+        foreach (scandir($listing['path']) ?: [] as $name) {
+            if ($name === '.' || $name === '..' || !mb_check_encoding((string) $name, 'UTF-8')) {
+                continue;
+            }
+            $entryPath = ($listing['path'] === '/' ? '' : $listing['path']) . '/' . $name;
+            $extension = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
+            if (is_file($entryPath) && in_array($extension, $extensions, true)) {
+                $names[] = (string) $name;
+            }
+        }
+        usort($names, 'strnatcasecmp');
+        $listing['truncated'] = $listing['truncated'] || count($names) > self::MAX_ENTRIES;
+        $listing['files'] = [];
+        foreach (array_slice($names, 0, self::MAX_ENTRIES) as $name) {
+            $entryPath = ($listing['path'] === '/' ? '' : $listing['path']) . '/' . $name;
+            $listing['files'][] = [
+                'name' => $name,
+                'path' => $entryPath,
+                'readable' => is_readable($entryPath),
+                'hidden' => str_starts_with($name, '.'),
+                'link' => is_link($entryPath),
+            ];
+        }
+
+        return $listing;
+    }
+
+    /**
      * @return array{rejection: ?string, writable: bool, resolvedPath: ?string}
      */
     public function checkDumpPath(?string $dumpPath, ?string $repositoryPath, ?string $restorePath): array

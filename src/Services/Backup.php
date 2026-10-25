@@ -76,7 +76,8 @@ class Backup
         protected ManageService $manageService,
         protected ServicesCliOutput $servicesCliOutput,
         protected RepositoryStats $repositoryStats,
-        protected EventDispatcherInterface $eventDispatcher
+        protected EventDispatcherInterface $eventDispatcher,
+        protected BackupCommandExecutor $backupCommandExecutor
     )
     {
         $this->backupException = new \Exception();
@@ -140,6 +141,12 @@ class Backup
      */
     public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
+        $this->backupCommandExecutor->execute(
+            $createBackup->getPreBackupCommandType(),
+            $createBackup->getPreBackupCommand(),
+            $createBackup->isPreBackupFailOnError()
+        );
+
         $this->eventDispatcher->dispatch(
             new BeforeBackupCreatedEvent($createBackup),
             BeforeBackupCreatedEvent::NAME
@@ -167,6 +174,12 @@ class Backup
         $this->createCheckItem($createBackup);
         $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
         $this->repositoryStats->collectAndSave($createBackup->getBackupRepositoryId());
+
+        $this->backupCommandExecutor->execute(
+            $createBackup->getPostBackupCommandType(),
+            $createBackup->getPostBackupCommand(),
+            $createBackup->isPostBackupFailOnError()
+        );
     }
 
     /**
@@ -388,6 +401,12 @@ class Backup
             $createBackup->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $createBackup->setHostName($backupRepository->getHostname());
             $createBackup->setDbDumpPath($backupRepository->getDbDumpPath());
+            $createBackup->setPreBackupCommandType($backupRepository->getPreBackupCommandType());
+            $createBackup->setPreBackupCommand($backupRepository->getPreBackupCommand());
+            $createBackup->setPreBackupFailOnError($backupRepository->isPreBackupFailOnError());
+            $createBackup->setPostBackupCommandType($backupRepository->getPostBackupCommandType());
+            $createBackup->setPostBackupCommand($backupRepository->getPostBackupCommand());
+            $createBackup->setPostBackupFailOnError($backupRepository->isPostBackupFailOnError());
         }
 
         return $createBackup;

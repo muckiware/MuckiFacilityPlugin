@@ -67,6 +67,11 @@ export default {
             required: false,
             default: false,
         },
+        selectFile: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
         repositoryPath: {
             type: [String, null],
             required: false,
@@ -83,6 +88,7 @@ export default {
         return {
             httpClient: null,
             requestDirectories: '/_action/muwa/filesystem/directories',
+            requestFiles: '/_action/muwa/filesystem/files',
             requestCheckDumpPath: '/_action/muwa/filesystem/check-dump-path',
             isOpen: false,
             isLoading: false,
@@ -293,7 +299,7 @@ export default {
             this.loadErrorDetail = null;
 
             this.httpClient.post(
-                this.requestDirectories,
+                this.selectFile ? this.requestFiles : this.requestDirectories,
                 { path: path || null },
                 { headers: this.getApiHeader() },
             ).then((response) => {
@@ -341,6 +347,14 @@ export default {
                 return;
             }
             this.loadDirectories(directory.path);
+        },
+
+        chooseFile(file) {
+            if (!file || !file.readable) {
+                return;
+            }
+            this.$emit('update:value', file.path);
+            this.closeDropdown();
         },
 
         chooseFolder() {

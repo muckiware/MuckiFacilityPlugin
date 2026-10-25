@@ -27,6 +27,19 @@ class FilesystemControllerTest extends TestCase
         static::assertSame($result, json_decode((string) $response->getContent(), true));
     }
 
+    public function testListFilesReturnsBrowserResult(): void
+    {
+        $result = ['path' => '/mnt', 'parent' => '/', 'directories' => [], 'files' => [], 'truncated' => false];
+        $browser = $this->createMock(DirectoryBrowser::class);
+        $browser->expects(static::once())->method('listFiles')->with('/mnt', ['sh'])->willReturn($result);
+
+        $response = (new FilesystemController($browser))
+            ->listFiles(new RequestDataBag(['path' => '/mnt']), Context::createDefaultContext());
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame($result, json_decode((string) $response->getContent(), true));
+    }
+
     public function testListDirectoriesReturns400OnInvalidPath(): void
     {
         $browser = $this->createMock(DirectoryBrowser::class);

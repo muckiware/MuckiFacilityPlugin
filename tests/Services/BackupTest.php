@@ -23,6 +23,7 @@ use MuckiFacilityPlugin\tests\TestCaseBase\CreateBackup;
 use MuckiFacilityPlugin\Services\Settings as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
+use MuckiFacilityPlugin\Services\BackupCommandExecutor;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
@@ -49,7 +50,8 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $this->createMock(EventDispatcherInterface::class)
+            $this->createMock(EventDispatcherInterface::class),
+            $this->createMock(BackupCommandExecutor::class)
         );
 
         $prepareBackupPaths = $backupService->prepareBackupPaths(TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATHS);
@@ -84,6 +86,12 @@ class BackupTest extends TestCase
             $backupRepositoryId
         );
         $backupRepositoryEntity->setName('Daily backup');
+        $backupRepositoryEntity->setPreBackupCommandType('batch');
+        $backupRepositoryEntity->setPreBackupCommand('/hooks/pre.sh');
+        $backupRepositoryEntity->setPreBackupFailOnError(false);
+        $backupRepositoryEntity->setPostBackupCommandType('php');
+        $backupRepositoryEntity->setPostBackupCommand('cache:clear');
+        $backupRepositoryEntity->setPostBackupFailOnError(true);
         $backupRepository = $this->createMock(BackupRepository::class);
         $backupRepository->method('getBackupRepositoryById')->willReturn($backupRepositoryEntity);
 
@@ -97,7 +105,8 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $this->createMock(EventDispatcherInterface::class)
+            $this->createMock(EventDispatcherInterface::class),
+            $this->createMock(BackupCommandExecutor::class)
         );
 
         $prepareCreateBackup = $backupService->prepareCreateBackup($backupRepositoryId);
@@ -126,6 +135,12 @@ class BackupTest extends TestCase
             $prepareCreateBackup->getRepositoryPath(),
             'BackupRepositoryPath should be equal'
         );
+        static::assertSame('batch', $prepareCreateBackup->getPreBackupCommandType());
+        static::assertSame('/hooks/pre.sh', $prepareCreateBackup->getPreBackupCommand());
+        static::assertFalse($prepareCreateBackup->isPreBackupFailOnError());
+        static::assertSame('php', $prepareCreateBackup->getPostBackupCommandType());
+        static::assertSame('cache:clear', $prepareCreateBackup->getPostBackupCommand());
+        static::assertTrue($prepareCreateBackup->isPostBackupFailOnError());
     }
 
     public function testCreateBackupWithoutFilePathsRunsNoFilesBackup(): void
@@ -159,7 +174,8 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $this->createMock(EventDispatcherInterface::class)
+            $this->createMock(EventDispatcherInterface::class),
+            $this->createMock(BackupCommandExecutor::class)
         );
 
         $backupService->createBackup($createBackup);
@@ -190,7 +206,8 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $repositoryStats,
-            $this->createMock(EventDispatcherInterface::class)
+            $this->createMock(EventDispatcherInterface::class),
+            $this->createMock(BackupCommandExecutor::class)
         );
 
         $createBackup = new BackupRepositorySettings();
@@ -199,5 +216,64 @@ class BackupTest extends TestCase
         $createBackup->setBackupPaths([]);
 
         $backupService->createBackup($createBackup, false);
+    }
+
+    public function testCreateBackupRunsConfiguredCommandsAtOuterBoundaries(): void
+    {
+        $repositoryId = Uuid::randomHex();
+        $settings = new BackupRepositorySettings();
+        $settings->setBackupRepositoryId($repositoryId);
+        $settings->setBackupType(BackupTypes::NONE_DATABASE->value);
+        $settings->setBackupPaths([]);
+        $settings->setPreBackupCommandType('batch');
+        $settings->setPreBackupCommand('/hooks/pre.sh');
+        $settings->setPreBackupFailOnError(true);
+        $settings->setPostBackupCommandType('php');
+        $settings->setPostBackupCommand('cache:clear');
+        $settings->setPostBackupFailOnError(false);
+
+        $runner = $this->createMock(BackupInterface::class);
+        $runner->method('getBackupResults')->willReturn([]);
+        $factory = $this->createMock(BackupRunnerFactory::class);
+        $factory->method('createBackupRunner')->willReturn($runner);
+
+        $sequence = [];
+        $executor = $this->createMock(BackupCommandExecutor::class);
+        $executor->expects(static::exactly(2))
+            ->method('execute')
+            ->willReturnCallback(static function (string $type, string $command, bool $failOnError) use (&$sequence): void {
+                $sequence[] = [$type, $command, $failOnError];
+            });
+        $manageService = $this->createMock(ManageService::class);
+        $manageService->method('saveSnapshots')->willReturnCallback(static function () use (&$sequence): void {
+            $sequence[] = 'snapshots';
+        });
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('collectAndSave')->willReturnCallback(static function () use (&$sequence): void {
+            $sequence[] = 'stats';
+        });
+
+        $service = new BackupService(
+            $this->createMock(LoggerInterface::class),
+            $factory,
+            $this->createMock(BackupRepository::class),
+            $this->createMock(BackupRepositoryChecks::class),
+            $this->createMock(PluginSettings::class),
+            $this->createMock(PluginHelper::class),
+            $manageService,
+            $this->createMock(ServicesCliOutput::class),
+            $repositoryStats,
+            $this->createMock(EventDispatcherInterface::class),
+            $executor
+        );
+
+        $service->createBackup($settings, false);
+
+        static::assertSame([
+            ['batch', '/hooks/pre.sh', true],
+            'snapshots',
+            'stats',
+            ['php', 'cache:clear', false],
+        ], $sequence);
     }
 }

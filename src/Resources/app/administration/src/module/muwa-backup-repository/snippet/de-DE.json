@@ -12,6 +12,27 @@
         "completeDatabaseSingleFile": "Komplette Datenbank (eine Datei)"
       }
     },
+    "commands": {
+      "title": "Kommandos vor und nach dem Backup",
+      "description": "Optional können vor dem vollständigen Backup und nach Check, Snapshot-Synchronisierung und Statistik zusätzliche Kommandos ausgeführt werden.",
+      "typeLabel": "Kommando-Typ",
+      "types": {
+        "none": "Keine Ausführung",
+        "batch": "Batch / Shell-Skript",
+        "php": "PHP / Shopware-CLI-Kommando"
+      },
+      "pre": {
+        "title": "Vor dem Backup"
+      },
+      "post": {
+        "title": "Nach dem Backup"
+      },
+      "batchPathLabel": "Shell-Skript",
+      "batchPathHelpText": "Ausgewählte .sh-Datei wird mit /bin/bash ausgeführt.",
+      "phpCommandLabel": "Shopware-CLI-Kommando",
+      "phpCommandPlaceholder": "z. B. cache:clear",
+      "failOnErrorLabel": "Bei Fehler Backup fehlschlagen lassen"
+    },
     "tabs": {
       "repositoryList": "Backup Repository Konfiguration",
       "config": "Configuration",

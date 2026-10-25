@@ -154,6 +154,12 @@ class InitBackupRepositoryController extends AbstractController
         $repositoryInitInputs->setForgetWeekly((int) $requestDataBag->get('forgetWeekly', 0));
         $repositoryInitInputs->setForgetMonthly((int) $requestDataBag->get('forgetMonthly', 0));
         $repositoryInitInputs->setForgetYearly((int) $requestDataBag->get('forgetYearly', 0));
+        $repositoryInitInputs->setPreBackupCommandType((string) $requestDataBag->get('preBackupCommandType', 'none'));
+        $repositoryInitInputs->setPreBackupCommand(trim((string) $requestDataBag->get('preBackupCommand', '')));
+        $repositoryInitInputs->setPreBackupFailOnError((bool) $requestDataBag->get('preBackupFailOnError', true));
+        $repositoryInitInputs->setPostBackupCommandType((string) $requestDataBag->get('postBackupCommandType', 'none'));
+        $repositoryInitInputs->setPostBackupCommand(trim((string) $requestDataBag->get('postBackupCommand', '')));
+        $repositoryInitInputs->setPostBackupFailOnError((bool) $requestDataBag->get('postBackupFailOnError', true));
         $repositoryInitInputs->setBackupPaths($this->createBackupPaths($requestDataBag));
 
         $dbDumpPath = trim((string) $requestDataBag->get('dbDumpPath', ''));

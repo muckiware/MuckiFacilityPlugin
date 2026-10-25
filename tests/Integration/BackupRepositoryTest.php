@@ -23,6 +23,7 @@ use MuckiFacilityPlugin\Services\Content\RepositoryPasswordResolver;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
 use MuckiFacilityPlugin\Services\Backup as ServicesBackup;
+use MuckiFacilityPlugin\Services\BackupCommandExecutor;
 use MuckiFacilityPlugin\Services\RepositoryStats;
 use MuckiFacilityPlugin\tests\TestCaseBase\Defaults as TestCaseBaseDefaults;
 use MuckiFacilityPlugin\tests\TestCaseBase\InitBackup;
@@ -146,7 +147,8 @@ class BackupRepositoryTest extends TestCase
             $this->createMock(ManageService::class),
             $servicesCliOutputMock,
             $this->createMock(RepositoryStats::class),
-            $this->createMock(EventDispatcherInterface::class)
+            $this->createMock(EventDispatcherInterface::class),
+            $this->createMock(BackupCommandExecutor::class)
         );
 
         $servicesBackup->createBackup($backupRepositorySettings);

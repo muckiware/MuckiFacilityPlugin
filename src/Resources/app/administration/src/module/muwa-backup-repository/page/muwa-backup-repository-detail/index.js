@@ -69,6 +69,11 @@ Component.register('muwa-backup-repository-detail', {
                 { value: 'completeDatabaseSingleFile', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSingleFile') },
                 { value: 'completeDatabaseSeparateFiles', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSeparateFiles') }
             ],
+            backupCommandTypes: [
+                { value: 'none', label: this.$tc('muwa-backup-repository.commands.types.none') },
+                { value: 'batch', label: this.$tc('muwa-backup-repository.commands.types.batch') },
+                { value: 'php', label: this.$tc('muwa-backup-repository.commands.types.php') }
+            ],
             isBackupProcessInProgress: false,
             isBackupProcessSuccess: false,
             isBackupProcessDisabled: true,
@@ -445,6 +450,17 @@ Component.register('muwa-backup-repository-detail', {
          */
         typeOptions() {
             return this.type.map((option) => {
+                return {
+                    id: option.value,
+                    name: option.label,
+                    value: option.value,
+                    label: option.label,
+                };
+            });
+        },
+
+        backupCommandTypeOptions() {
+            return this.backupCommandTypes.map((option) => {
                 return {
                     id: option.value,
                     name: option.label,

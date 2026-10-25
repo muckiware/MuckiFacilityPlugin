@@ -6,7 +6,9 @@ namespace MuckiFacilityPlugin\tests\Core\Content;
 
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Field;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\WriteProtected;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
@@ -80,6 +82,16 @@ class BackupRepositoryDefinitionTest extends TestCase
             $reflectionProperty->getValue($field),
             'Ciphertext needs more room than the former varchar(255)'
         );
+    }
+
+    public function testBackupCommandConfigurationFieldsExist(): void
+    {
+        foreach (['preBackupCommandType', 'preBackupCommand', 'postBackupCommandType', 'postBackupCommand'] as $field) {
+            self::assertInstanceOf(StringField::class, $this->getField($field));
+        }
+        foreach (['preBackupFailOnError', 'postBackupFailOnError'] as $field) {
+            self::assertInstanceOf(BoolField::class, $this->getField($field));
+        }
     }
 
     /**

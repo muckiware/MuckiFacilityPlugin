@@ -49,6 +49,24 @@ class FilesystemController extends AbstractController
     }
 
     #[Route(
+        path: '/api/_action/muwa/filesystem/files',
+        name: 'api.action.muwa.filesystem.files',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:update']],
+        methods: ['POST']
+    )]
+    public function listFiles(RequestDataBag $data, Context $context): JsonResponse
+    {
+        try {
+            return new JsonResponse($this->directoryBrowser->listFiles(
+                $this->getString($data, 'path'),
+                ['sh']
+            ));
+        } catch (InvalidBrowsePathException $exception) {
+            return $this->invalidPathResponse($exception);
+        }
+    }
+
+    #[Route(
         path: '/api/_action/muwa/filesystem/check-dump-path',
         name: 'api.action.muwa.filesystem.check_dump_path',
         defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:update']],

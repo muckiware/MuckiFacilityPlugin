@@ -246,6 +246,85 @@
                         </sw-text-field>
 
                     </sw-card>
+
+                    <sw-card
+                        positionIdentifier="muwaBackupRepositoryCommands"
+                        v-if="backupRepository && tab === 'backupRepositoryConfig'"
+                        :title="$tc('muwa-backup-repository.commands.title')"
+                    >
+                        <p>{{ $tc('muwa-backup-repository.commands.description') }}</p>
+                        <sw-container style="grid-template-columns: 1fr 1fr; gap: 30px; place-items: start stretch;">
+                            <div>
+                                <h3>{{ $tc('muwa-backup-repository.commands.pre.title') }}</h3>
+                                <sw-select-field
+                                    v-if="isV6700"
+                                    v-model="backupRepository.preBackupCommandType"
+                                    :options="backupCommandTypeOptions"
+                                    :label="$tc('muwa-backup-repository.commands.typeLabel')"
+                                />
+                                <sw-select-field
+                                    v-if="isV6600 && !isV6700"
+                                    v-model:value="backupRepository.preBackupCommandType"
+                                    :options="backupCommandTypeOptions"
+                                    :label="$tc('muwa-backup-repository.commands.typeLabel')"
+                                />
+                                <muwa-backup-repository-path-field
+                                    v-if="backupRepository.preBackupCommandType === 'batch'"
+                                    v-model:value="backupRepository.preBackupCommand"
+                                    :label="$tc('muwa-backup-repository.commands.batchPathLabel')"
+                                    :help-text="$tc('muwa-backup-repository.commands.batchPathHelpText')"
+                                    select-file
+                                    required
+                                />
+                                <sw-text-field
+                                    v-if="backupRepository.preBackupCommandType === 'php'"
+                                    v-model:value="backupRepository.preBackupCommand"
+                                    :label="$tc('muwa-backup-repository.commands.phpCommandLabel')"
+                                    :placeholder="$tc('muwa-backup-repository.commands.phpCommandPlaceholder')"
+                                    required
+                                />
+                                <sw-switch-field
+                                    v-model:value="backupRepository.preBackupFailOnError"
+                                    :label="$tc('muwa-backup-repository.commands.failOnErrorLabel')"
+                                />
+                            </div>
+                            <div>
+                                <h3>{{ $tc('muwa-backup-repository.commands.post.title') }}</h3>
+                                <sw-select-field
+                                    v-if="isV6700"
+                                    v-model="backupRepository.postBackupCommandType"
+                                    :options="backupCommandTypeOptions"
+                                    :label="$tc('muwa-backup-repository.commands.typeLabel')"
+                                />
+                                <sw-select-field
+                                    v-if="isV6600 && !isV6700"
+                                    v-model:value="backupRepository.postBackupCommandType"
+                                    :options="backupCommandTypeOptions"
+                                    :label="$tc('muwa-backup-repository.commands.typeLabel')"
+                                />
+                                <muwa-backup-repository-path-field
+                                    v-if="backupRepository.postBackupCommandType === 'batch'"
+                                    v-model:value="backupRepository.postBackupCommand"
+                                    :label="$tc('muwa-backup-repository.commands.batchPathLabel')"
+                                    :help-text="$tc('muwa-backup-repository.commands.batchPathHelpText')"
+                                    select-file
+                                    required
+                                />
+                                <sw-text-field
+                                    v-if="backupRepository.postBackupCommandType === 'php'"
+                                    v-model:value="backupRepository.postBackupCommand"
+                                    :label="$tc('muwa-backup-repository.commands.phpCommandLabel')"
+                                    :placeholder="$tc('muwa-backup-repository.commands.phpCommandPlaceholder')"
+                                    required
+                                />
+                                <sw-switch-field
+                                    v-model:value="backupRepository.postBackupFailOnError"
+                                    :label="$tc('muwa-backup-repository.commands.failOnErrorLabel')"
+                                />
+                            </div>
+                        </sw-container>
+                    </sw-card>
+
                     <sw-card positionIdentifier="muwaBackupRepositoryBackupPaths" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.backupPaths')">
                         <sw-button
                             v-tooltip="{

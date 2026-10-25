@@ -12,6 +12,27 @@
         "completeDatabaseSingleFile": "Complete database (single file)"
       }
     },
+    "commands": {
+      "title": "Commands before and after backup",
+      "description": "Optionally run commands before the full backup and after its check, snapshot synchronization, and statistics collection.",
+      "typeLabel": "Command type",
+      "types": {
+        "none": "Do not run a command",
+        "batch": "Batch / shell script",
+        "php": "PHP / Shopware CLI command"
+      },
+      "pre": {
+        "title": "Before backup"
+      },
+      "post": {
+        "title": "After backup"
+      },
+      "batchPathLabel": "Shell script",
+      "batchPathHelpText": "The selected .sh file is executed with /bin/bash.",
+      "phpCommandLabel": "Shopware CLI command",
+      "phpCommandPlaceholder": "e.g. cache:clear",
+      "failOnErrorLabel": "Fail backup when command fails"
+    },
     "tabs": {
       "repositoryList": "Backup Repository Configuration",
       "config": "Configuration",

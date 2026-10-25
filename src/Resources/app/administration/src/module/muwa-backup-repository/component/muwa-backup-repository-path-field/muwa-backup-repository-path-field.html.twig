@@ -130,8 +130,34 @@
                         </span>
                     </button>
 
+                    <button
+                        v-for="file in (listing.files || [])"
+                        :key="file.path"
+                        type="button"
+                        class="muwa-backup-repository-path-field__row"
+                        :class="{
+                            'is--hidden': file.hidden,
+                            'is--disabled': !file.readable,
+                        }"
+                        :disabled="!file.readable"
+                        @click="chooseFile(file)"
+                    >
+                        <sw-icon
+                            :name="file.readable ? 'regular-file' : 'regular-lock'"
+                            size="16px"
+                        />
+                        <span class="muwa-backup-repository-path-field__row-name">{{ file.name }}</span>
+                        <sw-icon
+                            v-if="file.link"
+                            class="muwa-backup-repository-path-field__row-link"
+                            name="regular-link"
+                            size="12px"
+                            :title="$t('muwa-backup-repository.pathField.isLink')"
+                        />
+                    </button>
+
                     <div
-                        v-if="!isLoading && listing.directories.length === 0"
+                        v-if="!isLoading && listing.directories.length === 0 && (!listing.files || listing.files.length === 0)"
                         class="muwa-backup-repository-path-field__info"
                     >
                         {{ $t('muwa-backup-repository.pathField.empty') }}
@@ -149,6 +175,7 @@
             <div class="muwa-backup-repository-path-field__footer">
                 <span class="muwa-backup-repository-path-field__current">{{ listing ? listing.path : '' }}</span>
                 <sw-button
+                    v-if="!selectFile"
                     variant="primary"
                     size="small"
                     :disabled="!listing || isLoading"
