@@ -25,6 +25,12 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service id="MuckiFacilityPlugin\Controller\BatchFileController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\BatchFileUploader"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service id="MuckiFacilityPlugin\Controller\FilesystemController" public="true">
             <argument type="service" id="MuckiFacilityPlugin\Services\DirectoryBrowser"/>
             <call method="setContainer">
@@ -211,6 +217,9 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
             <argument type="service" id="event_dispatcher"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\BatchFileUploader">
+            <argument type="service" id="kernel"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\BackupCommandExecutor">
             <argument type="service" id="Psr\Log\LoggerInterface"/>

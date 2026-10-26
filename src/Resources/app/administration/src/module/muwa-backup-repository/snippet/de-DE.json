@@ -28,7 +28,12 @@
         "title": "Nach dem Backup"
       },
       "batchPathLabel": "Shell-Skript",
-      "batchPathHelpText": "Ausgewählte .sh-Datei wird mit /bin/bash ausgeführt.",
+      "batchPathHelpText": "Ausgewählte oder hochgeladene .sh-Datei wird mit /bin/bash ausgeführt.",
+      "batchUploadButton": "Shell-Skript hochladen",
+      "batchUploadSuccess": "Shell-Skript wurde hochgeladen und der Pfad übernommen.",
+      "batchArgumentsLabel": "Parameter",
+      "batchArgumentsHelpText": "Parameter werden getrennt vom Skriptpfad übergeben. Werte mit Leerzeichen können in einfache oder doppelte Anführungszeichen gesetzt werden.",
+      "batchArgumentsPlaceholder": "/var/www/html --mode \"vollständig\"",
       "phpCommandLabel": "Shopware-CLI-Kommando",
       "phpCommandPlaceholder": "z. B. cache:clear",
       "failOnErrorLabel": "Bei Fehler Backup fehlschlagen lassen"

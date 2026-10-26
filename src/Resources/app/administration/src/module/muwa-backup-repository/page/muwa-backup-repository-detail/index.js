@@ -59,6 +59,10 @@ Component.register('muwa-backup-repository-detail', {
             schedule: { enabled: false, cronExpression: '0 2 * * *', timezone: 'UTC', status: 'inactive', lastExecutionTime: null, nextExecutionTime: null, lastError: null },
             timezoneOptions: [],
             isLoading: false,
+            isBatchUploadLoading: {
+                preBackupCommand: false,
+                postBackupCommand: false,
+            },
             isStatsLoading: false,
             showDeleteModal: false,
             isSaveSuccessful: false,
@@ -78,6 +82,7 @@ Component.register('muwa-backup-repository-detail', {
             isBackupProcessSuccess: false,
             isBackupProcessDisabled: true,
             requestBackupProcess: '/_action/muwa/backup/process',
+            requestBatchUpload: '/_action/muwa/filesystem/batch-file',
             requestSchedule: '/_action/muwa/backup',
             requestRestoreProcess: '/_action/muwa/restore/process',
             requestRemoveSnapshots: '/_action/muwa/remove/snapshots',
@@ -480,6 +485,45 @@ Component.register('muwa-backup-repository-detail', {
     },
 
     methods: {
+
+        onBatchFileSelected(event, commandField) {
+            const [file] = event.target.files;
+            event.target.value = '';
+
+            if (file) {
+                this.uploadBatchFile(file, commandField);
+            }
+        },
+
+        async uploadBatchFile(file, commandField) {
+            const formData = new FormData();
+            formData.append('file', file);
+            const headers = { ...this.getApiHeader() };
+            delete headers['Content-Type'];
+            this.isBatchUploadLoading[commandField] = true;
+
+            try {
+                const response = await this.httpClient.post(this.requestBatchUpload, formData, { headers });
+                this.backupRepository[commandField] = response.data.path;
+                this.createNotificationSuccess({
+                    title: this.$tc('global.default.success'),
+                    message: this.$tc('muwa-backup-repository.commands.batchUploadSuccess'),
+                });
+            } catch (exception) {
+                this.createNotificationError({
+                    title: this.$tc('global.default.error'),
+                    message: this.getErrorMessage(exception),
+                });
+            } finally {
+                this.isBatchUploadLoading[commandField] = false;
+            }
+        },
+
+        getErrorMessage(exception) {
+            const detail = exception?.response?.data?.errors?.[0]?.detail;
+
+            return detail || exception?.message || String(exception);
+        },
 
         createdComponent() {
 

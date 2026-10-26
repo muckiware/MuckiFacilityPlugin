@@ -16,17 +16,19 @@ class BackupCommandSubscriberTest extends TestCase
         $settings = new BackupRepositorySettings();
         $settings->setPreBackupCommandType('batch');
         $settings->setPreBackupCommand('/hooks/pre.sh');
+        $settings->setPreBackupCommandArguments('/var/www/html --mode fast');
         $settings->setPreBackupFailOnError(true);
         $settings->setPostBackupCommandType('php');
         $settings->setPostBackupCommand('cache:clear');
+        $settings->setPostBackupCommandArguments('ignored for php');
         $settings->setPostBackupFailOnError(false);
 
         $calls = [];
         $executor = $this->createMock(BackupCommandExecutor::class);
         $executor->expects(static::exactly(2))
             ->method('execute')
-            ->willReturnCallback(static function (string $type, string $command, bool $failOnError) use (&$calls): void {
-                $calls[] = [$type, $command, $failOnError];
+            ->willReturnCallback(static function (string $type, string $command, bool $failOnError, string $arguments) use (&$calls): void {
+                $calls[] = [$type, $command, $failOnError, $arguments];
             });
 
         $dispatcher = new EventDispatcher();
@@ -36,8 +38,8 @@ class BackupCommandSubscriberTest extends TestCase
         $dispatcher->dispatch(new AfterBackupCreatedEvent($settings, []), AfterBackupCreatedEvent::NAME);
 
         static::assertSame([
-            ['batch', '/hooks/pre.sh', true],
-            ['php', 'cache:clear', false],
+            ['batch', '/hooks/pre.sh', true, '/var/www/html --mode fast'],
+            ['php', 'cache:clear', false, 'ignored for php'],
         ], $calls);
     }
 }

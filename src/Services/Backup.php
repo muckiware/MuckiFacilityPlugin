@@ -390,9 +390,11 @@ class Backup
             $createBackup->setDbDumpPath($backupRepository->getDbDumpPath());
             $createBackup->setPreBackupCommandType($backupRepository->getPreBackupCommandType());
             $createBackup->setPreBackupCommand($backupRepository->getPreBackupCommand());
+            $createBackup->setPreBackupCommandArguments($backupRepository->getPreBackupCommandArguments());
             $createBackup->setPreBackupFailOnError($backupRepository->isPreBackupFailOnError());
             $createBackup->setPostBackupCommandType($backupRepository->getPostBackupCommandType());
             $createBackup->setPostBackupCommand($backupRepository->getPostBackupCommand());
+            $createBackup->setPostBackupCommandArguments($backupRepository->getPostBackupCommandArguments());
             $createBackup->setPostBackupFailOnError($backupRepository->isPostBackupFailOnError());
         }
 

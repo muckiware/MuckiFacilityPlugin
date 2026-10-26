@@ -38,7 +38,8 @@ class BackupCommandSubscriber implements EventSubscriberInterface
         $this->backupCommandExecutor->execute(
             $settings->getPreBackupCommandType(),
             $settings->getPreBackupCommand(),
-            $settings->isPreBackupFailOnError()
+            $settings->isPreBackupFailOnError(),
+            $settings->getPreBackupCommandArguments()
         );
     }
 
@@ -49,7 +50,8 @@ class BackupCommandSubscriber implements EventSubscriberInterface
         $this->backupCommandExecutor->execute(
             $settings->getPostBackupCommandType(),
             $settings->getPostBackupCommand(),
-            $settings->isPostBackupFailOnError()
+            $settings->isPostBackupFailOnError(),
+            $settings->getPostBackupCommandArguments()
         );
     }
 }

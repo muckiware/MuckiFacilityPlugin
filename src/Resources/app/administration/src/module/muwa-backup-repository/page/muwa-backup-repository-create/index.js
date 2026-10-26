@@ -22,6 +22,10 @@ Component.register('muwa-backup-repository-create', {
             backupRepository: {},
             isLoading: false,
             isLoadingInit: false,
+            isBatchUploadLoading: {
+                preBackupCommand: false,
+                postBackupCommand: false,
+            },
             type: [
                 { value: 'noneDatabase', label: this.$tc('muwa-backup-repository.general.types.noneDatabase') },
                 { value: 'completeDatabaseSingleFile', label: this.$tc('muwa-backup-repository.general.types.completeDatabaseSingleFile') },
@@ -34,7 +38,8 @@ Component.register('muwa-backup-repository-create', {
             ],
             processSuccess: false,
             httpClient: null,
-            requestInitRepository: '/_action/muwa/backup/repository/init'
+            requestInitRepository: '/_action/muwa/backup/repository/init',
+            requestBatchUpload: '/_action/muwa/filesystem/batch-file'
         };
     },
 
@@ -140,6 +145,39 @@ Component.register('muwa-backup-repository-create', {
 
     methods: {
 
+        onBatchFileSelected(event, commandField) {
+            const [file] = event.target.files;
+            event.target.value = '';
+
+            if (file) {
+                this.uploadBatchFile(file, commandField);
+            }
+        },
+
+        async uploadBatchFile(file, commandField) {
+            const formData = new FormData();
+            formData.append('file', file);
+            const headers = { ...this.getApiHeader() };
+            delete headers['Content-Type'];
+            this.isBatchUploadLoading[commandField] = true;
+
+            try {
+                const response = await this.httpClient.post(this.requestBatchUpload, formData, { headers });
+                this.backupRepository[commandField] = response.data.path;
+                this.createNotificationSuccess({
+                    title: this.$tc('global.default.success'),
+                    message: this.$tc('muwa-backup-repository.commands.batchUploadSuccess'),
+                });
+            } catch (exception) {
+                this.createNotificationError({
+                    title: this.$tc('global.default.error'),
+                    message: this.getErrorMessage(exception),
+                });
+            } finally {
+                this.isBatchUploadLoading[commandField] = false;
+            }
+        },
+
         createdComponent() {
 
             this.isLoading = true;
@@ -161,9 +199,11 @@ Component.register('muwa-backup-repository-create', {
             this.backupRepository.forgetYearly = 35;
             this.backupRepository.preBackupCommandType = 'none';
             this.backupRepository.preBackupCommand = '';
+            this.backupRepository.preBackupCommandArguments = '';
             this.backupRepository.preBackupFailOnError = true;
             this.backupRepository.postBackupCommandType = 'none';
             this.backupRepository.postBackupCommand = '';
+            this.backupRepository.postBackupCommandArguments = '';
             this.backupRepository.postBackupFailOnError = true;
             this.backupRepository.backupPaths= [];
         },

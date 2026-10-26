@@ -277,6 +277,29 @@
                                     required
                                 />
                                 <sw-text-field
+                                    v-if="backupRepository.preBackupCommandType === 'batch'"
+                                    v-model:value="backupRepository.preBackupCommandArguments"
+                                    :label="$tc('muwa-backup-repository.commands.batchArgumentsLabel')"
+                                    :help-text="$tc('muwa-backup-repository.commands.batchArgumentsHelpText')"
+                                    :placeholder="$tc('muwa-backup-repository.commands.batchArgumentsPlaceholder')"
+                                />
+                                <div v-if="backupRepository.preBackupCommandType === 'batch'">
+                                    <input
+                                        ref="preBatchFileInput"
+                                        type="file"
+                                        accept=".sh,text/x-shellscript,application/x-sh"
+                                        hidden
+                                        @change="onBatchFileSelected($event, 'preBackupCommand')"
+                                    >
+                                    <sw-button
+                                        size="small"
+                                        :is-loading="isBatchUploadLoading.preBackupCommand"
+                                        @click="$refs.preBatchFileInput.click()"
+                                    >
+                                        {{ $tc('muwa-backup-repository.commands.batchUploadButton') }}
+                                    </sw-button>
+                                </div>
+                                <sw-text-field
                                     v-if="backupRepository.preBackupCommandType === 'php'"
                                     v-model:value="backupRepository.preBackupCommand"
                                     :label="$tc('muwa-backup-repository.commands.phpCommandLabel')"
@@ -310,6 +333,29 @@
                                     select-file
                                     required
                                 />
+                                <sw-text-field
+                                    v-if="backupRepository.postBackupCommandType === 'batch'"
+                                    v-model:value="backupRepository.postBackupCommandArguments"
+                                    :label="$tc('muwa-backup-repository.commands.batchArgumentsLabel')"
+                                    :help-text="$tc('muwa-backup-repository.commands.batchArgumentsHelpText')"
+                                    :placeholder="$tc('muwa-backup-repository.commands.batchArgumentsPlaceholder')"
+                                />
+                                <div v-if="backupRepository.postBackupCommandType === 'batch'">
+                                    <input
+                                        ref="postBatchFileInput"
+                                        type="file"
+                                        accept=".sh,text/x-shellscript,application/x-sh"
+                                        hidden
+                                        @change="onBatchFileSelected($event, 'postBackupCommand')"
+                                    >
+                                    <sw-button
+                                        size="small"
+                                        :is-loading="isBatchUploadLoading.postBackupCommand"
+                                        @click="$refs.postBatchFileInput.click()"
+                                    >
+                                        {{ $tc('muwa-backup-repository.commands.batchUploadButton') }}
+                                    </sw-button>
+                                </div>
                                 <sw-text-field
                                     v-if="backupRepository.postBackupCommandType === 'php'"
                                     v-model:value="backupRepository.postBackupCommand"

@@ -62,9 +62,11 @@ class BackupRepositorySettings
 
     protected string $preBackupCommandType = 'none';
     protected string $preBackupCommand = '';
+    protected string $preBackupCommandArguments = '';
     protected bool $preBackupFailOnError = true;
     protected string $postBackupCommandType = 'none';
     protected string $postBackupCommand = '';
+    protected string $postBackupCommandArguments = '';
     protected bool $postBackupFailOnError = true;
 
     /**
@@ -285,6 +287,16 @@ class BackupRepositorySettings
         $this->preBackupCommand = $preBackupCommand;
     }
 
+    public function getPreBackupCommandArguments(): string
+    {
+        return $this->preBackupCommandArguments;
+    }
+
+    public function setPreBackupCommandArguments(string $preBackupCommandArguments): void
+    {
+        $this->preBackupCommandArguments = $preBackupCommandArguments;
+    }
+
     public function isPreBackupFailOnError(): bool
     {
         return $this->preBackupFailOnError;
@@ -313,6 +325,16 @@ class BackupRepositorySettings
     public function setPostBackupCommand(string $postBackupCommand): void
     {
         $this->postBackupCommand = $postBackupCommand;
+    }
+
+    public function getPostBackupCommandArguments(): string
+    {
+        return $this->postBackupCommandArguments;
+    }
+
+    public function setPostBackupCommandArguments(string $postBackupCommandArguments): void
+    {
+        $this->postBackupCommandArguments = $postBackupCommandArguments;
     }
 
     public function isPostBackupFailOnError(): bool

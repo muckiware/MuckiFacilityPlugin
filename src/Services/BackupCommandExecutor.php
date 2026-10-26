@@ -26,14 +26,14 @@ class BackupCommandExecutor
     )
     {}
 
-    public function execute(string $type, string $command, bool $failOnError): void
+    public function execute(string $type, string $command, bool $failOnError, string $arguments = ''): void
     {
         if($type === BackupCommandTypes::NONE->value || trim($command) === '') {
             return;
         }
 
         try {
-            $process = $this->createProcess($type, trim($command));
+            $process = $this->createProcess($type, trim($command), $arguments);
             $process->setTimeout(null);
             $process->run();
 
@@ -57,16 +57,16 @@ class BackupCommandExecutor
         }
     }
 
-    private function createProcess(string $type, string $command): Process
+    private function createProcess(string $type, string $command, string $arguments): Process
     {
         return match ($type) {
-            BackupCommandTypes::BATCH->value => $this->createBatchProcess($command),
+            BackupCommandTypes::BATCH->value => $this->createBatchProcess($command, $arguments),
             BackupCommandTypes::PHP->value => $this->createConsoleProcess($command),
             default => throw new \InvalidArgumentException('Unsupported backup command type: '.$type),
         };
     }
 
-    private function createBatchProcess(string $path): Process
+    private function createBatchProcess(string $path, string $arguments): Process
     {
         if(!is_file($path) || !is_readable($path)) {
             throw new \InvalidArgumentException('Backup batch file is not readable: '.$path);
@@ -75,7 +75,67 @@ class BackupCommandExecutor
             throw new \InvalidArgumentException('Backup batch file must use the .sh extension');
         }
 
-        return new Process(['/bin/bash', $path], $this->kernel->getProjectDir());
+        return new Process(array_merge(['/bin/bash', $path], $this->parseArguments($arguments)), $this->kernel->getProjectDir());
+    }
+
+    /**
+     * Split an argument line without invoking a shell. Single and double quotes group values;
+     * backslashes escape the following character outside single quotes.
+     *
+     * @return array<int, string>
+     */
+    private function parseArguments(string $arguments): array
+    {
+        $result = [];
+        $current = '';
+        $quote = null;
+        $escaped = false;
+        $tokenStarted = false;
+
+        foreach (str_split(trim($arguments)) as $character) {
+            if($escaped) {
+                $current .= $character;
+                $escaped = false;
+                $tokenStarted = true;
+                continue;
+            }
+
+            if($character === '\\' && $quote !== "'") {
+                $escaped = true;
+                $tokenStarted = true;
+                continue;
+            }
+
+            if(($character === '"' || $character === "'") && ($quote === null || $quote === $character)) {
+                $quote = $quote === null ? $character : null;
+                $tokenStarted = true;
+                continue;
+            }
+
+            if(ctype_space($character) && $quote === null) {
+                if($tokenStarted) {
+                    $result[] = $current;
+                    $current = '';
+                    $tokenStarted = false;
+                }
+                continue;
+            }
+
+            $current .= $character;
+            $tokenStarted = true;
+        }
+
+        if($quote !== null) {
+            throw new \InvalidArgumentException('Unclosed quote in batch arguments');
+        }
+        if($escaped) {
+            throw new \InvalidArgumentException('Trailing escape in batch arguments');
+        }
+        if($tokenStarted) {
+            $result[] = $current;
+        }
+
+        return $result;
     }
 
     private function createConsoleProcess(string $command): Process

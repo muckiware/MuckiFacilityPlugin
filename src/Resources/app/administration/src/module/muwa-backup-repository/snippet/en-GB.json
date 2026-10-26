@@ -28,7 +28,13 @@
         "title": "After backup"
       },
       "batchPathLabel": "Shell script",
-      "batchPathHelpText": "The selected .sh file is executed with /bin/bash.",
+      "batchPathHelpText": "The selected or uploaded .sh file is executed with /bin/bash.",
+      "batchUploadButton": "Upload shell script",
+      "batchUploadSuccess": "Shell script uploaded",
+      "batchArgumentsLabel": "Arguments",
+      "batchArgumentsHelpText": "Arguments are passed separately from the script path. Wrap values containing spaces in single or double quotes.",
+      "batchArgumentsPlaceholder": "/var/www/html --mode \"full\"",
+
       "phpCommandLabel": "Shopware CLI command",
       "phpCommandPlaceholder": "e.g. cache:clear",
       "failOnErrorLabel": "Fail backup when command fails"

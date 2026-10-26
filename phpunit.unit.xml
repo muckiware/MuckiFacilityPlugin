@@ -19,6 +19,9 @@
             <file>tests/Backup/Files/FilesRunnerTest.php</file>
             <file>tests/Controller/RouteAclTest.php</file>
             <file>tests/Controller/FilesystemControllerTest.php</file>
+            <file>tests/Controller/BatchFileControllerTest.php</file>
+            <file>tests/Services/BatchFileUploaderTest.php</file>
+            <file>tests/Administration/BatchFileUploadAdministrationTest.php</file>
             <file>tests/Services/Crypto/SecretCipherTest.php</file>
             <file>tests/Services/Content/RepositoryPasswordResolverTest.php</file>
             <file>tests/Services/SettingsInterfaceAliasTest.php</file>

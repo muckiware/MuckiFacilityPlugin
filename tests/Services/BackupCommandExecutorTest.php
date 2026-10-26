@@ -43,6 +43,57 @@ class BackupCommandExecutorTest extends TestCase
         static::assertSame('done', file_get_contents($marker));
     }
 
+    public function testBatchScriptReceivesSeparateQuotedArguments(): void
+    {
+        $marker = $this->root . '/batch-args';
+        $script = $this->root . '/hook.sh';
+        file_put_contents(
+            $script,
+            "#!/usr/bin/env bash\nprintf '%s|%s|%s' \"$1\" \"$2\" \"$3\" > " . escapeshellarg($marker) . "\n"
+        );
+
+        $this->executor->execute(
+            BackupCommandTypes::BATCH->value,
+            $script,
+            true,
+            '/var/www/html "value with spaces" \'single quoted\''
+        );
+
+        static::assertSame('/var/www/html|value with spaces|single quoted', file_get_contents($marker));
+    }
+
+    public function testBatchArgumentsDoNotInvokeAShell(): void
+    {
+        $marker = $this->root . '/batch-args';
+        $injected = $this->root . '/injected';
+        $script = $this->root . '/hook.sh';
+        file_put_contents(
+            $script,
+            "#!/usr/bin/env bash\nprintf '%s' \"$1\" > " . escapeshellarg($marker) . "\n"
+        );
+
+        $this->executor->execute(
+            BackupCommandTypes::BATCH->value,
+            $script,
+            true,
+            '; touch ' . $injected
+        );
+
+        static::assertSame(';', file_get_contents($marker));
+        static::assertFileDoesNotExist($injected);
+    }
+
+    public function testMalformedBatchArgumentsAreRejected(): void
+    {
+        $script = $this->root . '/hook.sh';
+        file_put_contents($script, "#!/usr/bin/env bash\nexit 0\n");
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unclosed quote in batch arguments');
+
+        $this->executor->execute(BackupCommandTypes::BATCH->value, $script, true, '"unfinished');
+    }
+
     public function testPhpOptionRunsShopwareConsoleCommand(): void
     {
         $marker = $this->root . '/console-args';

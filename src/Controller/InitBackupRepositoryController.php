@@ -156,9 +156,11 @@ class InitBackupRepositoryController extends AbstractController
         $repositoryInitInputs->setForgetYearly((int) $requestDataBag->get('forgetYearly', 0));
         $repositoryInitInputs->setPreBackupCommandType((string) $requestDataBag->get('preBackupCommandType', 'none'));
         $repositoryInitInputs->setPreBackupCommand(trim((string) $requestDataBag->get('preBackupCommand', '')));
+        $repositoryInitInputs->setPreBackupCommandArguments(trim((string) $requestDataBag->get('preBackupCommandArguments', '')));
         $repositoryInitInputs->setPreBackupFailOnError((bool) $requestDataBag->get('preBackupFailOnError', true));
         $repositoryInitInputs->setPostBackupCommandType((string) $requestDataBag->get('postBackupCommandType', 'none'));
         $repositoryInitInputs->setPostBackupCommand(trim((string) $requestDataBag->get('postBackupCommand', '')));
+        $repositoryInitInputs->setPostBackupCommandArguments(trim((string) $requestDataBag->get('postBackupCommandArguments', '')));
         $repositoryInitInputs->setPostBackupFailOnError((bool) $requestDataBag->get('postBackupFailOnError', true));
         $repositoryInitInputs->setBackupPaths($this->createBackupPaths($requestDataBag));
 
