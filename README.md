@@ -63,6 +63,43 @@ Use the __Add backup path__-button for to define the files and folders which sho
 ![backup_paths_config.png](img%2Fbackup_paths_config.png)<br>
 You can define for each path item a compress option. If the compress option is active, the backup data will be compressed by gzip. For folders which containing mainly compressed image files, additional compression during backup would make less sense.
 
+### Commands before and after a backup
+
+A repository can run an optional command before and after a backup. Select **Batch / shell script**
+to execute a `.sh` file with `/bin/bash`. The script can either be selected from the server or
+uploaded in the administration. Uploaded scripts are stored in
+`files/private/mucki-facility/batch/`; uploading the same filename again overwrites the existing
+file. After an upload, the absolute script path is written to the **Shell script** field
+automatically.
+
+Arguments belong in the separate **Arguments** field, not behind the script path. For example:
+
+| Field | Example |
+|:------|:--------|
+| Shell script | `/var/www/html/files/private/mucki-facility/batch/cron_before.sh` |
+| Arguments | `/var/www/html --mode "full backup"` |
+
+The script receives these values as normal positional arguments (`$1`, `$2`, `$3`, ...). Argument
+parsing follows these rules:
+
+- Spaces, tabs and line breaks separate arguments.
+- Wrap a value containing whitespace in single or double quotes, for example `"value with spaces"`
+  or `'value with spaces'`.
+- Outside single quotes, a backslash escapes the following character, for example
+  `value\ with\ spaces`.
+- Unclosed quotes and a trailing backslash are rejected.
+- A null byte (`\0`) cannot be passed as a process argument.
+- Characters such as `/ : . _ - = @ # % , ; & | $ ( )` are allowed.
+
+Arguments are passed directly to the process without invoking a shell. Shell syntax is therefore
+not evaluated: values such as `;`, `&&`, `$HOME`, `$(command)`, `*` and `~` are passed literally.
+This prevents an argument from starting an additional shell command. If expansion is required, the
+shell script must implement it explicitly.
+
+The administration field has no explicit character limit and the value is stored as `LONGTEXT`.
+The operating system still limits the combined size of process arguments and environment variables
+(`ARG_MAX`), so the field should be used for command parameters rather than large payloads.
+
 ### Delete of snapshots
 You can remove old snapshots of a repository with the command.
 ```shell
