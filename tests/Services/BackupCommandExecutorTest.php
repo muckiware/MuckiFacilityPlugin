@@ -85,9 +85,8 @@ class BackupCommandExecutorTest extends TestCase
 
     public function testNoneDoesNothing(): void
     {
+        $this->expectNotToPerformAssertions();
         $this->executor->execute(BackupCommandTypes::NONE->value, '', true);
-
-        static::assertTrue(true);
     }
 
     private function removeRecursive(string $path): void

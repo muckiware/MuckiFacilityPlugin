@@ -94,6 +94,17 @@ class BackupRepositoryDefinitionTest extends TestCase
         }
     }
 
+    public function testBackupCommandPathColumnsAcceptServerPaths(): void
+    {
+        foreach (['preBackupCommand', 'postBackupCommand'] as $propertyName) {
+            $field = $this->getField($propertyName);
+            $reflectionProperty = new \ReflectionProperty($field, 'maxLength');
+            $reflectionProperty->setAccessible(true);
+
+            self::assertSame(4096, $reflectionProperty->getValue($field));
+        }
+    }
+
     /**
      * Eine noch nicht kompilierte FieldCollection ist numerisch indiziert — get() greift
      * deshalb nicht auf den Property-Namen zu.

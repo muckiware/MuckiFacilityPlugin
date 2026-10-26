@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\tests\Services;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\KernelInterface;
 
@@ -22,6 +23,7 @@ use MuckiFacilityPlugin\Services\SettingsInterface;
 class DirectoryBrowserTest extends TestCase
 {
     private string $root;
+    /** @var SettingsInterface&MockObject */
     private SettingsInterface $settings;
     private DirectoryBrowser $browser;
 
