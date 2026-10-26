@@ -14,6 +14,7 @@ namespace MuckiFacilityPlugin\tests\Services;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Uuid\Uuid;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
@@ -24,6 +25,7 @@ use MuckiFacilityPlugin\Services\Settings as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\Backup as BackupService;
 use MuckiFacilityPlugin\Services\BackupCommandExecutor;
+use MuckiFacilityPlugin\Subscriber\BackupCommandSubscriber;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
@@ -50,8 +52,7 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $this->createMock(EventDispatcherInterface::class),
-            $this->createMock(BackupCommandExecutor::class)
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $prepareBackupPaths = $backupService->prepareBackupPaths(TestCaseBaseDefaults::DEFAULT_TEST_BACKUP_PATHS);
@@ -105,8 +106,7 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $this->createMock(EventDispatcherInterface::class),
-            $this->createMock(BackupCommandExecutor::class)
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $prepareCreateBackup = $backupService->prepareCreateBackup($backupRepositoryId);
@@ -174,8 +174,7 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $this->createMock(EventDispatcherInterface::class),
-            $this->createMock(BackupCommandExecutor::class)
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $backupService->createBackup($createBackup);
@@ -206,8 +205,7 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $repositoryStats,
-            $this->createMock(EventDispatcherInterface::class),
-            $this->createMock(BackupCommandExecutor::class)
+            $this->createMock(EventDispatcherInterface::class)
         );
 
         $createBackup = new BackupRepositorySettings();
@@ -218,7 +216,7 @@ class BackupTest extends TestCase
         $backupService->createBackup($createBackup, false);
     }
 
-    public function testCreateBackupRunsConfiguredCommandsAtOuterBoundaries(): void
+    public function testCreateBackupRunsSubscriberCommandsAtOuterBoundaries(): void
     {
         $repositoryId = Uuid::randomHex();
         $settings = new BackupRepositorySettings();
@@ -244,6 +242,9 @@ class BackupTest extends TestCase
             ->willReturnCallback(static function (string $type, string $command, bool $failOnError) use (&$sequence): void {
                 $sequence[] = [$type, $command, $failOnError];
             });
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new BackupCommandSubscriber($executor));
+
         $manageService = $this->createMock(ManageService::class);
         $manageService->method('saveSnapshots')->willReturnCallback(static function () use (&$sequence): void {
             $sequence[] = 'snapshots';
@@ -263,8 +264,7 @@ class BackupTest extends TestCase
             $manageService,
             $this->createMock(ServicesCliOutput::class),
             $repositoryStats,
-            $this->createMock(EventDispatcherInterface::class),
-            $executor
+            $dispatcher
         );
 
         $service->createBackup($settings, false);

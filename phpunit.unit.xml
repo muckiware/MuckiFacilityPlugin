@@ -8,6 +8,7 @@
             <file>tests/Services/HelperTest.php</file>
             <file>tests/Services/BackupTest.php</file>
             <file>tests/Services/BackupCommandExecutorTest.php</file>
+            <file>tests/Subscriber/BackupCommandSubscriberTest.php</file>
             <file>tests/Services/LifecycleEventDispatchTest.php</file>
             <file>tests/Services/RepositoryStatsTest.php</file>
             <file>tests/Services/SettingsTest.php</file>

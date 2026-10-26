@@ -76,8 +76,7 @@ class Backup
         protected ManageService $manageService,
         protected ServicesCliOutput $servicesCliOutput,
         protected RepositoryStats $repositoryStats,
-        protected EventDispatcherInterface $eventDispatcher,
-        protected BackupCommandExecutor $backupCommandExecutor
+        protected EventDispatcherInterface $eventDispatcher
     )
     {
         $this->backupException = new \Exception();
@@ -141,12 +140,6 @@ class Backup
      */
     public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
-        $this->backupCommandExecutor->execute(
-            $createBackup->getPreBackupCommandType(),
-            $createBackup->getPreBackupCommand(),
-            $createBackup->isPreBackupFailOnError()
-        );
-
         $this->eventDispatcher->dispatch(
             new BeforeBackupCreatedEvent($createBackup),
             BeforeBackupCreatedEvent::NAME
@@ -166,19 +159,13 @@ class Backup
             $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
         }
 
-        $this->eventDispatcher->dispatch(
-            new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
-            AfterBackupCreatedEvent::NAME
-        );
-
         $this->createCheckItem($createBackup);
         $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
         $this->repositoryStats->collectAndSave($createBackup->getBackupRepositoryId());
 
-        $this->backupCommandExecutor->execute(
-            $createBackup->getPostBackupCommandType(),
-            $createBackup->getPostBackupCommand(),
-            $createBackup->isPostBackupFailOnError()
+        $this->eventDispatcher->dispatch(
+            new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
+            AfterBackupCreatedEvent::NAME
         );
     }
 

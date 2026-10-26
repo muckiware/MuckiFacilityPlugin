@@ -17,7 +17,6 @@ use MuckiFacilityPlugin\Events\AfterSnapshotsForgottenEvent;
 use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
 use MuckiFacilityPlugin\Events\BeforeDatabaseDumpCreatedEvent;
 use MuckiFacilityPlugin\Services\Backup;
-use MuckiFacilityPlugin\Services\BackupCommandExecutor;
 use MuckiFacilityPlugin\Services\CliOutput;
 use MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
@@ -71,8 +70,7 @@ class LifecycleEventDispatchTest extends TestCase
             $this->createMock(ManageRepository::class),
             $this->createMock(CliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $dispatcher,
-            $this->createMock(BackupCommandExecutor::class)
+            $dispatcher
         );
 
         $service->createBackup($settings, false);
@@ -123,8 +121,7 @@ class LifecycleEventDispatchTest extends TestCase
             $this->createMock(ManageRepository::class),
             $this->createMock(CliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $dispatcher,
-            $this->createMock(BackupCommandExecutor::class)
+            $dispatcher
         );
 
         $service->createDump($settings);
@@ -185,8 +182,7 @@ class LifecycleEventDispatchTest extends TestCase
             $this->createMock(ManageRepository::class),
             $this->createMock(CliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $dispatcher,
-            $this->createMock(BackupCommandExecutor::class)
+            $dispatcher
         );
 
         $service->createCheckItem($settings);

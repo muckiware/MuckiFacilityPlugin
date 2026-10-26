@@ -211,11 +211,14 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
             <argument type="service" id="event_dispatcher"/>
-            <argument type="service" id="MuckiFacilityPlugin\Services\BackupCommandExecutor"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\BackupCommandExecutor">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="kernel"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Subscriber\BackupCommandSubscriber">
+            <argument type="service" id="MuckiFacilityPlugin\Services\BackupCommandExecutor"/>
+            <tag name="kernel.event_subscriber"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\RepositoryStats" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
