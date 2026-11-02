@@ -22,6 +22,17 @@ All notable changes to this project will be documented in this file.
   `POST /api/_action/muwa/filesystem/check-dump-path`. Invalid input returns 400
   `MUWA_INVALID_PATH`.
 
+### Fixed
+- Administration notifications of other modules no longer fail to render on Shopware 6.7 with
+  `TypeError: can't access property "bind", o.func is null`. The plugin overrode
+  `getTranslatedMessage` in `sw-notifications` / `sw-notification-center-item` and fell back to
+  `$super`, but since 6.7 that method comes from the core mixin `notification-translation`, which
+  `$super` cannot resolve.
+- Backup notifications are now translated on Shopware 6.6 as well instead of showing the raw JSON
+  payload. Translation moved from the two component overrides (removed) to a decorator on
+  `notificationsService`, which is identical in 6.6 and 6.7. Notifications stored before this
+  update keep their JSON payload in the notification center.
+
 ## [0.7.0]
 
 ### Security

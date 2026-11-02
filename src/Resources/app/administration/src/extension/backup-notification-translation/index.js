@@ -1,7 +1,14 @@
-const { Component } = Shopware;
-
-const ALLOWED_TAGS = ['a', 'b', 'i', 'u', 'strong', 'em', 'br'];
-const ALLOWED_ATTR = ['href', 'target'];
+/**
+ * Backup notifications are stored server side as a JSON payload (snippet key + parameters), because
+ * the server does not know the administration language of the reading user. They are translated
+ * here, right after the notification worker fetched them.
+ *
+ * `notificationsService` and its response are identical in Shopware 6.6 and 6.7, while the
+ * notification components differ (6.7 renders through the `notification-translation` mixin, 6.6
+ * sanitizes `notification.message` in the template). Both sanitize the message themselves, so only
+ * the parameters are escaped here.
+ */
+const { Application } = Shopware;
 
 function escapeHtml(value) {
     const replacements = {
@@ -15,47 +22,52 @@ function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, (character) => replacements[character]);
 }
 
-function translateBackupNotification(notification) {
-    if (typeof notification.message !== 'string') {
+function translateBackupNotification(message) {
+    if (typeof message !== 'string') {
         return null;
     }
 
     let payload;
     try {
-        payload = JSON.parse(notification.message);
+        payload = JSON.parse(message);
     } catch {
         return null;
     }
 
-    if (payload.source !== 'mucki-facility' || typeof payload.snippet !== 'string') {
+    if (payload?.source !== 'mucki-facility' || typeof payload.snippet !== 'string') {
+        return null;
+    }
+
+    const snippet = Shopware.Snippet;
+    if (!snippet) {
         return null;
     }
 
     const parameters = Object.fromEntries(
         Object.entries(payload.parameters ?? {}).map(([key, value]) => [key, escapeHtml(value)]),
     );
-    const message = this.$t(payload.snippet, parameters);
 
-    return this.$sanitize(message, {
-        ALLOWED_TAGS,
-        ALLOWED_ATTR,
-    });
+    return snippet.t(payload.snippet, parameters);
 }
 
-function createNotificationTranslationOverride() {
-    return {
-        methods: {
-            getTranslatedMessage(notification) {
-                const translatedMessage = translateBackupNotification.call(this, notification);
-                if (translatedMessage !== null) {
-                    return translatedMessage;
-                }
+function translateNotifications(data) {
+    if (!Array.isArray(data?.notifications)) {
+        return data;
+    }
 
-                return this.$super('getTranslatedMessage', notification);
-            },
-        },
+    return {
+        ...data,
+        notifications: data.notifications.map((notification) => ({
+            ...notification,
+            message: translateBackupNotification(notification.message) ?? notification.message,
+        })),
     };
 }
 
-Component.override('sw-notification-center-item', createNotificationTranslationOverride());
-Component.override('sw-notifications', createNotificationTranslationOverride());
+Application.addServiceProviderDecorator('notificationsService', (service) => {
+    const fetchNotifications = service.fetchNotifications.bind(service);
+
+    service.fetchNotifications = (...args) => fetchNotifications(...args).then(translateNotifications);
+
+    return service;
+});

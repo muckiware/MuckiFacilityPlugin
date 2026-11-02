@@ -15,11 +15,24 @@ final class BackupNotificationAdministrationTest extends TestCase
         self::assertIsString($extension);
         self::assertIsString($main);
         self::assertStringContainsString("import './extension/backup-notification-translation';", $main);
-        self::assertStringContainsString("payload.source !== 'mucki-facility'", $extension);
-        self::assertStringContainsString('this.$t(payload.snippet, parameters)', $extension);
-        self::assertStringContainsString("Component.override('sw-notification-center-item'", $extension);
-        self::assertStringContainsString("Component.override('sw-notifications'", $extension);
-        self::assertStringContainsString('this.$super(\'getTranslatedMessage\', notification)', $extension);
+        self::assertStringContainsString("payload?.source !== 'mucki-facility'", $extension);
+        self::assertStringContainsString('snippet.t(payload.snippet, parameters)', $extension);
+        self::assertStringContainsString("addServiceProviderDecorator('notificationsService'", $extension);
+    }
+
+    /**
+     * The notification components differ between Shopware 6.6 and 6.7; overriding them broke 6.7
+     * (`$super` cannot resolve the mixin method) and never translated anything in 6.6.
+     */
+    public function testBackupNotificationsDoNotOverrideNotificationComponents(): void
+    {
+        $extension = file_get_contents(
+            __DIR__ . '/../../src/Resources/app/administration/src/extension/backup-notification-translation/index.js'
+        );
+
+        self::assertIsString($extension);
+        self::assertStringNotContainsString('Component.override(', $extension);
+        self::assertStringNotContainsString('$super(', $extension);
     }
 
     public function testBackupNotificationSnippetsExistInEveryAdminLanguage(): void
