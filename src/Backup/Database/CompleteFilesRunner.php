@@ -16,7 +16,6 @@ use Spatie\DbDumper\Databases\MySql as MySqlDumper;
 use Spatie\DbDumper\Exceptions\CannotSetParameter;
 use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
-use Spatie\DbDumper\Compressors\GzipCompressor;
 
 use MuckiRestic\Entity\Result\ResultEntity;
 
@@ -32,7 +31,8 @@ class CompleteFilesRunner implements BackupInterface
         protected LoggerInterface $logger,
         protected SettingsInterface $pluginSettings,
         protected BackupRepositorySettings $createBackup,
-        protected CoreDatabase $database
+        protected CoreDatabase $database,
+        protected DumpArchiver $dumpArchiver
     ) {}
 
     public function createBackupData(bool $isJsonOutput=true): void
@@ -43,15 +43,17 @@ class CompleteFilesRunner implements BackupInterface
 
             $mysqlDumper = MySqlDumper::create();
             $mysqlDumper->setDatabaseUrl($databaseUrl);
-            if($isCompressDbBackupEnabled) {
-                $mysqlDumper->useCompressor(new GzipCompressor());
-            }
             $mysqlDumper->useSingleTransaction();
 
             try {
 
                 $mysqlDumper->includeTables($table);
-                $mysqlDumper->dumpToFile($this->createBackupFileName($table, true));
+                $dumpFile = $this->createBackupFileName($table, true);
+                $mysqlDumper->dumpToFile($dumpFile);
+
+                if($isCompressDbBackupEnabled) {
+                    $this->dumpArchiver->archive($dumpFile);
+                }
 
             } catch (CannotStartDump $e) {
                 $this->logger->error('Cannot start dump:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
@@ -112,12 +114,6 @@ class CompleteFilesRunner implements BackupInterface
             $backupFileName .= $databaseName;
         }
 
-        if($this->pluginSettings->isCompressDbBackupEnabled()) {
-            $backupFileName .= '.backup.sql.gz';
-        } else {
-            $backupFileName .= '.backup.sql';
-        }
-
-        return $backupFileName;
+        return $backupFileName.'.backup.sql';
     }
 }

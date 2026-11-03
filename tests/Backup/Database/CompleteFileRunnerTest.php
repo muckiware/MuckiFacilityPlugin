@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 use MuckiFacilityPlugin\Backup\Database\CompleteFileRunner;
+use MuckiFacilityPlugin\Backup\Database\DumpArchiver;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 
@@ -39,7 +40,8 @@ class CompleteFileRunnerTest extends TestCase
         $runner = new CompleteFileRunner(
             $this->createMock(LoggerInterface::class),
             $settings,
-            $createBackup
+            $createBackup,
+            $this->createMock(DumpArchiver::class)
         );
 
         static::assertSame(
@@ -62,7 +64,8 @@ class CompleteFileRunnerTest extends TestCase
         $runner = new CompleteFileRunner(
             $this->createMock(LoggerInterface::class),
             $settings,
-            new BackupRepositorySettings()
+            new BackupRepositorySettings(),
+            $this->createMock(DumpArchiver::class)
         );
 
         static::assertSame(
@@ -72,7 +75,7 @@ class CompleteFileRunnerTest extends TestCase
         );
     }
 
-    public function testCreateBackupFileNameWithCompression(): void
+    public function testCreateBackupFileNameIsPlainSqlEvenWithCompression(): void
     {
         $createBackup = new BackupRepositorySettings();
         $createBackup->setDbDumpPath(self::DUMP_PATH);
@@ -85,13 +88,14 @@ class CompleteFileRunnerTest extends TestCase
         $runner = new CompleteFileRunner(
             $this->createMock(LoggerInterface::class),
             $settings,
-            $createBackup
+            $createBackup,
+            $this->createMock(DumpArchiver::class)
         );
 
         static::assertSame(
-            self::DUMP_PATH.'/'.self::DATE_TIMESTAMP.'_shopware.backup.sql.gz',
+            self::DUMP_PATH.'/'.self::DATE_TIMESTAMP.'_shopware.backup.sql',
             $runner->createBackupFileName('shopware'),
-            'A compressed dump should get the gz suffix'
+            'mysqldump always writes plain sql, the tar.gz archive is created afterwards by the DumpArchiver'
         );
     }
 }

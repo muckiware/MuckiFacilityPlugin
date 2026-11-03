@@ -278,6 +278,7 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\RestoreSnapshot"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\AdminNotification"/>
             <tag name="messenger.message_handler"/>
         </service>
         <service id="MuckiFacilityPlugin\MessageQueue\Handler\UpdateRepositoryStatsHandler">

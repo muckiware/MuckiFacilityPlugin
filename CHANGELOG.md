@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Administration notification when a snapshot restore started from the administration has
+  finished: "info" on success, "error" with the restic error message on failure. Like the backup
+  notifications, it is stored as a translatable JSON payload and only shown to users with the
+  `muwa_backup_repository:restore` privilege. Restores via `muckiware:backup:restore` (CLI) do not
+  create a notification.
 - Dashboard widget "Backup status": a card on the administration dashboard with the latest
   repository status of every active backup repository — status date, repository size, number of
   snapshots and the last `restic check` result as a coloured label (OK / error / no check). Same
@@ -21,6 +26,14 @@ All notable changes to this project will be documented in this file.
   `POST /api/_action/muwa/filesystem/directories` and
   `POST /api/_action/muwa/filesystem/check-dump-path`. Invalid input returns 400
   `MUWA_INVALID_PATH`.
+
+### Changed
+- Compressed database dumps (`compressDbBackup`) are now real tar.gz archives named
+  `*.backup.sql.tar.gz` instead of a plain gzip stream named `*.backup.sql.gz`. The old file could
+  not be unpacked with `tar -xzvf`, because `mysqldump | gzip` never creates a tar container. The
+  dump is written as plain sql first and then packed with `tar -czf` (new
+  `Backup\Database\DumpArchiver`); if packing fails, the plain dump is kept and backed up instead.
+  Old `*.backup.sql.gz` files in existing snapshots still unpack with `gunzip`.
 
 ### Fixed
 - Administration notifications of other modules no longer fail to render on Shopware 6.7 with

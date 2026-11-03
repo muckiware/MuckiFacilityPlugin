@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 use MuckiFacilityPlugin\Backup\Database\CompleteFilesRunner;
+use MuckiFacilityPlugin\Backup\Database\DumpArchiver;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Services\SettingsInterface;
@@ -42,7 +43,8 @@ class CompleteFilesRunnerTest extends TestCase
             $this->createMock(LoggerInterface::class),
             $settings,
             $createBackup,
-            $this->createMock(CoreDatabase::class)
+            $this->createMock(CoreDatabase::class),
+            $this->createMock(DumpArchiver::class)
         );
 
         static::assertSame(
@@ -66,7 +68,8 @@ class CompleteFilesRunnerTest extends TestCase
             $this->createMock(LoggerInterface::class),
             $settings,
             new BackupRepositorySettings(),
-            $this->createMock(CoreDatabase::class)
+            $this->createMock(CoreDatabase::class),
+            $this->createMock(DumpArchiver::class)
         );
 
         static::assertSame(
