@@ -17,7 +17,21 @@ final class BackupNotificationAdministrationTest extends TestCase
         self::assertStringContainsString("import './extension/backup-notification-translation';", $main);
         self::assertStringContainsString("payload?.source !== 'mucki-facility'", $extension);
         self::assertStringContainsString('snippet.t(payload.snippet, parameters)', $extension);
-        self::assertStringContainsString("addServiceProviderDecorator('notificationsService'", $extension);
+        self::assertStringContainsString("Shopware.Service('notificationsService')", $extension);
+    }
+
+    /**
+     * The core notification worker resolves `notificationsService` in init-post, before plugins are
+     * loaded. A service decorator registered by the plugin is therefore never applied.
+     */
+    public function testBackupNotificationsPatchTheServiceInstanceInsteadOfDecorating(): void
+    {
+        $extension = file_get_contents(
+            __DIR__ . '/../../src/Resources/app/administration/src/extension/backup-notification-translation/index.js'
+        );
+
+        self::assertIsString($extension);
+        self::assertStringNotContainsString('addServiceProviderDecorator(', $extension);
     }
 
     /**

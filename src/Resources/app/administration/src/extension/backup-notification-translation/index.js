@@ -8,8 +8,6 @@
  * sanitizes `notification.message` in the template). Both sanitize the message themselves, so only
  * the parameters are escaped here.
  */
-const { Application } = Shopware;
-
 function escapeHtml(value) {
     const replacements = {
         '&': '&amp;',
@@ -64,10 +62,16 @@ function translateNotifications(data) {
     };
 }
 
-Application.addServiceProviderDecorator('notificationsService', (service) => {
-    const fetchNotifications = service.fetchNotifications.bind(service);
+/**
+ * The core notification worker resolves `notificationsService` in init-post, before plugins are
+ * loaded, so a service decorator would never be applied. The shared instance is patched instead;
+ * the worker keeps a reference to it and looks up `fetchNotifications` on every poll.
+ */
+const notificationsService = Shopware.Service('notificationsService');
 
-    service.fetchNotifications = (...args) => fetchNotifications(...args).then(translateNotifications);
+if (notificationsService && !notificationsService.muwaBackupTranslation) {
+    const fetchNotifications = notificationsService.fetchNotifications.bind(notificationsService);
 
-    return service;
-});
+    notificationsService.fetchNotifications = (...args) => fetchNotifications(...args).then(translateNotifications);
+    notificationsService.muwaBackupTranslation = true;
+}
