@@ -2,8 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+### [0.8.2]
 
+### Fixed
+- Creating a backup repository without pre/post backup commands no longer fails on a database
+  error. The columns `pre_backup_command`, `pre_backup_fail_on_error`, `post_backup_command` and
+  `post_backup_fail_on_error` were `NOT NULL`; the new migration `Migration1793808551` changes
+  them to `NULL DEFAULT NULL`. It checks each column first and only changes it if it is still
+  `NOT NULL`, so it does nothing on installations that already have the new column definition.
+
+### [0.8.1]
+- Administration notifications of other modules no longer fail to render on Shopware 6.7 with
+  `TypeError: can't access property "bind", o.func is null`. The plugin overrode
+  `getTranslatedMessage` in `sw-notifications` / `sw-notification-center-item` and fell back to
+  `$super`, but since 6.7 that method comes from the core mixin `notification-translation`, which
+  `$super` cannot resolve.
+- Backup notifications are now translated on Shopware 6.6 as well instead of showing the raw JSON
+  payload. Translation moved from the two component overrides (removed) to a decorator on
+  `notificationsService`, which is identical in 6.6 and 6.7. Notifications stored before this
+  update keep their JSON payload in the notification center.
+
+## [0.8.0]
 ### Added
 - Administration notification when a snapshot restore started from the administration has
   finished: "info" on success, "error" with the restic error message on failure. Like the backup

@@ -190,7 +190,7 @@ class DirectoryBrowserTest extends TestCase
     /**
      * @return array<string, array{string}>
      */
-    public function invalidInputProvider(): array
+    public static function invalidInputProvider(): array
     {
         return [
             'null byte' => ["/tmp\0x"],
@@ -214,7 +214,7 @@ class DirectoryBrowserTest extends TestCase
     /**
      * @return array<string, array{string}>
      */
-    public function controlCharacterProvider(): array
+    public static function controlCharacterProvider(): array
     {
         return [
             'null byte' => ["/tmp\0x"],
