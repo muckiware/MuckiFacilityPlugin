@@ -16,6 +16,7 @@
             <file>tests/Backup/BackupRunnerFactoryTest.php</file>
             <file>tests/Backup/Database/CompleteFileRunnerTest.php</file>
             <file>tests/Backup/Database/CompleteFilesRunnerTest.php</file>
+            <file>tests/Backup/Database/DumpArchiverTest.php</file>
             <file>tests/Backup/Files/FilesRunnerTest.php</file>
             <file>tests/Controller/RouteAclTest.php</file>
             <file>tests/Controller/FilesystemControllerTest.php</file>
@@ -32,6 +33,7 @@
             <file>tests/Database/TableRunner/LogEntryCleanupRunnerTest.php</file>
             <file>tests/Services/DbTableCleanupTest.php</file>
             <file>tests/Services/AdminNotificationTest.php</file>
+            <file>tests/MessageQueue/Handler/RestoreSnapshotHandlerTest.php</file>
             <file>tests/MuckiFacilityPluginUninstallTest.php</file>
             <directory>tests/Schedule</directory>
         </testsuite>

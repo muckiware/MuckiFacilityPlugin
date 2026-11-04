@@ -228,10 +228,15 @@ bin/console muckiware:db:dump <backupType>
 ```
 | Option backup type                   | Desc                                                                                                                                                                                        |
 |:-------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| completeDatabaseSingleFile (default) | Backup the complete database as single file. The backup is stored in the directory `var/backup/db/` with the filename `YYYY-MM-DD_HH-MM-SS_db_backup.sql.gz`                                |
-| completeDatabaseSeparateFiles        | Backup the complete database as single file for each database table. The backup is stored in the directory `var/backup/YYYY-MM-DD` with the filename `YYYY-MM-DD_HH-MM-SS_tablename.sql.gz` |
+| completeDatabaseSingleFile (default) | Backup the complete database as single file. The backup is stored in the directory `var/db/backup/` with the filename `YYYY-MM-DD_HH-MM-SS_<dbname>.backup.sql.tar.gz`                     |
+| completeDatabaseSeparateFiles        | Backup the complete database as single file for each database table. The backup is stored in the directory `var/db/backup/YYYY-MM-DD` with the filename `YYYY-MM-DD_HH-MM-SS_<tablename>.backup.sql.tar.gz` |
 
-This command execute a backup of the database. The backup is stored in the directory `var/backup/db/` with the filename `db_backup_YYYY-MM-DD_HH-MM-SS.sql.gz`
+This command execute a backup of the database. Without a configured database dump path the backup is stored in the directory `var/db/backup/`.
+With the plugin setting `compressDbBackup` the dump is packed into a tar.gz archive (`*.backup.sql.tar.gz`), otherwise it stays a plain `*.backup.sql` file.
+The archive contains the plain `*.backup.sql` file and can be unpacked with:
+```shell
+tar -xzvf 2026-11-03_07-44-36_db.backup.sql.tar.gz
+```
 ## Restore
 As long as the shopware instance is running, you can restore the backup data via cli like this:
 ```shell

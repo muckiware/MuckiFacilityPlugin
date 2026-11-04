@@ -17,6 +17,7 @@ use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Backup\Database\CompleteFileRunner;
 use MuckiFacilityPlugin\Backup\Database\CompleteFilesRunner;
+use MuckiFacilityPlugin\Backup\Database\DumpArchiver;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\SettingsInterface;
@@ -42,11 +43,22 @@ class BackupRunnerFactory
         switch ($createBackup->getBackupType()) {
 
             case BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value:
-                $runner = new CompleteFileRunner($this->logger, $this->settings, $createBackup);
+                $runner = new CompleteFileRunner(
+                    $this->logger,
+                    $this->settings,
+                    $createBackup,
+                    new DumpArchiver($this->logger)
+                );
                 break;
 
             case BackupTypes::COMPLETE_DATABASE_SEPARATE_FILES->value:
-                $runner = new CompleteFilesRunner($this->logger, $this->settings, $createBackup, $this->database);
+                $runner = new CompleteFilesRunner(
+                    $this->logger,
+                    $this->settings,
+                    $createBackup,
+                    $this->database,
+                    new DumpArchiver($this->logger)
+                );
                 break;
             case BackupTypes::FILES->value:
                 $runner = new FilesRunner(

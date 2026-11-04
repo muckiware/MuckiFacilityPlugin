@@ -198,7 +198,9 @@
     "notification": {
       "backupStarted": "Backup “{name}” started.",
       "backupSucceeded": "Backup “{name}” completed successfully.",
-      "backupFailed": "Backup “{name}” failed: {error}"
+      "backupFailed": "Backup “{name}” failed: {error}",
+      "restoreSucceeded": "Restore of snapshot “{snapshot}” from “{name}” completed successfully.",
+      "restoreFailed": "Restore of snapshot “{snapshot}” from “{name}” failed: {error}"
     },
     "schedule": {
       "title": "Automatic backup",

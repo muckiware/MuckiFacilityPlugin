@@ -197,7 +197,9 @@
     "notification": {
       "backupStarted": "Backup „{name}“ wurde gestartet.",
       "backupSucceeded": "Backup „{name}“ wurde erfolgreich abgeschlossen.",
-      "backupFailed": "Backup „{name}“ ist fehlgeschlagen: {error}"
+      "backupFailed": "Backup „{name}“ ist fehlgeschlagen: {error}",
+      "restoreSucceeded": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ wurde erfolgreich abgeschlossen.",
+      "restoreFailed": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ ist fehlgeschlagen: {error}"
     },
     "schedule": {
       "title": "Automatische Sicherung",

@@ -15,7 +15,6 @@ use Psr\Log\LoggerInterface;
 use Spatie\DbDumper\Databases\MySql as MySqlDumper;
 use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
-use Spatie\DbDumper\Compressors\GzipCompressor;
 
 use MuckiRestic\Entity\Result\ResultEntity;
 
@@ -29,19 +28,22 @@ class CompleteFileRunner implements BackupInterface
     public function __construct(
         protected LoggerInterface $logger,
         protected SettingsInterface $pluginSettings,
-        protected BackupRepositorySettings $createBackup
+        protected BackupRepositorySettings $createBackup,
+        protected DumpArchiver $dumpArchiver
     ) {}
     public function createBackupData(bool $isJsonOutput=true): void
     {
         $mysqlDumper = MySqlDumper::create();
         $mysqlDumper->setDatabaseUrl($this->pluginSettings->getDatabaseUrl());
-        if($this->pluginSettings->isCompressDbBackupEnabled()) {
-            $mysqlDumper->useCompressor(new GzipCompressor());
-        }
         $mysqlDumper->useSingleTransaction();
 
         try {
-            $mysqlDumper->dumpToFile($this->createBackupFileName($mysqlDumper->getDbName()));
+            $dumpFile = $this->createBackupFileName($mysqlDumper->getDbName());
+            $mysqlDumper->dumpToFile($dumpFile);
+
+            if($this->pluginSettings->isCompressDbBackupEnabled()) {
+                $this->dumpArchiver->archive($dumpFile);
+            }
         } catch (CannotStartDump $e) {
             $this->logger->error('Cannot start dump:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         } catch (DumpFailed $e) {
@@ -98,12 +100,6 @@ class CompleteFileRunner implements BackupInterface
             $backupFileName .= $databaseName;
         }
 
-        if($this->pluginSettings->isCompressDbBackupEnabled()) {
-            $backupFileName .= '.backup.sql.gz';
-        } else {
-            $backupFileName .= '.backup.sql';
-        }
-
-        return $backupFileName;
+        return $backupFileName.'.backup.sql';
     }
 }
