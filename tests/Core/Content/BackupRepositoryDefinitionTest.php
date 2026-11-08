@@ -10,6 +10,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Field;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\LongTextField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\AllowEmptyString;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\WriteProtected;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
@@ -92,6 +93,8 @@ class BackupRepositoryDefinitionTest extends TestCase
         }
         foreach (['preBackupCommandArguments', 'postBackupCommandArguments'] as $field) {
             self::assertInstanceOf(LongTextField::class, $this->getField($field));
+            // The columns are TEXT NOT NULL; without this flag the serializer turns '' into NULL.
+            self::assertTrue($this->getField($field)->is(AllowEmptyString::class), $field);
         }
         foreach (['preBackupFailOnError', 'postBackupFailOnError'] as $field) {
             self::assertInstanceOf(BoolField::class, $this->getField($field));

@@ -15,6 +15,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\CreatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\FkField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\AllowEmptyString;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Inherited;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
@@ -70,11 +71,11 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new StringField('db_dump_path', 'dbDumpPath')),
             (new StringField('pre_backup_command_type', 'preBackupCommandType')),
             (new StringField('pre_backup_command', 'preBackupCommand', 4096)),
-            (new LongTextField('pre_backup_command_arguments', 'preBackupCommandArguments')),
+            (new LongTextField('pre_backup_command_arguments', 'preBackupCommandArguments'))->addFlags(new AllowEmptyString()),
             (new BoolField('pre_backup_fail_on_error', 'preBackupFailOnError')),
             (new StringField('post_backup_command_type', 'postBackupCommandType')),
             (new StringField('post_backup_command', 'postBackupCommand', 4096)),
-            (new LongTextField('post_backup_command_arguments', 'postBackupCommandArguments')),
+            (new LongTextField('post_backup_command_arguments', 'postBackupCommandArguments'))->addFlags(new AllowEmptyString()),
             (new BoolField('post_backup_fail_on_error', 'postBackupFailOnError')),
             (new JsonField('backup_paths', 'backupPaths', [], [])),
             (new IntField('forget_daily', 'forgetDaily')),
