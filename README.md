@@ -1,4 +1,11 @@
 # MuckiFacilityPlugin
+[![Latest Stable Version](http://poser.pugx.org/muckiware/facility-plugin/v)](https://packagist.org/packages/muckiware/facility-plugin)
+[![Total Downloads](http://poser.pugx.org/muckiware/facility-plugin/downloads)](https://packagist.org/packages/muckiware/facility-plugin)
+[![PHP Version Require](http://poser.pugx.org/muckiware/facility-plugin/require/php)](https://packagist.org/packages/muckiware/facility-plugin)
+[![Dependents](http://poser.pugx.org/muckiware/facility-plugin/dependents)](https://packagist.org/packages/muckiware/facility-plugin)
+[![Shopware](https://img.shields.io/badge/Shopware-6.6%20%7C%206.7-189eff.svg)](https://www.shopware.com/)
+[![License](https://img.shields.io/github/license/shopware/shopware.svg)](https://github.com/shopware/shopware/blob/trunk/LICENSE)
+
 Muckiware Facility Plugin for Shopware 6 Web shops for to maintenance and backup of the database.
 - The plugin provides a backup functionality for the database.
 - Creates a backup of folders and files by an individual configuration into repository database. The plugin use the restic backup tool for to create the backups. https://restic.readthedocs.io/
