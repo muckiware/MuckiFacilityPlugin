@@ -791,6 +791,7 @@
                     </sw-entity-listing>
 
                     <sw-card
+                        class="muwa-backup-repository-restore-directory"
                         positionIdentifier="muwaBackupRepositoryRestoreDirectory"
                         v-if="backupRepository && tab === 'backupRepositorySnapshots' && acl.can('muwa_backup_repository.restore')"
                         :title="$tc('muwa-backup-repository.restoreDirectory.title')"
