@@ -156,6 +156,7 @@ class RestoreDirectoryControllerTest extends TestCase
             static::assertStringContainsString('attachment', $disposition);
             static::assertStringContainsString(basename($file), $disposition);
             static::assertSame('application/octet-stream', $response->headers->get('Content-Type'));
+            static::assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         } finally {
             unlink($file);
         }

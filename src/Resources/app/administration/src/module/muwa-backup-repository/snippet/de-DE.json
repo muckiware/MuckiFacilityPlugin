@@ -170,7 +170,6 @@
         "projectDirOrParent": "Das Shop-Verzeichnis oder eines seiner Elternverzeichnisse kann nicht als Dump-Pfad verwendet werden. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
         "overlapsRepositoryOrRestorePath": "Der Dump-Pfad überschneidet sich mit dem Repository-Pfad oder dem Restore-Pfad. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
         "blockedPath": "Dieses Verzeichnis ist geschützt und kann nicht als Dump-Pfad verwendet werden. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
-        "overlapsDumpPath": "Pfad überschneidet sich mit dem Datenbank-Dump-Pfad",
         "notWritable": "Der Ordner (bzw. sein nächster existierender Elternordner) ist für den Webserver-User nicht beschreibbar. Das Backup fällt dann ggf. auf den Standardpfad var/db/backup zurück."
       }
     },
@@ -225,6 +224,7 @@
       "error": "Zeitplan konnte nicht gespeichert werden"
     },
     "restoreDirectory": {
+      "rootLoadError": "Das Restore-Verzeichnis konnte nicht gelesen werden. Prüfe die Dateirechte des Webserver-Benutzers.",
       "title": "Wiederhergestellte Dateien",
       "emptyState": "Noch nichts wiederhergestellt. Stelle zuerst einen Snapshot wieder her.",
       "notConfigured": "Für dieses Repository ist kein Restore Path konfiguriert.",

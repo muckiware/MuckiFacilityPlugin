@@ -61,6 +61,7 @@ export default {
                 notConfigured: 'notConfigured',
                 notAllowed: 'notAllowed',
                 empty: 'emptyState',
+                error: 'rootLoadError',
             };
 
             return snippets[this.rootState] ? `${SNIPPET_PREFIX}.${snippets[this.rootState]}` : null;
@@ -125,7 +126,7 @@ export default {
                 if (generation !== this.loadGeneration) {
                     return;
                 }
-                this.setNode(path, { expanded: false, loading: false, loaded: false, state: null, directories: [], files: [], truncated: false });
+                this.setNode(path, { expanded: false, loading: false, loaded: false, state: path === '' ? 'error' : null, directories: [], files: [], truncated: false });
                 this.createNotificationError({
                     title: this.$tc(`${SNIPPET_PREFIX}.errorTitle`),
                     message: this.$tc(`${SNIPPET_PREFIX}.loadError`),
@@ -220,13 +221,8 @@ export default {
             return `${unit === 0 ? value : value.toFixed(1)} ${units[unit]}`;
         },
 
-        formatDate(timestamp) {
-            if (!timestamp) {
-                return '';
-            }
-            const date = new Date(typeof timestamp === 'number' ? timestamp * 1000 : timestamp);
-
-            return Number.isNaN(date.getTime()) ? '' : date.toLocaleString(Shopware.State.get('session').currentLocale ?? undefined);
+        formatDate(value) {
+            return value ? Shopware.Utils.format.date(value) : '';
         },
     },
 };

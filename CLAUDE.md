@@ -205,7 +205,7 @@ nicht mit JSON und die Repository-Initialisierung scheitert mit "JSON Syntax err
 (`cache.object`, 60 s TTL, einmalig einloesbar, an Repository-ID + relativen Pfad gebunden), ausgestellt
 durch die ACL-geschuetzte `prepare`-Route. `RestoreDirectoryBrowser` listet Ordner und alle regulaeren
 Dateien, `downloadable` ist nur fuer Dumps (`.backup.sql`, `.backup.sql.gz`, `.backup.sql.tar.gz`) true;
-`resolveDownloadFile()` lehnt alles andere ab. Symlinks werden uebersprungen und liefert die Zustaende
+`resolveDownloadFile()` lehnt alles andere ab. Symlinks werden uebersprungen, und der Browser liefert die Zustaende
 `ok`/`notConfigured`/`notAllowed`/`empty`. `RouteAclTest` fuehrt diese Route explizit als einzige
 erlaubte Public-Route; weitere Public-Routes duerfen dort nicht ohne Begruendung ergaenzt werden.
 

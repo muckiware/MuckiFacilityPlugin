@@ -10,9 +10,10 @@ All notable changes to this project will be documented in this file.
   database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.tar.gz`) can be downloaded;
   other files are listed but not downloadable. It requires the `muwa_backup_repository:restore`
   privilege, the restore path must be an allowed path, and the files must have been restored first.
-- The restore path of a backup repository is now validated like the dump path: it must not overlap
-  with the database dump path (new rejection `OVERLAPS_DUMP_PATH`, checked by
-  `Settings::getRestorePathRejection()`).
+- The restore path of a backup repository is checked against the same rules as the dump path (it must
+  not overlap with the database dump path; new rejection `OVERLAPS_DUMP_PATH`, checked by
+  `Settings::getRestorePathRejection()`), but only when browsing and downloading restored files.
+  Saving the configuration and the restore itself are unchanged.
 - Downloads are guarded by a single-use token that is valid for 60 seconds, because the browser
   download cannot send the administration bearer token.
 

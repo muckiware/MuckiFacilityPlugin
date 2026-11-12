@@ -100,7 +100,9 @@ Pflicht-Pruefungen (gemeinsam fuer beide Routen, in einem Service):
   davon, die Blockliste gefaehrlicher System- und Projektordner, Ueberschneidung mit dem
   `repositoryPath` — und (Claudes Entscheidung) Ueberschneidung mit dem aufgeloesten Dump-Pfad
   des Repositories, damit der live geschriebene Dump nicht ueber das Panel ladbar ist.
-  Bei Ablehnung: 400 mit eigenem Fehlercode; das Panel zeigt "Restore Path nicht zulaessig"
+  Bei Ablehnung antwortet die Directory-Route mit 200 und `state: 'notAllowed'` (+ `rejection`);
+  Download-Prepare/-Redeem antworten mit 400 `MUWA_INVALID_PATH`. (Waehrend der Implementierung
+  geaendert, weil das Panel den State braucht.) Das Panel zeigt "Restore Path nicht zulaessig"
   statt eines Baums. Restore und Configuration-Formular werden **nicht** geaendert.
 - Aufgeloester Pfad liegt **innerhalb** des Restore Path: keine `..`-Segmente, keine absoluten
   Pfade, kein Null-Byte; nach `realpath()` muss der Pfad mit dem `realpath()` des Restore Path

@@ -122,6 +122,7 @@ class RestoreDirectoryController extends AbstractController
 
         $response = new BinaryFileResponse($absolutePath);
         $response->headers->set('Content-Type', 'application/octet-stream');
+        $response->headers->set('Cache-Control', 'no-store, private');
         $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, basename($absolutePath));
 
         return $response;

@@ -62,9 +62,19 @@ final class RestoreDirectoryTreeAdministrationTest extends TestCase
         self::assertStringContainsString("if (!node.loaded) {\n                this.loadNode(directory.path);", $component);
     }
 
+    public function testComponentIsVersionNeutralAndHandlesRootError(): void
+    {
+        $component = $this->read('component/muwa-restore-directory-tree/index.js');
+
+        self::assertStringNotContainsString('Shopware.State.get(', $component);
+        self::assertStringContainsString('Shopware.Utils.format.date', $component);
+        self::assertStringContainsString("error: 'rootLoadError'", $component);
+        self::assertStringContainsString("state: path === '' ? 'error' : null", $component);
+    }
+
     public function testSnippetsExistInBothLanguages(): void
     {
-        $keys = ['title', 'emptyState', 'notConfigured', 'notAllowed', 'truncated', 'downloadStarted', 'errorTitle', 'loadError', 'downloadError'];
+        $keys = ['title', 'emptyState', 'notConfigured', 'notAllowed', 'truncated', 'downloadStarted', 'errorTitle', 'loadError', 'downloadError', 'rootLoadError'];
         $exact = [
             'de-DE' => ['title' => 'Wiederhergestellte Dateien', 'notAllowed' => 'Restore Path nicht zulässig – Anzeige gesperrt.'],
             'en-GB' => ['title' => 'Restored files', 'notAllowed' => 'Restore path not allowed – view blocked.'],

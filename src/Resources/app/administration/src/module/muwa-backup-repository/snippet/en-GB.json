@@ -170,7 +170,6 @@
         "projectDirOrParent": "The shop directory or one of its parent directories cannot be used as dump path. The backup uses the default path var/db/backup instead.",
         "overlapsRepositoryOrRestorePath": "The dump path overlaps with the repository path or the restore path. The backup uses the default path var/db/backup instead.",
         "blockedPath": "This directory is protected and cannot be used as dump path. The backup uses the default path var/db/backup instead.",
-        "overlapsDumpPath": "Path overlaps the database dump path",
         "notWritable": "The folder (or its nearest existing parent folder) is not writable for the web server user. The backup may fall back to the default path var/db/backup."
       }
     },
@@ -225,6 +224,7 @@
       "error": "Could not save schedule"
     },
     "restoreDirectory": {
+      "rootLoadError": "The restore directory could not be read. Check the file permissions of the web server user.",
       "title": "Restored files",
       "emptyState": "Nothing restored yet. Restore a snapshot first.",
       "notConfigured": "No restore path is configured for this repository.",

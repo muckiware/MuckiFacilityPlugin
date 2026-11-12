@@ -263,7 +263,7 @@ restore path. Database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.t
 button; other files are only listed.
 - You need the `muwa_backup_repository:restore` privilege.
 - The restore path of the repository must be an allowed path (it must not overlap with the database
-  dump path or point to a system directory); otherwise the panel shows why it is not available.
+  dump path or point to a system directory); otherwise the panel only shows a generic "restore path not allowed" message.
 - The files must have been restored first, otherwise the panel is empty.
 - Symbolic links are not listed. A download link is valid for 60 seconds and can be used once.
 
