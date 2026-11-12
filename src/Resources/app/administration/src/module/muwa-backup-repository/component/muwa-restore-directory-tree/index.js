@@ -66,6 +66,10 @@ export default {
 
             return snippets[this.rootState] ? `${SNIPPET_PREFIX}.${snippets[this.rootState]}` : null;
         },
+
+        rootMessageParams() {
+            return { status: this.formatStatus(this.root?.httpStatus) };
+        },
     },
 
     watch: {
@@ -126,10 +130,11 @@ export default {
                 if (generation !== this.loadGeneration) {
                     return;
                 }
-                this.setNode(path, { expanded: false, loading: false, loaded: false, state: path === '' ? 'error' : null, directories: [], files: [], truncated: false });
+                const httpStatus = this.getHttpStatus(exception);
+                this.setNode(path, { expanded: false, loading: false, loaded: false, state: path === '' ? 'error' : null, httpStatus, directories: [], files: [], truncated: false });
                 this.createNotificationError({
                     title: this.$tc(`${SNIPPET_PREFIX}.errorTitle`),
-                    message: this.$tc(`${SNIPPET_PREFIX}.loadError`),
+                    message: this.$t(`${SNIPPET_PREFIX}.loadError`, { status: this.formatStatus(httpStatus) }),
                 });
             }
         },
@@ -198,11 +203,21 @@ export default {
             } catch (exception) {
                 this.createNotificationError({
                     title: this.$tc(`${SNIPPET_PREFIX}.errorTitle`),
-                    message: this.$tc(`${SNIPPET_PREFIX}.downloadError`),
+                    message: this.$t(`${SNIPPET_PREFIX}.downloadError`, {
+                        status: this.formatStatus(this.getHttpStatus(exception)),
+                    }),
                 });
             } finally {
                 this.downloadingPath = null;
             }
+        },
+
+        getHttpStatus(exception) {
+            return exception?.response?.status ?? null;
+        },
+
+        formatStatus(status) {
+            return status ?? '–';
         },
 
         formatSize(bytes) {

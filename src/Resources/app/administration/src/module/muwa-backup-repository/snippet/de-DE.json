@@ -224,7 +224,7 @@
       "error": "Zeitplan konnte nicht gespeichert werden"
     },
     "restoreDirectory": {
-      "rootLoadError": "Das Restore-Verzeichnis konnte nicht gelesen werden. Prüfe die Dateirechte des Webserver-Benutzers.",
+      "rootLoadError": "Das Restore-Verzeichnis konnte nicht geladen werden (HTTP-Status: {status}).",
       "title": "Wiederhergestellte Dateien",
       "emptyState": "Noch nichts wiederhergestellt. Stelle zuerst einen Snapshot wieder her.",
       "notConfigured": "Für dieses Repository ist kein Restore Path konfiguriert.",
@@ -232,8 +232,8 @@
       "truncated": "Liste gekürzt (max. 1000 Einträge).",
       "downloadStarted": "Download gestartet",
       "errorTitle": "Fehler",
-      "loadError": "Ordner konnte nicht geladen werden.",
-      "downloadError": "Download fehlgeschlagen."
+      "loadError": "Ordner konnte nicht geladen werden (HTTP-Status: {status}).",
+      "downloadError": "Download fehlgeschlagen (HTTP-Status: {status})."
     }
   },
   "sw-privileges": {

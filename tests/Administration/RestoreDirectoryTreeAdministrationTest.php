@@ -91,6 +91,19 @@ final class RestoreDirectoryTreeAdministrationTest extends TestCase
             foreach ($values as $key => $value) {
                 self::assertSame($value, $block[$key]);
             }
+            foreach (['rootLoadError', 'loadError', 'downloadError'] as $key) {
+                self::assertStringContainsString('{status}', $block[$key], $language . ' ' . $key);
+            }
         }
+    }
+
+    public function testErrorMessagesShowHttpStatus(): void
+    {
+        $component = $this->read('component/muwa-restore-directory-tree/index.js');
+        $template = $this->read('component/muwa-restore-directory-tree/muwa-restore-directory-tree.html.twig');
+
+        self::assertStringContainsString('exception?.response?.status', $component);
+        self::assertStringContainsString('httpStatus', $component);
+        self::assertStringContainsString('$t(rootMessageSnippet, rootMessageParams)', $template);
     }
 }

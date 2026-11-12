@@ -224,7 +224,7 @@
       "error": "Could not save schedule"
     },
     "restoreDirectory": {
-      "rootLoadError": "The restore directory could not be read. Check the file permissions of the web server user.",
+      "rootLoadError": "The restore directory could not be loaded (HTTP status: {status}).",
       "title": "Restored files",
       "emptyState": "Nothing restored yet. Restore a snapshot first.",
       "notConfigured": "No restore path is configured for this repository.",
@@ -232,8 +232,8 @@
       "truncated": "List truncated (max. 1000 entries).",
       "downloadStarted": "Download started",
       "errorTitle": "Error",
-      "loadError": "Folder could not be loaded.",
-      "downloadError": "Download failed."
+      "loadError": "Folder could not be loaded (HTTP status: {status}).",
+      "downloadError": "Download failed (HTTP status: {status})."
     }
   },
   "sw-privileges": {
