@@ -3,7 +3,8 @@ div.muwa-backup-repository-detail-backup-paths__description {
   margin: 15px 0;
 }
 
-.muwa-backup-repository-restore-directory {
+// mt-card (6.7) sets "margin: 0 auto ..." via a scoped .mt-card[data-v-*] rule, so a single class loses
+.muwa-backup-repository-tabs-detail .muwa-backup-repository-restore-directory.muwa-backup-repository-restore-directory {
   margin-top: 55px;
 }
 
