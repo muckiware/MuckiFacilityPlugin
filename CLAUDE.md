@@ -190,8 +190,8 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `GET /api/_action/muwa/repository/stats/{id}` | `ManageController::getRepositoryStats` | — (live `restic stats`, von der Administration nicht mehr aufgerufen; siehe Repository-Status-Tab) |
 | `POST /api/_action/muwa/filesystem/directories` | `FilesystemController::listDirectories` | Ordner-Browser (Pfad-Felder), ACL `muwa_backup_repository:update` |
 | `POST /api/_action/muwa/filesystem/check-dump-path` | `FilesystemController::checkDumpPath` | Live-Warnung am Dump-Pfad, ACL `muwa_backup_repository:update` |
-| `POST /api/_action/muwa/restore/directory` | `RestoreDirectoryController::listDirectory` | Snapshot-Tab, Komponente `muwa-restore-directory-tree`, ACL `muwa_backup_repository:restore` |
-| `POST /api/_action/muwa/restore/download/prepare` | `RestoreDirectoryController::prepareDownload` | wie oben; stellt ein Einmal-Token aus, ACL `muwa_backup_repository:restore` |
+| `POST /api/_action/muwa/restore/directory` | `RestoreDirectoryController::directory` | Snapshot-Tab, Komponente `muwa-restore-directory-tree`, ACL `muwa_backup_repository:restore` |
+| `POST /api/_action/muwa/restore/download/prepare` | `RestoreDirectoryController::downloadPrepare` | wie oben; stellt ein Einmal-Token aus, ACL `muwa_backup_repository:restore` |
 | `GET /api/_action/muwa/restore/download` | `RestoreDirectoryController::download` | Browser-Download, **`auth_required: false`**, abgesichert nur ueber das Token |
 | `GET /api/_action/muwa/restic/info` | `ResticController::getInfo` | Plugin-Konfiguration, Komponente `muwa-restic-binary-info`, ACL `system_config:read` |
 
