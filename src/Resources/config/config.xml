@@ -18,6 +18,9 @@
             <label>Compress database backup file</label>
         </input-field>
 
+        <component name="muwa-restic-binary-info">
+            <name>resticBinaryInfo</name>
+        </component>
         <input-field type="bool">
             <name>useOwnResticPath</name>
             <label>Use own restic path</label>

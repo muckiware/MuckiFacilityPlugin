@@ -185,6 +185,12 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `GET /api/_action/muwa/repository/stats/{id}` | `ManageController::getRepositoryStats` | — (live `restic stats`, von der Administration nicht mehr aufgerufen; siehe Repository-Status-Tab) |
 | `POST /api/_action/muwa/filesystem/directories` | `FilesystemController::listDirectories` | Ordner-Browser (Pfad-Felder), ACL `muwa_backup_repository:update` |
 | `POST /api/_action/muwa/filesystem/check-dump-path` | `FilesystemController::checkDumpPath` | Live-Warnung am Dump-Pfad, ACL `muwa_backup_repository:update` |
+| `GET /api/_action/muwa/restic/info` | `ResticController::getInfo` | Plugin-Konfiguration, Komponente `muwa-restic-binary-info`, ACL `system_config:read` |
+
+`Services\ResticBinaryInfo` liefert Pfad und Version des restic-Binarys fuer die **gespeicherte**
+Konfiguration (eigener Pfad nur bei `useOwnResticPath` + gesetztem Pfad, sonst `restic` aus `PATH`)
+und markiert Versionen unter `MIN_SUPPORTED_VERSION` (0.15.0) — darunter antwortet `restic init`
+nicht mit JSON und die Repository-Initialisierung scheitert mit "JSON Syntax error".
 
 Die beiden `filesystem`-Routes antworten bei ungueltiger Eingabe mit 400 `MUWA_INVALID_PATH`.
 `Services\DirectoryBrowser` ist rein lesend und listet nur Ordner: logische Pfade ohne

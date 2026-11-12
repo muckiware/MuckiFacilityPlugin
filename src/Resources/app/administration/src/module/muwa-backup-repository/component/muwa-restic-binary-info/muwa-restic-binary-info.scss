@@ -1,0 +1,22 @@
+.muwa-restic-binary-info {
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+
+    &__title {
+        margin: 0 0 8px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    &__line.is--warning {
+        color: var(--color-text-critical-default, #de294c);
+    }
+
+    &__hint {
+        display: block;
+        font-size: 12px;
+        color: var(--color-text-secondary-default, #758ca3);
+    }
+}

@@ -13,6 +13,7 @@
             <file>tests/Services/RepositoryStatsTest.php</file>
             <file>tests/Services/SettingsTest.php</file>
             <file>tests/Services/DirectoryBrowserTest.php</file>
+            <file>tests/Services/ResticBinaryInfoTest.php</file>
             <file>tests/Backup/BackupRunnerFactoryTest.php</file>
             <file>tests/Backup/Database/CompleteFileRunnerTest.php</file>
             <file>tests/Backup/Database/CompleteFilesRunnerTest.php</file>

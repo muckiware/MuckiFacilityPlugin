@@ -13,6 +13,7 @@ use MuckiFacilityPlugin\Controller\BatchFileController;
 use MuckiFacilityPlugin\Controller\FilesystemController;
 use MuckiFacilityPlugin\Controller\InitBackupRepositoryController;
 use MuckiFacilityPlugin\Controller\ManageController;
+use MuckiFacilityPlugin\Controller\ResticController;
 use MuckiFacilityPlugin\Controller\RestoreSnapshotController;
 use MuckiFacilityPlugin\Controller\ScheduleController;
 
@@ -85,6 +86,11 @@ class RouteAclTest extends TestCase
                 FilesystemController::class,
                 'checkDumpPath',
                 ['muwa_backup_repository:update'],
+            ],
+            'restic info' => [
+                ResticController::class,
+                'getInfo',
+                ['system_config:read'],
             ],
         ];
     }
