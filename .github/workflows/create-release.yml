@@ -32,6 +32,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      release: ${{ steps.detect.outputs.release }}
+      tag: ${{ steps.tagcheck.outputs.tag }}
     steps:
       - name: Checkout (full history)
         uses: actions/checkout@v7
@@ -151,3 +154,15 @@ jobs:
             gh release create "${TAG}" --title "${TAG}" --generate-notes
             echo "GitHub release ${TAG} created."
           fi
+
+  # A release created with GITHUB_TOKEN does not fire the "release" event, so
+  # trigger-muckisafe.yml is called directly. Runs on every release attempt
+  # (including re-runs), so a failed trigger can be retried.
+  muckisafe:
+    name: Trigger MuckiSafe release
+    needs: release
+    if: needs.release.outputs.release == 'true'
+    uses: ./.github/workflows/trigger-muckisafe.yml
+    with:
+      tag: ${{ needs.release.outputs.tag }}
+    secrets: inherit
