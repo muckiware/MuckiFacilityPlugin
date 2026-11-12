@@ -93,6 +93,11 @@ ist die einzige Stelle fuer die Dump-Pfad-Regeln: `resolveOwnDumpPath()` (Fallba
 `DirectoryBrowser::checkDumpPath()` (Warnung in der Administration) nutzen sie beide. Regeln nur
 dort aendern, sonst laufen Backup-Verhalten und Admin-Warnung auseinander.
 
+Analog fuer den Restore-Pfad: `Settings::getRestorePathRejection()` (ebenfalls `?Core\DumpPathRejection`)
+ist die einzige Regelquelle. Zusaetzlich zu den Standardregeln liefert sie
+`DumpPathRejection::OVERLAPS_DUMP_PATH`, wenn der Restore-Pfad sich mit dem Dump-Pfad (eigener oder
+Default) ueberschneidet. `RestoreDirectoryBrowser` nutzt sie und prueft den real aufgeloesten Restore-Root erneut.
+
 Das ist kein Schoenheitsthema: der Dump-Ordner wird vor **und** nach jedem DB-Backup per
 `Helper::deleteDirectory()` rekursiv geloescht. Diese Methode folgt keinen Symlinks mehr (weder
 als Top-Level-Pfad noch beim Durchlaufen), gibt `bool` zurueck statt `void`, und beide Aufrufer
@@ -185,12 +190,23 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `GET /api/_action/muwa/repository/stats/{id}` | `ManageController::getRepositoryStats` | — (live `restic stats`, von der Administration nicht mehr aufgerufen; siehe Repository-Status-Tab) |
 | `POST /api/_action/muwa/filesystem/directories` | `FilesystemController::listDirectories` | Ordner-Browser (Pfad-Felder), ACL `muwa_backup_repository:update` |
 | `POST /api/_action/muwa/filesystem/check-dump-path` | `FilesystemController::checkDumpPath` | Live-Warnung am Dump-Pfad, ACL `muwa_backup_repository:update` |
+| `POST /api/_action/muwa/restore/directory` | `RestoreDirectoryController::listDirectory` | Snapshot-Tab, Komponente `muwa-restore-directory-tree`, ACL `muwa_backup_repository:restore` |
+| `POST /api/_action/muwa/restore/download/prepare` | `RestoreDirectoryController::prepareDownload` | wie oben; stellt ein Einmal-Token aus, ACL `muwa_backup_repository:restore` |
+| `GET /api/_action/muwa/restore/download` | `RestoreDirectoryController::download` | Browser-Download, **`auth_required: false`**, abgesichert nur ueber das Token |
 | `GET /api/_action/muwa/restic/info` | `ResticController::getInfo` | Plugin-Konfiguration, Komponente `muwa-restic-binary-info`, ACL `system_config:read` |
 
 `Services\ResticBinaryInfo` liefert Pfad und Version des restic-Binarys fuer die **gespeicherte**
 Konfiguration (eigener Pfad nur bei `useOwnResticPath` + gesetztem Pfad, sonst `restic` aus `PATH`)
 und markiert Versionen unter `MIN_SUPPORTED_VERSION` (0.15.0) — darunter antwortet `restic init`
 nicht mit JSON und die Repository-Initialisierung scheitert mit "JSON Syntax error".
+
+**Token-geschuetzte Public-Route.** Der Browser-Download kann keinen Bearer-Header senden, daher ist
+`GET .../restore/download` oeffentlich (`auth_required: false`). Schutz: `Services\RestoreDownloadToken`
+(`cache.object`, 60 s TTL, einmalig einloesbar, an Repository-ID + relativen Pfad gebunden), ausgestellt
+durch die ACL-geschuetzte `prepare`-Route. `RestoreDirectoryBrowser` listet nur Ordner und Dumps
+(`.backup.sql`, `.backup.sql.gz`, `.backup.sql.tar.gz`), ueberspringt Symlinks und liefert die Zustaende
+`ok`/`notConfigured`/`notAllowed`/`empty`. `RouteAclTest` fuehrt diese Route explizit als einzige
+erlaubte Public-Route; weitere Public-Routes duerfen dort nicht ohne Begruendung ergaenzt werden.
 
 Die beiden `filesystem`-Routes antworten bei ungueltiger Eingabe mit 400 `MUWA_INVALID_PATH`.
 `Services\DirectoryBrowser` ist rein lesend und listet nur Ordner: logische Pfade ohne

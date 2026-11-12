@@ -257,6 +257,16 @@ Or you can choose the snapshot id from the list of snapshots in the administrati
   ![select_snapshot_for_restore.png](img%2Fselect_snapshot_for_restore.png)
 This action will start the restore process of the backup data as a background process.
 
+### Download restored database dumps
+After a restore, the **Snapshots**-tab shows the panel __Restored files__ with a read-only tree of the
+restore path. Database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.tar.gz`) have a download
+button; other files are only listed.
+- You need the `muwa_backup_repository:restore` privilege.
+- The restore path of the repository must be an allowed path (it must not overlap with the database
+  dump path or point to a system directory); otherwise the panel shows why it is not available.
+- The files must have been restored first, otherwise the panel is empty.
+- Symbolic links are not listed. A download link is valid for 60 seconds and can be used once.
+
 But if the shop instance is not running anymore, you can use the native restic commands for to restore the backup data.
 ```shell
 restic -r /srv/restic-repo restore 79766175 --target /tmp/restore-workdir 

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.9.0]
+
+### Added
+- Restored database dumps can be browsed and downloaded in the **Snapshots** tab of a backup
+  repository. The new panel "Restored files" shows the restore path as a read-only tree. Only
+  database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.tar.gz`) can be downloaded;
+  other files are listed but not downloadable. It requires the `muwa_backup_repository:restore`
+  privilege, the restore path must be an allowed path, and the files must have been restored first.
+- The restore path of a backup repository is now validated like the dump path: it must not overlap
+  with the database dump path (new rejection `OVERLAPS_DUMP_PATH`, checked by
+  `Settings::getRestorePathRejection()`).
+- Downloads are guarded by a single-use token that is valid for 60 seconds, because the browser
+  download cannot send the administration bearer token.
+
 ### [0.8.2]
 
 ### Fixed
