@@ -33,6 +33,7 @@ export default {
             // relative path => { expanded, loading, loaded, state, directories, files, truncated }
             nodes: {},
             downloadingPath: null,
+            loadGeneration: 0,
         };
     },
 
@@ -87,6 +88,7 @@ export default {
         },
 
         refresh() {
+            this.loadGeneration += 1;
             this.nodes = {};
             return this.loadNode('');
         },
@@ -96,6 +98,7 @@ export default {
         },
 
         async loadNode(path) {
+            const generation = this.loadGeneration;
             const previous = this.nodes[path] ?? {};
             this.setNode(path, { ...previous, expanded: true, loading: true, loaded: false, directories: [], files: [], truncated: false, state: null });
 
@@ -105,6 +108,9 @@ export default {
                     { backupRepositoryId: this.backupRepositoryId, path },
                     { headers: this.getApiHeader() },
                 );
+                if (generation !== this.loadGeneration) {
+                    return;
+                }
                 const data = response.data ?? {};
                 this.setNode(path, {
                     expanded: true,
@@ -116,6 +122,9 @@ export default {
                     truncated: !!data.truncated,
                 });
             } catch (exception) {
+                if (generation !== this.loadGeneration) {
+                    return;
+                }
                 this.setNode(path, { expanded: false, loading: false, loaded: false, state: null, directories: [], files: [], truncated: false });
                 this.createNotificationError({
                     title: this.$tc(`${SNIPPET_PREFIX}.errorTitle`),
@@ -155,6 +164,10 @@ export default {
                 return;
             }
             if (node.loading) {
+                return;
+            }
+            if (!node.loaded) {
+                this.loadNode(directory.path);
                 return;
             }
             this.setNode(directory.path, { ...node, expanded: !node.expanded });

@@ -53,6 +53,15 @@ final class RestoreDirectoryTreeAdministrationTest extends TestCase
         self::assertStringContainsString('accessToken', $component);
     }
 
+    public function testStaleResponsesAreDroppedAndFailedLoadsRetry(): void
+    {
+        $component = $this->read('component/muwa-restore-directory-tree/index.js');
+
+        self::assertStringContainsString('this.loadGeneration += 1;', $component);
+        self::assertSame(2, substr_count($component, 'if (generation !== this.loadGeneration) {'));
+        self::assertStringContainsString("if (!node.loaded) {\n                this.loadNode(directory.path);", $component);
+    }
+
     public function testSnippetsExistInBothLanguages(): void
     {
         $keys = ['title', 'emptyState', 'notConfigured', 'notAllowed', 'truncated', 'downloadStarted', 'errorTitle', 'loadError', 'downloadError'];
