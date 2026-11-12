@@ -225,7 +225,7 @@
     },
     "restoreDirectory": {
       "rootLoadError": "The restore directory could not be loaded (HTTP status: {status}).",
-      "title": "Restored files",
+      "title": "Restored database files",
       "emptyState": "Nothing restored yet. Restore a snapshot first.",
       "notConfigured": "No restore path is configured for this repository.",
       "notAllowed": "Restore path not allowed – view blocked.",

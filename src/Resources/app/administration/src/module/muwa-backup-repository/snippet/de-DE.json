@@ -225,7 +225,7 @@
     },
     "restoreDirectory": {
       "rootLoadError": "Das Restore-Verzeichnis konnte nicht geladen werden (HTTP-Status: {status}).",
-      "title": "Wiederhergestellte Dateien",
+      "title": "Wiederhergestellte Datenbank Dateien",
       "emptyState": "Noch nichts wiederhergestellt. Stelle zuerst einen Snapshot wieder her.",
       "notConfigured": "Für dieses Repository ist kein Restore Path konfiguriert.",
       "notAllowed": "Restore Path nicht zulässig – Anzeige gesperrt.",

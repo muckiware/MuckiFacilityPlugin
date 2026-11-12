@@ -258,7 +258,7 @@ Or you can choose the snapshot id from the list of snapshots in the administrati
 This action will start the restore process of the backup data as a background process.
 
 ### Download restored database dumps
-After a restore, the **Snapshots**-tab shows the panel __Restored files__ with a read-only tree of the
+After a restore, the **Snapshots**-tab shows the panel __Restored database files__ with a read-only tree of the
 restore path. Database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.tar.gz`) have a download
 button; other files are only listed.
 - You need the `muwa_backup_repository:restore` privilege.

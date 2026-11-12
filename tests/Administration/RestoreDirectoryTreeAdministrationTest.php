@@ -76,8 +76,8 @@ final class RestoreDirectoryTreeAdministrationTest extends TestCase
     {
         $keys = ['title', 'emptyState', 'notConfigured', 'notAllowed', 'truncated', 'downloadStarted', 'errorTitle', 'loadError', 'downloadError', 'rootLoadError'];
         $exact = [
-            'de-DE' => ['title' => 'Wiederhergestellte Dateien', 'notAllowed' => 'Restore Path nicht zulässig – Anzeige gesperrt.'],
-            'en-GB' => ['title' => 'Restored files', 'notAllowed' => 'Restore path not allowed – view blocked.'],
+            'de-DE' => ['title' => 'Wiederhergestellte Datenbank Dateien', 'notAllowed' => 'Restore Path nicht zulässig – Anzeige gesperrt.'],
+            'en-GB' => ['title' => 'Restored database files', 'notAllowed' => 'Restore path not allowed – view blocked.'],
         ];
 
         foreach ($exact as $language => $values) {

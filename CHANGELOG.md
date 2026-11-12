@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Restored database dumps can be browsed and downloaded in the **Snapshots** tab of a backup
-  repository. The new panel "Restored files" shows the restore path as a read-only tree. Only
+  repository. The new panel "Restored database files" shows the restore path as a read-only tree. Only
   database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.tar.gz`) can be downloaded;
   other files are listed but not downloadable. It requires the `muwa_backup_repository:restore`
   privilege, the restore path must be an allowed path, and the files must have been restored first.
