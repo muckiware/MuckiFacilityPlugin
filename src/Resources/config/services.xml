@@ -258,6 +258,16 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
         </service>
+        <service id="MuckiFacilityPlugin\Services\RestoreDownloadToken" public="true">
+            <argument type="service" id="cache.object"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Controller\RestoreDirectoryController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\RestoreDirectoryBrowser"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\RestoreDownloadToken"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service id="MuckiFacilityPlugin\Services\ResticBinaryInfo">
             <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
         </service>

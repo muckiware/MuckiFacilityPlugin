@@ -15,6 +15,7 @@
             <file>tests/Services/DirectoryBrowserTest.php</file>
             <file>tests/Services/RestoreDirectoryBrowserTest.php</file>
             <file>tests/Services/ResticBinaryInfoTest.php</file>
+            <file>tests/Services/RestoreDownloadTokenTest.php</file>
             <file>tests/Backup/BackupRunnerFactoryTest.php</file>
             <file>tests/Backup/Database/CompleteFileRunnerTest.php</file>
             <file>tests/Backup/Database/CompleteFilesRunnerTest.php</file>
@@ -22,6 +23,7 @@
             <file>tests/Backup/Files/FilesRunnerTest.php</file>
             <file>tests/Controller/RouteAclTest.php</file>
             <file>tests/Controller/FilesystemControllerTest.php</file>
+            <file>tests/Controller/RestoreDirectoryControllerTest.php</file>
             <file>tests/Controller/BatchFileControllerTest.php</file>
             <file>tests/Services/BatchFileUploaderTest.php</file>
             <file>tests/Administration/BatchFileUploadAdministrationTest.php</file>

@@ -14,6 +14,7 @@ use MuckiFacilityPlugin\Controller\FilesystemController;
 use MuckiFacilityPlugin\Controller\InitBackupRepositoryController;
 use MuckiFacilityPlugin\Controller\ManageController;
 use MuckiFacilityPlugin\Controller\ResticController;
+use MuckiFacilityPlugin\Controller\RestoreDirectoryController;
 use MuckiFacilityPlugin\Controller\RestoreSnapshotController;
 use MuckiFacilityPlugin\Controller\ScheduleController;
 
@@ -50,6 +51,16 @@ class RouteAclTest extends TestCase
             'restore process' => [
                 RestoreSnapshotController::class,
                 'process',
+                ['muwa_backup_repository:restore'],
+            ],
+            'restore directory' => [
+                RestoreDirectoryController::class,
+                'directory',
+                ['muwa_backup_repository:restore'],
+            ],
+            'restore download prepare' => [
+                RestoreDirectoryController::class,
+                'downloadPrepare',
                 ['muwa_backup_repository:restore'],
             ],
             'get snapshots' => [
@@ -96,6 +107,34 @@ class RouteAclTest extends TestCase
     }
 
     /**
+     * Routes that are deliberately reachable without an authenticated admin session. Each one must
+     * protect itself otherwise (here: a short-lived single-use token) and is listed explicitly.
+     *
+     * @return array<string, array{class-string, string}>
+     */
+    public static function publicTokenRouteProvider(): array
+    {
+        return [
+            'restore download' => [RestoreDirectoryController::class, 'download'],
+        ];
+    }
+
+    /**
+     * @param class-string $controllerClass
+     * @dataProvider publicTokenRouteProvider
+     */
+    public function testPublicRoutesRequireNoAuthButAreExplicitlyListed(
+        string $controllerClass,
+        string $methodName
+    ): void {
+        $defaults = $this->getRouteDefaults($controllerClass, $methodName);
+
+        self::assertArrayHasKey('auth_required', $defaults);
+        self::assertFalse($defaults['auth_required']);
+        self::assertArrayNotHasKey(PlatformRequest::ATTRIBUTE_ACL, $defaults);
+    }
+
+    /**
      * @param class-string $controllerClass
      * @param array<int, string> $expectedPrivileges
      *
@@ -123,6 +162,9 @@ class RouteAclTest extends TestCase
     {
         $covered = [];
         foreach (self::routeAclProvider() as $case) {
+            $covered[] = $case[0] . '::' . $case[1];
+        }
+        foreach (self::publicTokenRouteProvider() as $case) {
             $covered[] = $case[0] . '::' . $case[1];
         }
 
