@@ -194,6 +194,15 @@
       "emptyTitle": "Keine aktiven Backup Repositories",
       "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an."
     },
+    "resticInfo": {
+      "loading": "restic wird geprüft …",
+      "current": "Verwendetes restic: {path}, Version {version}",
+      "unsupported": "Version {version} ist zu alt, benötigt wird mindestens {minVersion}.",
+      "notFound": "Unter „{path}“ wurde kein ausführbares restic gefunden.",
+      "versionUnreadable": "restic unter {path} gefunden, die Version konnte aber nicht gelesen werden.",
+      "loadError": "Die restic-Informationen konnten nicht geladen werden.",
+      "savedConfigHint": "Bezieht sich auf die gespeicherte Konfiguration."
+    },
     "notification": {
       "backupStarted": "Backup „{name}“ wurde gestartet.",
       "backupSucceeded": "Backup „{name}“ wurde erfolgreich abgeschlossen.",

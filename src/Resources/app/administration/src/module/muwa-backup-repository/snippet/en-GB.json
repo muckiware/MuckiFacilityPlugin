@@ -195,6 +195,15 @@
       "emptyTitle": "No active backup repositories",
       "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories."
     },
+    "resticInfo": {
+      "loading": "Checking restic …",
+      "current": "restic in use: {path}, version {version}",
+      "unsupported": "Version {version} is too old, at least {minVersion} is required.",
+      "notFound": "No executable restic binary found at “{path}”.",
+      "versionUnreadable": "restic found at {path}, but its version could not be read.",
+      "loadError": "The restic information could not be loaded.",
+      "savedConfigHint": "Based on the saved configuration."
+    },
     "notification": {
       "backupStarted": "Backup “{name}” started.",
       "backupSucceeded": "Backup “{name}” completed successfully.",

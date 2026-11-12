@@ -1,0 +1,36 @@
+{% block muwa_restic_binary_info %}
+<div class="muwa-restic-binary-info">
+    <h4 class="muwa-restic-binary-info__title">
+        restic
+    </h4>
+    <div
+        class="muwa-restic-binary-info__line"
+        :class="{ 'is--warning': !isLoading && hasWarning }"
+    >
+        <template v-if="isLoading">
+            {{ $t('muwa-backup-repository.resticInfo.loading') }}
+        </template>
+        <template v-else-if="hasLoadError">
+            {{ $t('muwa-backup-repository.resticInfo.loadError') }}
+        </template>
+        <template v-else-if="info.error === 'notFound'">
+            {{ $t('muwa-backup-repository.resticInfo.notFound', { path: info.configuredPath }) }}
+        </template>
+        <template v-else-if="info.error === 'versionUnreadable'">
+            {{ $t('muwa-backup-repository.resticInfo.versionUnreadable', { path: info.path }) }}
+        </template>
+        <template v-else>
+            {{ $t('muwa-backup-repository.resticInfo.current', { path: info.path, version: info.version }) }}
+            <template v-if="isUnsupported">
+                {{ $t('muwa-backup-repository.resticInfo.unsupported', { version: info.version, minVersion: info.minVersion }) }}
+            </template>
+        </template>
+    </div>
+    <span
+        v-if="!isLoading && !hasLoadError"
+        class="muwa-restic-binary-info__hint"
+    >
+        {{ $t('muwa-backup-repository.resticInfo.savedConfigHint') }}
+    </span>
+</div>
+{% endblock %}
