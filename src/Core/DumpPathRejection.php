@@ -18,4 +18,5 @@ enum DumpPathRejection: string
     case PROJECT_DIR_OR_PARENT = 'projectDirOrParent';
     case OVERLAPS_REPOSITORY_OR_RESTORE_PATH = 'overlapsRepositoryOrRestorePath';
     case BLOCKED_PATH = 'blockedPath';
+    case OVERLAPS_DUMP_PATH = 'overlapsDumpPath';
 }

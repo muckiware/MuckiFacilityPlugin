@@ -171,6 +171,7 @@
         "projectDirOrParent": "The shop directory or one of its parent directories cannot be used as dump path. The backup uses the default path var/db/backup instead.",
         "overlapsRepositoryOrRestorePath": "The dump path overlaps with the repository path or the restore path. The backup uses the default path var/db/backup instead.",
         "blockedPath": "This directory is protected and cannot be used as dump path. The backup uses the default path var/db/backup instead.",
+        "overlapsDumpPath": "Path overlaps the database dump path",
         "notWritable": "The folder (or its nearest existing parent folder) is not writable for the web server user. The backup may fall back to the default path var/db/backup."
       }
     },

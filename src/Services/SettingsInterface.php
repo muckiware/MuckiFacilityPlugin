@@ -21,6 +21,7 @@ interface SettingsInterface
     public function getDatabaseUrl(): string;
     public function getBackupPath(bool $useSubFolder=false, ?string $ownDumpPath=null, ?string $repositoryPath=null, ?string $restorePath=null): string;
     public function getOwnDumpPathRejection(?string $ownDumpPath, ?string $repositoryPath=null, ?string $restorePath=null): ?DumpPathRejection;
+    public function getRestorePathRejection(string $restorePath, ?string $repositoryPath, ?string $ownDumpPath): ?DumpPathRejection;
     public function resolveDumpPathValue(string $ownDumpPath): string;
     public function getDateTimestamp(): string;
     public function getDatestamp(): string;

@@ -396,6 +396,41 @@ class SettingsTest extends TestCase
         $this->assertSame('/mnt/a', $settings->resolveDumpPathValue(' /mnt/a '));
     }
 
+    /** @dataProvider rejectedRestorePathProvider */
+    public function testRestorePathIsRejected(string $restorePath, ?string $repositoryPath, ?string $ownDumpPath, DumpPathRejection $expected): void
+    {
+        static::assertSame($expected, $this->createSettings()->getRestorePathRejection($restorePath, $repositoryPath, $ownDumpPath));
+    }
+
+    public static function rejectedRestorePathProvider(): array
+    {
+        return [
+            'root'                  => ['/', null, null, DumpPathRejection::ROOT_DIRECTORY],
+            'dot segment'           => ['/mnt/../etc', null, null, DumpPathRejection::RELATIVE_SEGMENT],
+            'project dir'           => ['/var/www/html', null, null, DumpPathRejection::PROJECT_DIR_OR_PARENT],
+            'parent of project'     => ['/var/www', null, null, DumpPathRejection::PROJECT_DIR_OR_PARENT],
+            'blocked system dir'    => ['/etc/restore', null, null, DumpPathRejection::BLOCKED_PATH],
+            'blocked project sub'   => ['vendor/restore', null, null, DumpPathRejection::BLOCKED_PATH],
+            'repository overlap'    => ['/mnt/repo/restore', '/mnt/repo', null, DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH],
+            'own dump path overlap' => ['/mnt/dumps', null, '/mnt/dumps/db', DumpPathRejection::OVERLAPS_DUMP_PATH],
+        ];
+    }
+
+    public function testRestorePathOverlappingDefaultDumpPathIsRejected(): void
+    {
+        static::assertSame(
+            DumpPathRejection::OVERLAPS_DUMP_PATH,
+            $this->createSettings()->getRestorePathRejection('var/db', null, null)
+        );
+    }
+
+    public function testAllowedRestorePathsReturnNull(): void
+    {
+        $settings = $this->createSettings();
+        static::assertNull($settings->getRestorePathRejection('/mnt/restore', '/mnt/repo', '/mnt/dumps'));
+        static::assertNull($settings->getRestorePathRejection('var/restore', null, null));
+    }
+
     private function createSettings(?LoggerInterface $logger = null): PluginSettings
     {
         $kernel = $this->createMock(KernelInterface::class);
