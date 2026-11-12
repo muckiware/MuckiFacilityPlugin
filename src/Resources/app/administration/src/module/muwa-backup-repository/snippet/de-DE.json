@@ -223,6 +223,17 @@
       "lastError": "Letzter Fehler",
       "save": "Zeitplan speichern",
       "error": "Zeitplan konnte nicht gespeichert werden"
+    },
+    "restoreDirectory": {
+      "title": "Wiederhergestellte Dateien",
+      "emptyState": "Noch nichts wiederhergestellt. Stelle zuerst einen Snapshot wieder her.",
+      "notConfigured": "Für dieses Repository ist kein Restore Path konfiguriert.",
+      "notAllowed": "Restore Path nicht zulässig – Anzeige gesperrt.",
+      "truncated": "Liste gekürzt (max. 1000 Einträge).",
+      "downloadStarted": "Download gestartet",
+      "errorTitle": "Fehler",
+      "loadError": "Ordner konnte nicht geladen werden.",
+      "downloadError": "Download fehlgeschlagen."
     }
   },
   "sw-privileges": {

@@ -652,6 +652,7 @@ Component.register('muwa-backup-repository-detail', {
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
             this.fetchBackupRepositoryStats();
+            this.$refs.restoreDirectoryTree?.refresh();
         },
 
         onClickSave() {

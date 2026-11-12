@@ -789,6 +789,14 @@
                         {% endblock %}
 
                     </sw-entity-listing>
+
+                    <sw-card
+                        positionIdentifier="muwaBackupRepositoryRestoreDirectory"
+                        v-if="backupRepository && tab === 'backupRepositorySnapshots' && acl.can('muwa_backup_repository.restore')"
+                        :title="$tc('muwa-backup-repository.restoreDirectory.title')"
+                    >
+                        <muwa-restore-directory-tree ref="restoreDirectoryTree" :backup-repository-id="backupRepository.id" />
+                    </sw-card>
                 </sw-card-view>
             {% endblock %}
         </template>

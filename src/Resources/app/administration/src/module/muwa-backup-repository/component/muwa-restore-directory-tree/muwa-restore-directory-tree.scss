@@ -1,0 +1,55 @@
+@import "~scss/variables";
+
+.muwa-restore-directory-tree {
+    position: relative;
+    min-height: 40px;
+
+    .muwa-restore-directory-tree__message {
+        color: $color-darkgray-200;
+        font-size: $font-size-xs;
+    }
+
+    .muwa-restore-directory-tree__list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .muwa-restore-directory-tree__row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 32px;
+        font-size: $font-size-xs;
+    }
+
+    .muwa-restore-directory-tree__toggle,
+    .muwa-restore-directory-tree__download {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .muwa-restore-directory-tree__download {
+        color: $color-shopware-brand-500;
+        text-decoration: underline;
+
+        &:disabled {
+            cursor: progress;
+            opacity: 0.6;
+        }
+    }
+
+    .muwa-restore-directory-tree__meta {
+        margin-left: auto;
+        color: $color-darkgray-200;
+        white-space: nowrap;
+    }
+}

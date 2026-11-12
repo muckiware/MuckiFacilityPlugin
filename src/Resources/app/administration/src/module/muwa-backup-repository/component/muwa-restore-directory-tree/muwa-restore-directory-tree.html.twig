@@ -1,0 +1,75 @@
+{% block muwa_restore_directory_tree %}
+<div class="muwa-restore-directory-tree">
+    <sw-loader v-if="root && root.loading" />
+
+    <p
+        v-if="rootMessageSnippet"
+        class="muwa-restore-directory-tree__message"
+    >
+        {{ $tc(rootMessageSnippet) }}
+    </p>
+
+    <ul
+        v-else-if="rootState === 'ok'"
+        class="muwa-restore-directory-tree__list"
+    >
+        <li
+            v-for="row in rows"
+            :key="row.key"
+            class="muwa-restore-directory-tree__row"
+            :class="`muwa-restore-directory-tree__row--${row.type}`"
+            :style="{ paddingLeft: `${row.depth * 20}px` }"
+        >
+            <template v-if="row.type === 'directory'">
+                <button
+                    type="button"
+                    class="muwa-restore-directory-tree__toggle"
+                    @click="onToggleDirectory(row.entry)"
+                >
+                    <sw-icon
+                        :name="row.node && row.node.expanded ? 'regular-chevron-down-xxs' : 'regular-chevron-right-xxs'"
+                        size="12px"
+                    />
+                    <sw-icon
+                        name="regular-folder"
+                        size="16px"
+                    />
+                    <span>{{ row.entry.name }}</span>
+                </button>
+            </template>
+
+            <template v-else-if="row.type === 'file'">
+                <sw-icon
+                    name="regular-file"
+                    size="16px"
+                />
+                <button
+                    v-if="row.entry.downloadable"
+                    type="button"
+                    class="muwa-restore-directory-tree__download"
+                    :disabled="!!downloadingPath"
+                    @click="onDownload(row.entry)"
+                >
+                    {{ row.entry.name }}
+                </button>
+                <span v-else>{{ row.entry.name }}</span>
+                <span class="muwa-restore-directory-tree__meta">
+                    {{ formatSize(row.entry.size) }} · {{ formatDate(row.entry.modifiedAt) }}
+                </span>
+            </template>
+
+            <sw-loader
+                v-else-if="row.type === 'loading'"
+                size="16px"
+            />
+
+            <span
+                v-else-if="row.type === 'truncated'"
+                class="muwa-restore-directory-tree__message"
+            >
+                {{ $tc('muwa-backup-repository.restoreDirectory.truncated') }}
+            </span>
+        </li>
+    </ul>
+</div>
+{% endblock %}

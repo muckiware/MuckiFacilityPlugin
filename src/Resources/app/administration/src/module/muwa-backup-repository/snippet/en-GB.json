@@ -34,7 +34,6 @@
       "batchArgumentsLabel": "Arguments",
       "batchArgumentsHelpText": "Arguments are passed separately from the script path. Wrap values containing spaces in single or double quotes.",
       "batchArgumentsPlaceholder": "/var/www/html --mode \"full\"",
-
       "phpCommandLabel": "Shopware CLI command",
       "phpCommandPlaceholder": "e.g. cache:clear",
       "failOnErrorLabel": "Fail backup when command fails"
@@ -224,6 +223,17 @@
       "lastError": "Last error",
       "save": "Save schedule",
       "error": "Could not save schedule"
+    },
+    "restoreDirectory": {
+      "title": "Restored files",
+      "emptyState": "Nothing restored yet. Restore a snapshot first.",
+      "notConfigured": "No restore path is configured for this repository.",
+      "notAllowed": "Restore path not allowed – view blocked.",
+      "truncated": "List truncated (max. 1000 entries).",
+      "downloadStarted": "Download started",
+      "errorTitle": "Error",
+      "loadError": "Folder could not be loaded.",
+      "downloadError": "Download failed."
     }
   },
   "sw-privileges": {
