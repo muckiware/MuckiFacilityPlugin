@@ -254,6 +254,10 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
             <argument type="service" id="kernel"/>
         </service>
+        <service id="MuckiFacilityPlugin\Services\RestoreDirectoryBrowser" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+        </service>
         <service id="MuckiFacilityPlugin\Services\ResticBinaryInfo">
             <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
         </service>
