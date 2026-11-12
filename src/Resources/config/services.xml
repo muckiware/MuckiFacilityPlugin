@@ -11,8 +11,16 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service id="MuckiFacilityPlugin\Controller\DatabaseConnectionController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabaseConnectionRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\DatabaseConnectionResolver"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service id="MuckiFacilityPlugin\Controller\InitBackupRepositoryController" public="true">
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabaseConnectionRepository"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
@@ -67,11 +75,15 @@
             <tag name="shopware.entity.definition" entity="muwa_backup_repository_stats" />
         </service>
 
+        <service id="MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition">
+            <tag name="shopware.entity.definition" entity="muwa_database_connection" />
+        </service>
+
         <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
-            <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\DatabaseConnectionResolver"/>
         </service>
         <service id="MuckiFacilityPlugin\Database\DatabaseHelper">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -195,6 +207,28 @@
         <service id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
         <service id="MuckiFacilityPlugin\Services\Content\RepositoryPasswordResolver">
             <argument type="service" id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Content\DatabasePasswordResolver">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
+            <argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper">
+            <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Subscriber\MysqlDatabaseConnectionSubscriber">
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabasePasswordResolver"/>
+            <argument type="service" id="MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Content\DatabaseConnectionRepository">
+            <argument type="service" id="muwa_database_connection.repository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabasePasswordResolver"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\DatabaseConnectionResolver">
+            <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="muwa_database_connection.repository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\Content\BackupRepository" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>

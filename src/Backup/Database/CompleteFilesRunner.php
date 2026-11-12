@@ -12,18 +12,13 @@
 namespace MuckiFacilityPlugin\Backup\Database;
 
 use Psr\Log\LoggerInterface;
-use Spatie\DbDumper\Databases\MySql as MySqlDumper;
-use Spatie\DbDumper\Exceptions\CannotSetParameter;
-use Spatie\DbDumper\Exceptions\CannotStartDump;
-use Spatie\DbDumper\Exceptions\DumpFailed;
-
-use MuckiRestic\Entity\Result\ResultEntity;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
-use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
+use MuckiFacilityPlugin\Entity\DatabaseBackupTarget;
+use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 
 class CompleteFilesRunner implements BackupInterface
 {
@@ -31,38 +26,55 @@ class CompleteFilesRunner implements BackupInterface
         protected LoggerInterface $logger,
         protected SettingsInterface $pluginSettings,
         protected BackupRepositorySettings $createBackup,
-        protected CoreDatabase $database,
+        protected DatabaseBackupTarget $target,
         protected DumpArchiver $dumpArchiver
     ) {}
 
+    /**
+     * @throws DatabaseBackupFailedException for a configured connection, the default connection only logs
+     */
     public function createBackupData(bool $isJsonOutput=true): void
     {
-        $databaseUrl = $this->pluginSettings->getDatabaseUrl();
+        $connection = $this->target->getConnection();
+        $dumper = $this->target->getDumper();
         $isCompressDbBackupEnabled = $this->pluginSettings->isCompressDbBackupEnabled();
-        foreach ($this->database->getListOfAllTables() as $table) {
 
-            $mysqlDumper = MySqlDumper::create();
-            $mysqlDumper->setDatabaseUrl($databaseUrl);
-            $mysqlDumper->useSingleTransaction();
+        try {
+            $tables = $dumper->listTables($connection);
+        } catch (DatabaseBackupFailedException $e) {
+            $this->handleFailure($e);
+            return;
+        }
 
+        foreach ($tables as $table) {
             try {
-
-                $mysqlDumper->includeTables($table);
                 $dumpFile = $this->createBackupFileName($table, true);
-                $mysqlDumper->dumpToFile($dumpFile);
+                $dumper->dump($connection, $dumpFile, [$table]);
 
                 if($isCompressDbBackupEnabled) {
                     $this->dumpArchiver->archive($dumpFile);
                 }
-
-            } catch (CannotStartDump $e) {
-                $this->logger->error('Cannot start dump:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            } catch (DumpFailed $e) {
-                $this->logger->error('Dump failed:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            } catch (CannotSetParameter $e) {
-                $this->logger->error('Cannot set parameter:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+            } catch (DatabaseBackupFailedException $e) {
+                $this->handleFailure($e);
             }
         }
+    }
+
+    /**
+     * Default connection: log and go on (legacy behaviour). Own connection: abort the backup run.
+     *
+     * @throws DatabaseBackupFailedException
+     */
+    protected function handleFailure(DatabaseBackupFailedException $e): void
+    {
+        if(!$this->target->isDefault()) {
+            throw new DatabaseBackupFailedException(sprintf(
+                'Database backup for connection "%s" failed: %s',
+                $this->target->getConnectionName(),
+                $e->getMessage()
+            ), 0, $e);
+        }
+        $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
     }
 
     public function getBackupData(): mixed

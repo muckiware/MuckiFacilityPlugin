@@ -234,6 +234,49 @@
       "errorTitle": "Error",
       "loadError": "Folder could not be loaded (HTTP status: {status}).",
       "downloadError": "Download failed (HTTP status: {status})."
+    },
+    "databaseConnection": {
+      "tabLabel": "Database connections",
+      "createButton": "Add connection",
+      "cardTitle": "Database connection",
+      "passwordCardTitle": "Password",
+      "nameLabel": "Name",
+      "typeLabel": "Type",
+      "hostLabel": "Host",
+      "portLabel": "Port",
+      "databaseNameLabel": "Database",
+      "usernameLabel": "User",
+      "passwordSourceLabel": "Password source",
+      "passwordSources": {
+        "encrypted": "Stored encrypted",
+        "env": "Environment variable",
+        "file": "File"
+      },
+      "passwordValueLabels": {
+        "encrypted": "Password",
+        "env": "Name of the environment variable",
+        "file": "Path to the password file"
+      },
+      "passwordRepeatLabel": "Repeat password",
+      "passwordKeepPlaceholder": "Leave empty to keep the stored password",
+      "passwordSourceHelpText": "<b>Stored encrypted:</b> the password is stored encrypted in the database.<br><b>Environment variable:</b> name of a variable starting with <code>MUWA_DB_</code> (e.g. <code>MUWA_DB_BACKUP_PASSWORD</code>).<br><b>File:</b> path to a file inside <code>&lt;project dir&gt;/var/secrets/</code>.<br>The password is never returned to the administration. It must be entered again when host, port, type or user change.",
+      "passwordMismatch": "The passwords do not match.",
+      "testButton": "Test connection",
+      "testSuccessTitle": "Connection successful",
+      "testSuccessMessage": "The database can be reached with these settings.",
+      "testErrorTitle": "Connection failed",
+      "saveButton": "Save",
+      "saveSuccess": "The database connection has been saved.",
+      "saveError": "The database connection could not be saved",
+      "deleteSuccess": "The database connection has been deleted.",
+      "deleteInUse": "The connection is still used by these backup configurations and cannot be deleted: {names}",
+      "emptyState": "No database connections available.",
+      "defaultConnection": "Default connection (system)",
+      "selectLabel": "Database connection",
+      "selectHelpText": "Database the dump is created from. The default connection is the database of this shop.",
+      "types": {
+        "mysql": "MySQL / MariaDB"
+      }
     }
   },
   "sw-privileges": {

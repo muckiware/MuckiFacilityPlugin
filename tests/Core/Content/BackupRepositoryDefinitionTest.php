@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Field;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\FkField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\LongTextField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\AllowEmptyString;
@@ -110,6 +112,14 @@ class BackupRepositoryDefinitionTest extends TestCase
 
             self::assertSame(4096, $reflectionProperty->getValue($field));
         }
+    }
+
+    public function testDatabaseConnectionIdIsOptionalForeignKey(): void
+    {
+        $field = $this->getField('databaseConnectionId');
+
+        self::assertInstanceOf(FkField::class, $field);
+        self::assertFalse($field->is(Required::class), 'NULL means the standard connection');
     }
 
     /**

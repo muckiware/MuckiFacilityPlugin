@@ -15,6 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Services\Content\BackupRepository as BackupRepositoryService;
+use MuckiFacilityPlugin\Services\Content\DatabaseConnectionRepository;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
@@ -26,7 +27,8 @@ class InitBackupRepositoryController extends AbstractController
      * @internal
      */
     public function __construct(
-        protected BackupRepositoryService $backupRepositoryService
+        protected BackupRepositoryService $backupRepositoryService,
+        protected DatabaseConnectionRepository $databaseConnectionRepository
     )
     {}
 
@@ -109,6 +111,16 @@ class InitBackupRepositoryController extends AbstractController
         if(!$this->checkPassword($requestDataBag)) {
             throw new \Exception('Passwords does not match');
         }
+
+        // Checked before `restic init`, otherwise the record write fails on the foreign key
+        // after the restic repository already exists.
+        $databaseConnectionId = (string) $requestDataBag->get('databaseConnectionId', '');
+        if(
+            Uuid::isValid($databaseConnectionId)
+            && $this->databaseConnectionRepository->getById($databaseConnectionId) === null
+        ) {
+            throw new \Exception('Database connection not found');
+        }
     }
 
     public function checkPassword(RequestDataBag $requestDataBag): bool
@@ -166,6 +178,11 @@ class InitBackupRepositoryController extends AbstractController
 
         $dbDumpPath = trim((string) $requestDataBag->get('dbDumpPath', ''));
         $repositoryInitInputs->setDbDumpPath($dbDumpPath === '' ? null : $dbDumpPath);
+
+        $databaseConnectionId = (string) $requestDataBag->get('databaseConnectionId', '');
+        $repositoryInitInputs->setDatabaseConnectionId(
+            Uuid::isValid($databaseConnectionId) ? $databaseConnectionId : null
+        );
 
         $hostName = trim((string) $requestDataBag->get('hostname', ''));
         if($hostName !== '') {

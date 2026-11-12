@@ -16,6 +16,35 @@ All notable changes to this project will be documented in this file.
   Saving the configuration and the restore itself are unchanged.
 - Downloads are guarded by a single-use token that is valid for 60 seconds, because the browser
   download cannot send the administration bearer token.
+- Database connections: a backup configuration can dump another database than the system
+  database. Connections (name, type, host, port, database name, user, password) are managed in the
+  new tab **Database connections** of the backup module and are chosen per backup configuration in
+  a dropdown. The first entry is always **Default connection (system)**; without a choice the
+  backup works exactly as before (`DATABASE_URL`). A connection can be checked with the button
+  **Check connection**. New table `muwa_database_connection`, new nullable column
+  `muwa_backup_repository.database_connection_id` (migration `Migration1794470400`, existing
+  configurations stay on the default connection), new API routes
+  `POST /api/_action/muwa/database-connection/save` and `.../test` and the privileges
+  `muwa_database_connection:*` inside the existing backup repository roles.
+- The database password of a connection uses the password sources `encrypted` (needs
+  `MUWA_FACILITY_SECRET`), `env` and `file`. `env` names must start with `MUWA_DB_`, files must be
+  inside `<projectDir>/var/secrets/` (relative paths are resolved against the project directory).
+  Passwords with line breaks are rejected, as are line breaks and NUL bytes in name, host, user and
+  database name. Passwords containing `'` are not supported. The password is never part of an API
+  response, log entry or error message. All connection fields are write protected for the generic
+  entity API; connections are written only through the save route, which asks for the password
+  again when host, port, type, user or password source change.
+- New event `mucki_facility.database_connection.resolve` (`ResolveDatabaseConnectionEvent`) and
+  interface `DatabaseDumperInterface`: other plugins can provide connection data and a dumper for
+  further database types. The built-in `MysqlDatabaseConnectionSubscriber` handles `mysql`.
+
+### Changed
+- The database backup runners (`CompleteFileRunner`, `CompleteFilesRunner`) get connection and
+  dumper from `DatabaseConnectionResolver` instead of building the dump themselves. The table
+  list of `completeDatabaseSeparateFiles` comes from the dumper of the target database. For the
+  default connection errors are still only logged, as before. A failing own connection aborts the
+  whole backup run with a `DatabaseBackupFailedException` naming the connection (no fallback to the
+  system database, no empty dump is pushed to restic).
 
 ### [0.8.2]
 

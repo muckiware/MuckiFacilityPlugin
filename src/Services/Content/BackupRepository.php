@@ -209,6 +209,7 @@ class BackupRepository
             'forgetWeekly' => $backupRepositoryInput->getForgetWeekly(),
             'forgetMonthly' => $backupRepositoryInput->getForgetMonthly(),
             'forgetYearly' => $backupRepositoryInput->getForgetYearly(),
+            'databaseConnectionId' => $backupRepositoryInput->getDatabaseConnectionId(),
         ];
     }
 

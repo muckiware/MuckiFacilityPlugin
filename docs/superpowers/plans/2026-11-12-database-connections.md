@@ -12,6 +12,7 @@
 
 ## Global Constraints
 
+- **Git: nur Code bearbeiten, keine Git-Schreiboperationen.** Kein `git commit`, kein `git push`, kein `git add`, kein neuer Branch, kein Worktree, kein `git stash`/`reset`/`checkout`. Gearbeitet wird direkt im bereits ausgecheckten Branch `main` des Plugin-Repos; alle Aenderungen bleiben im Working Tree. Commit und Push macht der Nutzer spaeter selbst. Das gilt auch fuer Subagents und Reviewer — sie pruefen per `git diff` gegen `HEAD`.
 - Namespace `MuckiFacilityPlugin\`; Stil wie Bestand (`protected`, kein `final`/`readonly`, `declare(strict_types=1)`, Datei-Header-Kommentar wie in den Nachbardateien).
 - Jeder Service in `src/Resources/config/services.xml` — kein Autowiring. Jeder neue Unit-Test als `<file>` in `phpunit.unit.xml`.
 - Tests laufen mit: `ddev exec "cd custom/static-plugins/MuckiFacilityPlugin && /var/www/html/vendor/bin/phpunit -c phpunit.unit.xml"` (Einzeltest: `--filter <Name>`).
@@ -69,7 +70,7 @@
 - [ ] **Step 5: Migration im Dev-Shop pruefen**
   Run: `ddev exec bin/console database:migrate MuckiFacilityPlugin --all` zweimal, danach `ddev mysql -e "SELECT COUNT(*) FROM muwa_backup_repository WHERE database_connection_id IS NOT NULL"`
   Expected: zweiter Lauf ohne Fehler, Ergebnis `0`.
-- [ ] **Step 6: Commit** `feat: add database connection entity and optional link on backup repositories`
+- [ ] **Step 6: Nicht committen** — Aenderungen im Working Tree lassen. Vorschlag fuer die spaetere Commit-Message des Nutzers: `feat: add database connection entity and optional link on backup repositories`
 
 ---
 
@@ -97,7 +98,7 @@
 - [ ] **Step 2: FAIL**
 - [ ] **Step 3: Implementieren** — Verschluesselung ueber `SecretCipher::encrypt/decrypt` (gleicher Cipher, Repository-Pfad unberuehrt). Pfadpruefung: `realpath($path)` muss mit `realpath($projectDir.'/var/secrets').'/'` beginnen. Pruefung in `resolve()` **und** `prepareForStorage()`.
 - [ ] **Step 4: PASS**
-- [ ] **Step 5: Commit** `feat: add database password resolver restricted to MUWA_DB_ env vars and var/secrets`
+- [ ] **Step 5: Nicht committen** — Aenderungen im Working Tree lassen. Vorschlag fuer die spaetere Commit-Message des Nutzers: `feat: add database password resolver restricted to MUWA_DB_ env vars and var/secrets`
 
 ---
 
@@ -133,7 +134,7 @@
   - `MysqlDatabaseDumper`: Standardverbindung → `setDatabaseUrl()` wie heute + `listTables()` ueber `CoreDatabase`; eigene → `setHost/setPort/setDbName/setUserName/setPassword` (spatie nutzt eine Credentials-Datei, das Passwort erscheint nicht in `ps`), `useSingleTransaction()`. `listTables()`/`testConnection()` fuer eigene Verbindung ueber kurzlebige `DriverManager::getConnection([...'driver' => 'pdo_mysql'])`, danach `close()`. spatie-/DBAL-Fehler → `DatabaseBackupFailedException` mit maskierter Meldung.
   - Resolver laedt die Entity ueber `muwa_database_connection.repository` im System-Scope.
 - [ ] **Step 4: PASS**, PHPStan gruen
-- [ ] **Step 5: Commit** `feat: resolve database connection and dumper through ResolveDatabaseConnectionEvent`
+- [ ] **Step 5: Nicht committen** — Aenderungen im Working Tree lassen. Vorschlag fuer die spaetere Commit-Message des Nutzers: `feat: resolve database connection and dumper through ResolveDatabaseConnectionEvent`
 
 ---
 
@@ -158,7 +159,7 @@
 - [ ] **Step 4: PASS** (gesamte Suite), PHPStan gruen
 - [ ] **Step 5: Regressionscheck im Dev-Shop** — bestehendes Repository (ohne Verbindung) per `ddev exec bin/console muckiware:backup:create <id>` sichern
   Expected: Dump-Datei `<datum>_<dbname>.backup.sql[.tar.gz]` im Snapshot wie vorher (`restic ls` bzw. Snapshot-Tab).
-- [ ] **Step 6: Commit** `feat: dump the configured database connection in database backup runners`
+- [ ] **Step 6: Nicht committen** — Aenderungen im Working Tree lassen. Vorschlag fuer die spaetere Commit-Message des Nutzers: `feat: dump the configured database connection in database backup runners`
 
 ---
 
@@ -189,7 +190,7 @@
 - [ ] **Step 2: FAIL**
 - [ ] **Step 3: Implementieren** — Schreiben im System-Scope (Muster `BackupRepository::createBackupRepository()`), Passwort ueber `DatabasePasswordResolver::prepareForStorage()`. Test-Route: `buildTransient()` → `DatabaseConnectionResolver::resolveConnection()` → `getDumper()->testConnection()`.
 - [ ] **Step 4: PASS**
-- [ ] **Step 5: Commit** `feat: add API routes to save and test database connections`
+- [ ] **Step 5: Nicht committen** — Aenderungen im Working Tree lassen. Vorschlag fuer die spaetere Commit-Message des Nutzers: `feat: add API routes to save and test database connections`
 
 ---
 
@@ -219,7 +220,7 @@
   - Dropdown: Optionen aus DAL + fuehrender Eintrag `null`; Create-Seite sendet `databaseConnectionId` an die Init-Route, Detail-Seite speichert ueber das normale `repository.save`.
 - [ ] **Step 4: PASS**, Build: `ddev exec bin/build-administration.sh`
 - [ ] **Step 5: Browser-Check** (`https://muckidirve.ddev.site/admin`, 6.7): Verbindung zur DDEV-DB (`db`, 3306, `db`, `db`, Passwort per `encrypted`) anlegen → "Verbindung pruefen" ok; falscher Host → Fehlermeldung ohne Passwort; Repository auf die Verbindung stellen, Backup starten, Dump im Snapshot; Verbindung mit Nutzung loeschen → blockiert mit Namensliste; neues Repository ohne Auswahl → `databaseConnectionId` `NULL`.
-- [ ] **Step 6: Commit** `feat: manage database connections and select them in backup configuration`
+- [ ] **Step 6: Nicht committen** — Aenderungen im Working Tree lassen. Vorschlag fuer die spaetere Commit-Message des Nutzers: `feat: manage database connections and select them in backup configuration`
 
 ---
 
@@ -232,4 +233,4 @@
 - [ ] **Step 2: Gesamte Suite + PHPStan**
   Run: Tests wie in Global Constraints, `composer run-script phpstan`
   Expected: alle gruen
-- [ ] **Step 3: Commit** `docs: document database connections`
+- [ ] **Step 3: Nicht committen** — Aenderungen im Working Tree lassen. Vorschlag fuer die spaetere Commit-Message des Nutzers: `docs: document database connections`

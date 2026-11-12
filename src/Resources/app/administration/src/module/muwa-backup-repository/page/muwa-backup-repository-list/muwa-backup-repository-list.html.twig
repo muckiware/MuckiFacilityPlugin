@@ -3,6 +3,16 @@
         {% block muwa_backup_repository_list_smart_bar_actions %}
             <template #smart-bar-actions>
                 <sw-button
+                    v-if="tab === 'databaseConnectionList'"
+                    variant="primary"
+                    position-identifier="muwa-database-connection-create-button"
+                    :disabled="!acl.can('muwa_backup_repository.creator')"
+                    :routerLink="{ name: 'muwa.backup.repository.databaseConnectionCreate' }"
+                >
+                    {{ $t('muwa-backup-repository.databaseConnection.createButton') }}
+                </sw-button>
+                <sw-button
+                    v-else
                     variant="primary"
                     position-identifier="muwa-backup-repository-create-button"
                     :disabled="!acl.can('muwa_backup_repository.creator')"
@@ -26,9 +36,20 @@
                             >
                                 {{ $tc('muwa-backup-repository.tabs.repositoryList') }}
                             </sw-tabs-item>
+                            <sw-tabs-item
+                                key="databaseConnectionList"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.index', params: { tab: 'databaseConnectionList' } }"
+                            >
+                                {{ $t('muwa-backup-repository.databaseConnection.tabLabel') }}
+                            </sw-tabs-item>
                         </template>
                     </sw-tabs>
                 {% endblock %}
+
+                <muwa-database-connection-list
+                    v-if="tab === 'databaseConnectionList'"
+                />
 
                 <sw-entity-listing
                         v-if="backupRepository && tab === 'repositoryList'"

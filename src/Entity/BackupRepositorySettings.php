@@ -458,4 +458,19 @@ class BackupRepositorySettings
     {
         $this->hostName = $hostName;
     }
+
+    /**
+     * @var string|null null = standard connection (DATABASE_URL)
+     */
+    protected ?string $databaseConnectionId = null;
+
+    public function getDatabaseConnectionId(): ?string
+    {
+        return $this->databaseConnectionId;
+    }
+
+    public function setDatabaseConnectionId(?string $databaseConnectionId): void
+    {
+        $this->databaseConnectionId = $databaseConnectionId;
+    }
 }

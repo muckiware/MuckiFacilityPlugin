@@ -226,6 +226,12 @@
                             :repository-path="backupRepository.repositoryPath"
                             :restore-path="backupRepository.restorePath"
                         />
+
+                        <muwa-database-connection-select
+                            v-if="backupRepository.type && backupRepository.type !== 'noneDatabase'"
+                            v-model:value="backupRepository.databaseConnectionId"
+                            :disabled="!acl.can('muwa_backup_repository.editor')"
+                        />
                         <sw-text-field
                                 v-if="isV6600"
                                 :label="$tc('muwa-backup-repository.detail.hostnameLabel')"

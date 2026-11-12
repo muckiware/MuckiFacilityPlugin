@@ -206,6 +206,7 @@ Component.register('muwa-backup-repository-create', {
             this.backupRepository.postBackupCommandArguments = '';
             this.backupRepository.postBackupFailOnError = true;
             this.backupRepository.backupPaths= [];
+            this.backupRepository.databaseConnectionId = null;
         },
 
         /**

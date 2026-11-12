@@ -14,6 +14,7 @@ use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChe
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
+use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition;
 
 /**
  * Uninstalling without "keep data" used to leave all four `muwa_*` tables in place, repository
@@ -45,7 +46,7 @@ class MuckiFacilityPluginUninstallTest extends TestCase
         $dropPluginTables->setAccessible(true);
         $dropPluginTables->invoke($plugin);
 
-        self::assertCount(5, $executedStatements);
+        self::assertCount(6, $executedStatements);
 
         $expectedOrder = [
             BackupScheduleDefinition::ENTITY_NAME,
@@ -53,6 +54,7 @@ class MuckiFacilityPluginUninstallTest extends TestCase
             BackupRepositorySnapshotsDefinition::ENTITY_NAME,
             BackupRepositoryChecksDefinition::ENTITY_NAME,
             BackupRepositoryDefinition::ENTITY_NAME,
+            DatabaseConnectionDefinition::ENTITY_NAME,
         ];
 
         foreach ($expectedOrder as $index => $tableName) {
@@ -65,9 +67,42 @@ class MuckiFacilityPluginUninstallTest extends TestCase
         }
 
         self::assertStringContainsString(
-            '`'.BackupRepositoryDefinition::ENTITY_NAME.'`',
+            '`'.DatabaseConnectionDefinition::ENTITY_NAME.'`',
             $executedStatements[array_key_last($executedStatements)],
-            'muwa_backup_repository must be dropped last — the other three tables have a foreign key on it'
+            'muwa_database_connection must be dropped last — muwa_backup_repository has a foreign key on it'
         );
+    }
+
+    public function testDatabaseConnectionTableIsDroppedAfterBackupRepository(): void
+    {
+        $executedStatements = [];
+        $connection = $this->createMock(Connection::class);
+        $connection->method('executeStatement')
+            ->willReturnCallback(function (string $sql) use (&$executedStatements): int {
+                $executedStatements[] = $sql;
+                return 0;
+            });
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->with(Connection::class)->willReturn($connection);
+
+        $plugin = new MuckiFacilityPlugin(true, __DIR__);
+        $plugin->setContainer($container);
+        $dropPluginTables = new \ReflectionMethod(MuckiFacilityPlugin::class, 'dropPluginTables');
+        $dropPluginTables->setAccessible(true);
+        $dropPluginTables->invoke($plugin);
+
+        $find = static function (string $table) use ($executedStatements): int {
+            foreach ($executedStatements as $i => $sql) {
+                if (str_contains($sql, '`'.$table.'`')) {
+                    return $i;
+                }
+            }
+            return -1;
+        };
+
+        $repo = $find('muwa_backup_repository');
+        $conn = $find('muwa_database_connection');
+        self::assertGreaterThanOrEqual(0, $repo);
+        self::assertGreaterThan($repo, $conn);
     }
 }

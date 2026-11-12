@@ -24,6 +24,7 @@ use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChe
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
+use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition;
 
 /**
  * Add dependencies from composer
@@ -67,6 +68,7 @@ class MuckiFacilityPlugin extends Plugin
             BackupRepositorySnapshotsDefinition::ENTITY_NAME,
             BackupRepositoryChecksDefinition::ENTITY_NAME,
             BackupRepositoryDefinition::ENTITY_NAME,
+            DatabaseConnectionDefinition::ENTITY_NAME,
         ] as $tableName) {
             $connection->executeStatement('DROP TABLE IF EXISTS `'.$tableName.'`');
         }

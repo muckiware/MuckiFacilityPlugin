@@ -26,6 +26,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IntField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\JsonField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\LongTextField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\ManyToOneAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToManyAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToOneAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
@@ -36,6 +37,7 @@ use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChe
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
+use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition;
 
 class BackupRepositoryDefinition extends EntityDefinition
 {
@@ -82,6 +84,15 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new IntField('forget_weekly', 'forgetWeekly')),
             (new IntField('forget_monthly', 'forgetMonthly')),
             (new IntField('forget_yearly', 'forgetYearly')),
+            (new FkField('database_connection_id', 'databaseConnectionId', DatabaseConnectionDefinition::class)),
+
+            (new ManyToOneAssociationField(
+                'databaseConnection',
+                'database_connection_id',
+                DatabaseConnectionDefinition::class,
+                'id',
+                false
+            )),
 
             (new OneToManyAssociationField(
                 'backupRepositoryChecks',

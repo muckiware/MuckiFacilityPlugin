@@ -1,0 +1,40 @@
+{% block muwa_database_connection_list %}
+    <div class="muwa-database-connection-list">
+        <sw-entity-listing
+            v-if="databaseConnections && databaseConnections.total > 0"
+            :is-loading="isLoading"
+            :items="databaseConnections"
+            :repository="repository"
+            :columns="columns"
+            :show-actions="true"
+            :show-selection="false"
+            :show-settings="false"
+            :allow-inline-edit="false"
+            detail-route="muwa.backup.repository.databaseConnectionDetail"
+            identifier="muwa-database-connection-list"
+        >
+            <template #column-type="{ item }">
+                {{ getTypeLabel(item.type) }}
+            </template>
+
+            {% block muwa_database_connection_list_grid_columns_actions %}
+                <template #delete-action="{ item }">
+                    <sw-context-menu-item
+                        variant="danger"
+                        :disabled="!acl.can('muwa_backup_repository.deleter')"
+                        @click="onDelete(item)"
+                    >
+                        {{ $t('global.default.delete') }}
+                    </sw-context-menu-item>
+                </template>
+            {% endblock %}
+        </sw-entity-listing>
+
+        <sw-empty-state
+            v-else-if="databaseConnections && !isLoading"
+            :title="$t('muwa-backup-repository.databaseConnection.emptyState')"
+            :absolute="false"
+            icon="regular-database"
+        />
+    </div>
+{% endblock %}

@@ -10,6 +10,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 use MuckiFacilityPlugin\Controller\BackupController;
 use MuckiFacilityPlugin\Controller\BatchFileController;
+use MuckiFacilityPlugin\Controller\DatabaseConnectionController;
 use MuckiFacilityPlugin\Controller\FilesystemController;
 use MuckiFacilityPlugin\Controller\InitBackupRepositoryController;
 use MuckiFacilityPlugin\Controller\ManageController;
@@ -97,6 +98,16 @@ class RouteAclTest extends TestCase
                 FilesystemController::class,
                 'checkDumpPath',
                 ['muwa_backup_repository:update'],
+            ],
+            'database connection save' => [
+                DatabaseConnectionController::class,
+                'save',
+                ['muwa_database_connection:update'],
+            ],
+            'database connection test' => [
+                DatabaseConnectionController::class,
+                'testConnection',
+                ['muwa_database_connection:update'],
             ],
             'restic info' => [
                 ResticController::class,

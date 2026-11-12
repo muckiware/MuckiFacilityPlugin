@@ -234,6 +234,49 @@
       "errorTitle": "Fehler",
       "loadError": "Ordner konnte nicht geladen werden (HTTP-Status: {status}).",
       "downloadError": "Download fehlgeschlagen (HTTP-Status: {status})."
+    },
+    "databaseConnection": {
+      "tabLabel": "Datenbankverbindungen",
+      "createButton": "Verbindung hinzufügen",
+      "cardTitle": "Datenbankverbindung",
+      "passwordCardTitle": "Passwort",
+      "nameLabel": "Name",
+      "typeLabel": "Typ",
+      "hostLabel": "Host",
+      "portLabel": "Port",
+      "databaseNameLabel": "Datenbank",
+      "usernameLabel": "Benutzer",
+      "passwordSourceLabel": "Passwort-Quelle",
+      "passwordSources": {
+        "encrypted": "Verschlüsselt gespeichert",
+        "env": "Umgebungsvariable",
+        "file": "Datei"
+      },
+      "passwordValueLabels": {
+        "encrypted": "Passwort",
+        "env": "Name der Umgebungsvariable",
+        "file": "Pfad zur Passwort-Datei"
+      },
+      "passwordRepeatLabel": "Passwort wiederholen",
+      "passwordKeepPlaceholder": "Leer lassen, um das gespeicherte Passwort zu behalten",
+      "passwordSourceHelpText": "<b>Verschlüsselt gespeichert:</b> das Passwort wird verschlüsselt in der Datenbank abgelegt.<br><b>Umgebungsvariable:</b> Name einer Variable, die mit <code>MUWA_DB_</code> beginnt (z. B. <code>MUWA_DB_BACKUP_PASSWORD</code>).<br><b>Datei:</b> Pfad zu einer Datei innerhalb von <code>&lt;Projektverzeichnis&gt;/var/secrets/</code>.<br>Das Passwort wird nie an die Administration zurückgegeben. Bei Änderung von Host, Port, Typ oder Benutzer muss es neu eingegeben werden.",
+      "passwordMismatch": "Die Passwörter stimmen nicht überein.",
+      "testButton": "Verbindung prüfen",
+      "testSuccessTitle": "Verbindung erfolgreich",
+      "testSuccessMessage": "Die Datenbank ist mit diesen Angaben erreichbar.",
+      "testErrorTitle": "Verbindung fehlgeschlagen",
+      "saveButton": "Speichern",
+      "saveSuccess": "Die Datenbankverbindung wurde gespeichert.",
+      "saveError": "Die Datenbankverbindung konnte nicht gespeichert werden",
+      "deleteSuccess": "Die Datenbankverbindung wurde gelöscht.",
+      "deleteInUse": "Die Verbindung wird noch von diesen Backup-Konfigurationen verwendet und kann nicht gelöscht werden: {names}",
+      "emptyState": "Keine Datenbankverbindungen vorhanden.",
+      "defaultConnection": "Standardverbindung (System)",
+      "selectLabel": "Datenbankverbindung",
+      "selectHelpText": "Datenbank, von der der Dump erstellt wird. Die Standardverbindung ist die Datenbank dieses Shops.",
+      "types": {
+        "mysql": "MySQL / MariaDB"
+      }
     }
   },
   "sw-privileges": {

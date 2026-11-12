@@ -20,6 +20,7 @@ use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Entity\ForgetTypes;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleEntity;
+use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionEntity;
 
 class BackupRepositoryEntity extends Entity
 {
@@ -465,6 +466,22 @@ class BackupRepositoryEntity extends Entity
     {
         $this->hostname = $hostname;
     }
+    protected ?string $databaseConnectionId = null;
+
+    protected ?DatabaseConnectionEntity $databaseConnection = null;
+
+    public function getDatabaseConnectionId(): ?string { return $this->databaseConnectionId; }
+    public function setDatabaseConnectionId(?string $databaseConnectionId): void
+    {
+        $this->databaseConnectionId = $databaseConnectionId;
+    }
+
+    public function getDatabaseConnection(): ?DatabaseConnectionEntity { return $this->databaseConnection; }
+    public function setDatabaseConnection(?DatabaseConnectionEntity $databaseConnection): void
+    {
+        $this->databaseConnection = $databaseConnection;
+    }
+
     protected ?BackupScheduleEntity $schedule = null;
 
     public function getSchedule(): ?BackupScheduleEntity { return $this->schedule; }

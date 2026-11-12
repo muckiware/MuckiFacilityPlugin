@@ -177,6 +177,11 @@
                             :restore-path="backupRepository.restorePath"
                         />
 
+                        <muwa-database-connection-select
+                            v-if="backupRepository.type && backupRepository.type !== 'noneDatabase'"
+                            v-model:value="backupRepository.databaseConnectionId"
+                        />
+
                     </sw-card>
 
                     <sw-card
