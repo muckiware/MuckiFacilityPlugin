@@ -149,6 +149,36 @@ class RestoreDirectoryBrowserTest extends TestCase
         static::assertSame([], $result['files']);
     }
 
+    public function testRestorePathSymlinkToRejectedTargetIsNotAllowed(): void
+    {
+        $target = $this->base . '/blocked';
+        mkdir($target);
+        file_put_contents($target . '/x.backup.sql', 'secret');
+        $link = $this->base . '/link';
+        symlink($target, $link);
+        $realTarget = realpath($target);
+
+        $entity = $this->createMock(BackupRepositoryEntity::class);
+        $entity->method('getRestorePath')->willReturn($link);
+        $repositories = $this->createMock(BackupRepository::class);
+        $repositories->method('getBackupRepositoryById')->willReturn($entity);
+        $settings = $this->createMock(SettingsInterface::class);
+        $settings->method('resolveDumpPathValue')->willReturnArgument(0);
+        $settings->method('getRestorePathRejection')->willReturnCallback(
+            static fn (string $path): ?DumpPathRejection => $path === $realTarget ? DumpPathRejection::BLOCKED_PATH : null
+        );
+        $browser = new RestoreDirectoryBrowser($repositories, $settings);
+
+        $result = $browser->listDirectory(self::ID, '');
+
+        static::assertSame('notAllowed', $result['state']);
+        static::assertSame('blockedPath', $result['rejection']);
+        static::assertSame([], $result['files']);
+
+        $this->expectException(InvalidBrowsePathException::class);
+        $browser->resolveDownloadFile(self::ID, 'x.backup.sql');
+    }
+
     public function testMissingRestoreDirectoryReturnsEmptyState(): void
     {
         $this->removeRecursive($this->restore);

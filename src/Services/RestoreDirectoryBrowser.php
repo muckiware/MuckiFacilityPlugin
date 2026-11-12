@@ -114,6 +114,18 @@ class RestoreDirectoryBrowser
             return null;
         }
 
+        // The configured string may be a symlink: the real target must pass the same rules.
+        $violation = $root === $restorePath ? null : $this->settings->getRestorePathRejection(
+            $root,
+            $repository->getRepositoryPath(),
+            $repository->getDbDumpPath()
+        );
+        if ($violation !== null) {
+            $state = 'notAllowed';
+            $rejection = $violation->value;
+            return null;
+        }
+
         $state = 'ok';
         return $root;
     }
