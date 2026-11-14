@@ -76,6 +76,7 @@
       "column-check-status": "Check Status",
       "column-last-backup-at": "Letzter Backup-Lauf",
       "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
+      "textDeleteRepositoryConfirm": "Sind Sie sicher, dieses Repository löschen zu wollen?",
       "totalFileSizeLabel": "Gesamt Dateigröße",
       "stats": "Repository Status",
       "statsItemLabel": "Name",
