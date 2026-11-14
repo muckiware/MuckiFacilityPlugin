@@ -17,6 +17,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\Uuid\Uuid;
 
 use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionEntity;
+use MuckiFacilityPlugin\Core\Database\DbIdentifier;
 use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Exception\InvalidDatabaseConnectionException;
 use MuckiFacilityPlugin\Exception\UnresolvableDatabasePasswordException;
@@ -222,6 +223,18 @@ class DatabaseConnectionRepository
         if ($type === '' || strlen($type) > self::MAX_TYPE_LENGTH) {
             throw new InvalidDatabaseConnectionException(
                 sprintf('Type must not be empty and at most %d characters long', self::MAX_TYPE_LENGTH)
+            );
+        }
+
+        // spatie/db-dumper inserts the database name unescaped into a shell command
+        // line — every shell metacharacter would be code execution on the worker
+        // (security finding S-01). Only plain identifiers are storable.
+        if (!DbIdentifier::isValid($fields['databaseName'])) {
+            throw new InvalidDatabaseConnectionException(
+                sprintf(
+                    'Field "databaseName" must be 1 to %d characters from letters, digits, "_" and "$"',
+                    DbIdentifier::MAX_LENGTH
+                )
             );
         }
 

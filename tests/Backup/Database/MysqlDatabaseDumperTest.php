@@ -122,6 +122,52 @@ class MysqlDatabaseDumperTest extends TestCase
         }
     }
 
+    /**
+     * S-01: spatie inserts the database name unescaped into a shell command line —
+     * a name with shell metacharacters must never reach the dumper.
+     */
+    public function testOwnConnectionDumpRejectsShellMetacharactersInDatabaseName(): void
+    {
+        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper->expects(static::never())->method('setDbName');
+
+        $dumper = $this->createDumperWithSpatie($spatieDumper);
+        $connection = new ResolvedDatabaseConnection(
+            'mysql',
+            'db.example.org',
+            3307,
+            'shop; echo pwn #',
+            'backup',
+            self::PASSWORD
+        );
+
+        try {
+            $dumper->dump($connection, '/tmp/shop.sql');
+            static::fail('dump should have thrown');
+        } catch (DatabaseBackupFailedException $e) {
+            static::assertStringContainsString('Invalid database identifier', $e->getMessage());
+            static::assertStringNotContainsString(self::PASSWORD, $e->getMessage());
+        }
+    }
+
+    /**
+     * S-01: table names land unescaped in the --tables shell argument.
+     */
+    public function testDumpRejectsShellMetacharactersInTableNames(): void
+    {
+        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper->expects(static::never())->method('includeTables');
+
+        $dumper = $this->createDumperWithSpatie($spatieDumper);
+
+        try {
+            $dumper->dump($this->createDefaultConnection(), '/tmp/dump.sql', ['product; touch /tmp/pwn']);
+            static::fail('dump should have thrown');
+        } catch (DatabaseBackupFailedException $e) {
+            static::assertStringContainsString('Table name', $e->getMessage());
+        }
+    }
+
     public function testDumpFailureIsWrappedWithLegacyPrefixAndMaskedPassword(): void
     {
         $spatieDumper = $this->createMock(MySql::class);

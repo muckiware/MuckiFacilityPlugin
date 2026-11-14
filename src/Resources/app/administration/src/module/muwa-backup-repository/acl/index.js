@@ -67,6 +67,14 @@ Shopware.Service('privileges').addPrivilegeMappingEntry({
                 'muwa_backup_repository.viewer',
             ],
         },
+        execute_commands: {
+            privileges: [
+                'muwa_backup_repository:execute_commands',
+            ],
+            dependencies: [
+                'muwa_backup_repository.viewer',
+            ],
+        },
         delete_snapshots: {
             privileges: [
                 'muwa_backup_repository:snapshot_delete',

@@ -57,6 +57,23 @@ class InitBackupRepositoryController extends AbstractController
     {
         $this->assertValidInput($requestDataBag);
 
+        // Pre-/Post-Backup-Kommandos werden beim Anlegen validiert und verlangen das
+        // eigene Hochrisiko-Recht (Security-Finding S-02). Ohne konfiguriertes Kommando
+        // aendert sich das bestehende Verhalten nicht.
+        try {
+            $hookConfiguration = BackupRepositoryService::extractHookConfiguration($requestDataBag);
+        } catch (\InvalidArgumentException $exception) {
+            throw new \Exception('Invalid backup command configuration: ' . $exception->getMessage());
+        }
+        if ($hookConfiguration !== null && !$context->isAllowed('muwa_backup_repository:execute_commands')) {
+            return new JsonResponse(array(
+                'errors' => array(array(
+                    'code' => 'MUWA_MISSING_PRIVILEGE',
+                    'detail' => 'Missing privilege muwa_backup_repository:execute_commands',
+                )),
+            ), JsonResponse::HTTP_FORBIDDEN);
+        }
+
         $repositoryInitInputs = $this->createRepositoryInitInputs($requestDataBag);
 
         $storedPassword = $this->backupRepositoryService->prepareStoredPassword(

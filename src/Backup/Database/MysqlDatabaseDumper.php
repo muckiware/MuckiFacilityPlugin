@@ -19,6 +19,7 @@ use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
 
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
+use MuckiFacilityPlugin\Core\Database\DbIdentifier;
 use MuckiFacilityPlugin\Entity\ResolvedDatabaseConnection;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 
@@ -65,6 +66,7 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
     public function dump(ResolvedDatabaseConnection $connection, string $dumpFile, array $tables = []): void
     {
         try {
+            $this->assertValidIdentifiers($connection, $tables);
             $mysqlDumper = $this->createDumper();
             $this->configureDumper($mysqlDumper, $connection);
             $mysqlDumper->useSingleTransaction();
@@ -80,6 +82,8 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
             throw $this->createException('Dump failed:' . $e->getMessage(), $connection);
         } catch (CannotSetParameter $e) {
             throw $this->createException('Cannot set parameter:' . $e->getMessage(), $connection);
+        } catch (\InvalidArgumentException $e) {
+            throw $this->createException('Invalid database identifier: ' . $e->getMessage(), $connection);
         } catch (\Throwable $e) {
             // Default connection: anything else keeps propagating unchanged, as before.
             if ($connection->getDatabaseUrl() !== null) {
@@ -121,6 +125,26 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
         $mysqlDumper->setDbName($connection->getDatabaseName());
         $mysqlDumper->setUserName($connection->getUsername());
         $mysqlDumper->setPassword($connection->getPassword());
+    }
+
+    /**
+     * spatie/db-dumper builds the mysqldump command as a shell string and inserts
+     * the database name and the included table names unescaped (security finding
+     * S-01). Rejects every value outside the safe identifier charset before it
+     * can reach that sink; the database name of the default connection comes from
+     * DATABASE_URL and is not user input, table names are validated in both cases.
+     *
+     * @param array<int, string> $tables
+     */
+    protected function assertValidIdentifiers(ResolvedDatabaseConnection $connection, array $tables): void
+    {
+        if ($connection->getDatabaseUrl() === null) {
+            DbIdentifier::assertValid((string) $connection->getDatabaseName(), 'Database name');
+        }
+
+        foreach ($tables as $table) {
+            DbIdentifier::assertValid((string) $table, 'Table name');
+        }
     }
 
     /**

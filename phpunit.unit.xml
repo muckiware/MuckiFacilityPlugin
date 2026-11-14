@@ -25,6 +25,8 @@
             <file>tests/Backup/Database/DumpArchiverTest.php</file>
             <file>tests/Backup/Files/FilesRunnerTest.php</file>
             <file>tests/Controller/RouteAclTest.php</file>
+            <file>tests/Controller/BackupControllerTest.php</file>
+            <file>tests/Controller/BackupRepositoryHooksControllerTest.php</file>
             <file>tests/Controller/DatabaseConnectionControllerTest.php</file>
             <file>tests/Controller/InitBackupRepositoryControllerTest.php</file>
             <file>tests/Controller/FilesystemControllerTest.php</file>
@@ -48,6 +50,7 @@
             <file>tests/Core/Content/BackupRepositorySnapshotsDefinitionTest.php</file>
             <file>tests/Services/Content/BackupFileSnapshotsRepositoryTest.php</file>
             <file>tests/Core/ConfigPathTest.php</file>
+            <file>tests/Core/Database/DbIdentifierTest.php</file>
             <file>tests/Database/TableRunner/CleanupRunnerTest.php</file>
             <file>tests/Database/TableRunner/TempTableNamingTest.php</file>
             <file>tests/Database/TableRunner/LogEntryCleanupRunnerTest.php</file>

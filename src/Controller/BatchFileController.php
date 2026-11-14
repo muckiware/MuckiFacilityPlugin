@@ -30,7 +30,7 @@ class BatchFileController extends AbstractController
     #[Route(
         path: '/api/_action/muwa/filesystem/batch-file',
         name: 'api.action.muwa.filesystem.batch_file',
-        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:update']],
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:execute_commands']],
         methods: ['POST']
     )]
     public function upload(Request $request, Context $context): JsonResponse

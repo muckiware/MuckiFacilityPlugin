@@ -140,6 +140,40 @@ class BackupCommandExecutorTest extends TestCase
         $this->executor->execute(BackupCommandTypes::NONE->value, '', true);
     }
 
+    /**
+     * S-02: batch hooks run arbitrary shell code and must not inherit the shop secrets
+     * of the worker process.
+     */
+    public function testBatchScriptDoesNotInheritShopSecrets(): void
+    {
+        $marker = $this->root . '/batch-env';
+        $script = $this->root . '/hook.sh';
+        file_put_contents(
+            $script,
+            "#!/usr/bin/env bash\n"
+            . 'printf \'%s|%s|%s|%s\' "${DATABASE_URL:-}" "${MUWA_FACILITY_SECRET:-}" "${MUWA_DB_TEST:-}" "${MUWA_HOOK_KEEP:-}"'
+            . ' > ' . escapeshellarg($marker) . "\n"
+        );
+
+        $originalDatabaseUrl = getenv('DATABASE_URL');
+        $originalFacilitySecret = getenv('MUWA_FACILITY_SECRET');
+        putenv('DATABASE_URL=mysql://root:pw@db/shop');
+        putenv('MUWA_FACILITY_SECRET=0123456789abcdef0123456789abcdef');
+        putenv('MUWA_DB_TEST=leak');
+        putenv('MUWA_HOOK_KEEP=kept');
+
+        try {
+            $this->executor->execute(BackupCommandTypes::BATCH->value, $script, true);
+        } finally {
+            putenv($originalDatabaseUrl === false ? 'DATABASE_URL' : 'DATABASE_URL=' . $originalDatabaseUrl);
+            putenv($originalFacilitySecret === false ? 'MUWA_FACILITY_SECRET' : 'MUWA_FACILITY_SECRET=' . $originalFacilitySecret);
+            putenv('MUWA_DB_TEST');
+            putenv('MUWA_HOOK_KEEP');
+        }
+
+        static::assertSame('|||kept', file_get_contents($marker));
+    }
+
     private function removeRecursive(string $path): void
     {
         if (is_file($path) || is_link($path)) {

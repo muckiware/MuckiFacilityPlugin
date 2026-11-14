@@ -688,8 +688,14 @@ Component.register('muwa-backup-repository-detail', {
             this.isLoading = true;
             this.isSaveSuccessful = false;
 
+            // Pre-/post-backup command fields are WriteProtected on the DAL side: they
+            // never travel through the generic repository save, only through their own
+            // action route (privilege muwa_backup_repository:execute_commands).
+            const hookConfiguration = this.extractHookConfiguration();
+
             this.repository
                 .save(this.backupRepository, Shopware.Context.api, this.criteria)
+                .then(() => this.saveHookConfiguration(hookConfiguration))
                 .then(() => {
 
                     this.getBackupRepository();
@@ -704,6 +710,52 @@ Component.register('muwa-backup-repository-detail', {
                     message: exception
                 });
             });
+        },
+
+        /**
+         * Removes the hook fields from the entity for the generic save and returns
+         * them for the dedicated hooks route. The values are restored on the entity
+         * right away, so the UI keeps showing them.
+         */
+        extractHookConfiguration() {
+            const hookFields = [
+                'preBackupCommandType',
+                'preBackupCommand',
+                'preBackupCommandArguments',
+                'preBackupFailOnError',
+                'postBackupCommandType',
+                'postBackupCommand',
+                'postBackupCommandArguments',
+                'postBackupFailOnError',
+            ];
+            const hookConfiguration = {};
+
+            hookFields.forEach((field) => {
+                hookConfiguration[field] = this.backupRepository[field];
+                delete this.backupRepository[field];
+            });
+
+            // restore for the UI; the server is the source of truth after the reload
+            Object.assign(this.backupRepository, hookConfiguration);
+
+            return hookConfiguration;
+        },
+
+        /**
+         * Persists the hook configuration through its own action route. Without the
+         * privilege nothing is sent — the fields are not part of the generic save
+         * payload either, so a user without the privilege can never change them.
+         */
+        saveHookConfiguration(hookConfiguration) {
+            if (!this.acl.can('muwa_backup_repository:execute_commands')) {
+                return Promise.resolve();
+            }
+
+            return this.httpClient.put(
+                `${this.requestSchedule}/${this.backupRepository.id}/hooks`,
+                hookConfiguration,
+                { headers: this.getApiHeader() },
+            );
         },
 
         onScheduleSave() {

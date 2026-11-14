@@ -10,6 +10,7 @@ use Shopware\Core\PlatformRequest;
 use Symfony\Component\Routing\Attribute\Route;
 
 use MuckiFacilityPlugin\Controller\BackupController;
+use MuckiFacilityPlugin\Controller\BackupRepositoryHooksController;
 use MuckiFacilityPlugin\Controller\BatchFileController;
 use MuckiFacilityPlugin\Controller\DatabaseConnectionController;
 use MuckiFacilityPlugin\Controller\FilesystemController;
@@ -94,7 +95,12 @@ class RouteAclTest extends TestCase
             'batch file upload' => [
                 BatchFileController::class,
                 'upload',
-                ['muwa_backup_repository:update'],
+                ['muwa_backup_repository:execute_commands'],
+            ],
+            'backup repository hooks' => [
+                BackupRepositoryHooksController::class,
+                'update',
+                ['muwa_backup_repository:execute_commands'],
             ],
             'filesystem directories' => [
                 FilesystemController::class,

@@ -78,6 +78,82 @@ class InitBackupRepositoryControllerTest extends TestCase
     }
 
     /**
+     * S-02: a hook configuration in the init request requires the dedicated privilege.
+     */
+    public function testHookConfigurationRequiresItsOwnPrivilege(): void
+    {
+        $backupRepositoryService = $this->createMock(BackupRepositoryService::class);
+        $backupRepositoryService->expects(static::never())->method('prepareStoredPassword');
+
+        $databaseConnectionRepository = $this->createMock(DatabaseConnectionRepository::class);
+
+        $controller = new InitBackupRepositoryController($backupRepositoryService, $databaseConnectionRepository);
+
+        // AdminApiSource without the privilege: createDefaultContext() is a system context
+        // whose isAllowed() is always true and would not exercise the check.
+        $source = new \Shopware\Core\Framework\Api\Context\AdminApiSource(Uuid::randomHex());
+        $source->setPermissions([]);
+        $response = $controller->initRepository($this->input([
+            'preBackupCommandType' => 'batch',
+            'preBackupCommand' => '/shop/files/private/mucki-facility/batch/nightly.sh',
+        ]), new Context($source));
+
+        static::assertSame(403, $response->getStatusCode());
+        $errors = json_decode((string) $response->getContent(), true)['errors'];
+        static::assertSame('MUWA_MISSING_PRIVILEGE', $errors[0]['code']);
+    }
+
+    /**
+     * S-02: hook values are validated before anything expensive happens.
+     */
+    public function testInvalidHookConfigurationIsRejected(): void
+    {
+        $backupRepositoryService = $this->createMock(BackupRepositoryService::class);
+        $backupRepositoryService->expects(static::never())->method('prepareStoredPassword');
+
+        $databaseConnectionRepository = $this->createMock(DatabaseConnectionRepository::class);
+
+        $controller = new InitBackupRepositoryController($backupRepositoryService, $databaseConnectionRepository);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Invalid backup command configuration');
+
+        $controller->initRepository($this->input([
+            'preBackupCommandType' => 'bash',
+        ]), Context::createDefaultContext());
+    }
+
+    /**
+     * S-02: with the privilege, a hook configuration passes the check (and stops at the
+     * mocked next step, as in the existing flow tests).
+     */
+    public function testHookConfigurationPassesWithPrivilege(): void
+    {
+        $backupRepositoryService = $this->createMock(BackupRepositoryService::class);
+        $backupRepositoryService->method('prepareStoredPassword')
+            ->willThrowException(new \RuntimeException('stop after input checks'));
+
+        $databaseConnectionRepository = $this->createMock(DatabaseConnectionRepository::class);
+
+        $controller = new InitBackupRepositoryController($backupRepositoryService, $databaseConnectionRepository);
+
+        $this->expectExceptionMessage('stop after input checks');
+
+        $controller->initRepository($this->input([
+            'preBackupCommandType' => 'batch',
+            'preBackupCommand' => '/shop/files/private/mucki-facility/batch/nightly.sh',
+        ]), $this->contextWithExecuteCommandsPrivilege());
+    }
+
+    private function contextWithExecuteCommandsPrivilege(): Context
+    {
+        $source = new \Shopware\Core\Framework\Api\Context\AdminApiSource(Uuid::randomHex());
+        $source->setPermissions(['muwa_backup_repository:execute_commands']);
+
+        return new Context($source);
+    }
+
+    /**
      * @param array<string, mixed> $override
      */
     private function input(array $override): RequestDataBag

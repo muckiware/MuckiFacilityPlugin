@@ -186,7 +186,7 @@
 
                     <sw-card
                         positionIdentifier="muwaBackupRepositoryCommands"
-                        v-if="backupRepository"
+                        v-if="backupRepository && acl.can('muwa_backup_repository:execute_commands')"
                         :title="$tc('muwa-backup-repository.commands.title')"
                     >
                         <p>{{ $tc('muwa-backup-repository.commands.description') }}</p>

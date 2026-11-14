@@ -457,6 +457,34 @@ class DatabaseConnectionControllerTest extends TestCase
     }
 
     /**
+     * S-01: the database name reaches spatie/db-dumper, which inserts it unescaped into
+     * a shell command line — shell metacharacters must be rejected when saving.
+     */
+    public function testSaveRejectsShellMetacharactersInDatabaseName(): void
+    {
+        $response = $this->controller->save(
+            new RequestDataBag($this->input(['databaseName' => 'shop; echo pwn #'])),
+            $this->context(true)
+        );
+
+        static::assertSame(400, $response->getStatusCode());
+        $errors = $this->decode($response)['errors'];
+        static::assertSame('MUWA_INVALID_DATABASE_CONNECTION', $errors[0]['code']);
+        static::assertStringContainsString('databaseName', $errors[0]['detail']);
+    }
+
+    public function testSaveAcceptsPlainIdentifierAsDatabaseName(): void
+    {
+        $response = $this->controller->save(
+            new RequestDataBag($this->input(['databaseName' => 'shop_2026'])),
+            $this->context(true)
+        );
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertTrue($this->decode($response)['success']);
+    }
+
+    /**
      * @param array<string, mixed> $override
      * @return array<string, mixed>
      */
