@@ -20,12 +20,12 @@ Bug fixt, der auch andere Nutzer des Plugins betrifft, bumpt Version und `CHANGE
 
 | | |
 |---|---|
-| Composer-Paket | `muckiware/facility-plugin`, Version `v0.8.0` |
+| Composer-Paket | `muckiware/facility-plugin`, Version `v0.10.0` |
 | Plugin-Klasse | `MuckiFacilityPlugin\MuckiFacilityPlugin` |
 | Shopware im Projekt | `shopware/core` **v6.7.14.0** (Arbeitsprojekt `sw67`; das Repo liegt ggf. in mehreren Shops) |
 | Von Plugin unterstuetzt | Shopware 6.6.x + 6.7.x, PHP 8.2–8.4, restic >= 0.15 |
 | CI-Matrix | PHP 8.2, MySQL 8.0, Shopware v6.6.9.0 (`.github/workflows/main.yml`) |
-| Runtime-Deps | `muckiware/restic ^1.4`, `spatie/db-dumper ^3.7`, `gabrielelana/byte-units ^0.5` |
+| Runtime-Deps | `muckiware/restic ^1.6`, `spatie/db-dumper ^3.7`, `gabrielelana/byte-units ^0.5` |
 | Git-Stand | Branch `main` (tracked `origin/main`), letzter Commit `8077d42` |
 
 Es gibt **keine** Storefront-Integration (Controller/Templates/JS) — nur API-Routes, Admin-Modul
@@ -230,6 +230,8 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `POST /api/_action/muwa/database-connection/save` | `DatabaseConnectionController::save` | Datenbankverbindungen-Tab, ACL `muwa_database_connection:update`, Neuanlage zusaetzlich `muwa_database_connection:create` (im Controller geprueft) |
 | `POST /api/_action/muwa/database-connection/test` | `DatabaseConnectionController::testConnection` | Button "Verbindung pruefen", ACL `muwa_database_connection:update`; ungueltige Felder 400 `MUWA_INVALID_DATABASE_CONNECTION`; Passwortprobleme (fehlt, Zeilenumbruch, Ziel geaendert ohne Passwort) und Verbindungsfehler HTTP 200 mit `success=false` |
 | `GET /api/_action/muwa/restic/info` | `ResticController::getInfo` | Plugin-Konfiguration, Komponente `muwa-restic-binary-info`, ACL `system_config:read` |
+| `POST /api/_action/muwa/backup/repository/takeover` | `TakeoverBackupRepositoryController::takeover` | Modal `muwa-backup-repository-add-modal` (Liste, "Repository hinzufuegen"), ACL `muwa_backup_repository:create`; Fehler 400 `{errors:[{code,detail,meta}]}` mit `MUWA_TAKEOVER_*` (u.a. `MUWA_TAKEOVER_INVALID_INPUT` fuer ungueltige Id; `MUWA_TAKEOVER_SAVE_FAILED` bei DB-Fehlern; `MUWA_TAKEOVER_ACCESS_FAILED` traegt die restic-Ausgabe in `meta.detail`); `MUWA_INVALID_ID` kommt nur von path-suggestions |
+| `POST /api/_action/muwa/backup/repository/path-suggestions` | `TakeoverBackupRepositoryController::pathSuggestions` | Detail-Seite, Tab Konfiguration (Pfad-Vorschlaege), ACL `muwa_backup_repository:update` |
 
 Die Rollen fuer `muwa_database_connection:*` (read/update/create/delete) haengen in den bestehenden
 Rollen von `muwa_backup_repository`, es gibt keine eigene Rollengruppe.
@@ -285,6 +287,13 @@ Die Message erbt **nicht** von `BackupRepositorySettings` — sie traegt nur die
 `backupRepositoryId` — und ist damit von der doppelten `CreateBackupMessage`-Typisierung
 (Auffaelligkeit 1) nicht betroffen.
 
+`TakeoverRepositoryCheckMessage` / `TakeoverRepositoryCheckHandler` werden nach einer Repository-
+Uebernahme (`Services\RepositoryTakeover`) dispatcht: `restic check` (ohne `--read-data`,
+`ManageRepository::checkRepositoryStructure()`), dann Statistik, dann Admin-Benachrichtigung. Der
+Handler wirft nie (Fehler werden als Benachrichtigung gemeldet); auch er hat Handler-Tag in
+`services.xml`. Die Uebernahme liest Snapshots per `ManageRepository::readSnapshots()`
+(`restic snapshots --no-lock`) und ruft kein `init`/`unlock`/`prune`/`forget` auf.
+
 ## Konfiguration
 
 `src/Resources/config/config.xml` definiert:
@@ -322,6 +331,15 @@ Am Dump-Pfad zeigt es live die Warnung (abgelehnt / nicht beschreibbar). Nur fue
 (`update`-Recht). Einsatz: Create-Seite — Repository Path, Restore Path, Database dump path,
 Backup Paths; Detail-Tab Configuration — Restore Path, Database dump path, Backup Paths. Der
 Repository Path bleibt auf der Detail-Seite gesperrt.
+
+**Uebernahme-Modal.** `component/muwa-backup-repository-add-modal` ersetzt auf der Liste den direkten
+Sprung auf `create`: Auswahl "Neues Repository" (unveraenderte Create-Seite) oder "Bestehendes
+Repository uebernehmen" (Pfad + Passwort, Aufruf der `takeover`-Route, Fehlercodes werden ueber
+Snippets `takeover.errors.*` angezeigt, danach Sprung in den Tab Konfiguration). Der Tab Konfiguration
+zeigt ueber `Services\BackupPathSuggestions` die Pfade der vorhandenen Snapshots als Vorschlaege
+(Uebernehmen traegt sie in die Backup-Pfade ein). Snippets mit Platzhaltern immer per
+`$t(key, {...})`. Spalte `muwa_backup_repository_snapshots.paths` ist `LONGTEXT`
+(`Migration1794614400`).
 
 ## Tests & Statische Analyse
 

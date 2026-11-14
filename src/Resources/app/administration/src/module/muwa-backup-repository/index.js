@@ -14,6 +14,7 @@ import enGB from './snippet/en-GB.json';
 Shopware.Component.register('muwa-backup-repository-entity-path-select', () => import('./component/muwa-backup-repository-entity-path-select'));
 Shopware.Component.register('muwa-restore-directory-tree', () => import('./component/muwa-restore-directory-tree'));
 Shopware.Component.register('muwa-backup-repository-path-field', () => import('./component/muwa-backup-repository-path-field'));
+Shopware.Component.register('muwa-backup-repository-add-modal', () => import('./component/muwa-backup-repository-add-modal'));
 Shopware.Component.register('muwa-database-connection-select', () => import('./component/muwa-database-connection-select'));
 Shopware.Component.register('muwa-database-connection-list', () => import('./page/muwa-database-connection-list'));
 Shopware.Component.register('muwa-database-connection-detail', () => import('./page/muwa-database-connection-detail'));

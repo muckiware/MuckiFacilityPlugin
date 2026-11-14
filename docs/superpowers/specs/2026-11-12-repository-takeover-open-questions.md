@@ -1,25 +1,20 @@
 # Uebernahme bestehender restic-Repositories — offene Fragen
 
-Stand 13.11.2026. Gehoert zu
+Stand 14.11.2026 (erstellt 13.11.2026). Gehoert zu
 [`2026-11-12-repository-takeover-design.md`](2026-11-12-repository-takeover-design.md).
 
 ## Stand
 
-- Das Design ist geschrieben, aber **noch nicht freigegeben** und **nicht committet**.
-- Ein Reviewer (Builder-Check) hat es gegengelesen. Vier Punkte sind offen und nur vom
-  Maintainer zu entscheiden. Sie stehen unten, jeweils mit Empfehlung.
-- Zwei kleinere Punkte sind bereits entschieden, aber **noch nicht ins Design eingetragen**
-  (siehe "Noch ins Design einzutragen").
-- Es wurde noch nichts gebaut: kein Produktcode, keine Migration, keine Tests.
+Stand 14.11.2026: **Alle vier Fragen sind beantwortet** (jeweils wie empfohlen) und zusammen mit
+den beiden bereits entschiedenen Punkten ins Design-Dokument eingetragen. Ausserdem neu im
+Design: Einstieg ueber ein Auswahl-Modal am Button "Repository anlegen" statt eigener Seite,
+Uebernahme sofort nach erfolgreicher Pruefung, Name aus dem Ordnernamen.
 
-## So geht es weiter
+Offen ist nur noch die Freigabe des Design-Dokuments. Danach den Umsetzungsplan schreiben
+(`superpowers:writing-plans`), Ablage unter `docs/superpowers/plans/`. Es wurde noch nichts
+gebaut.
 
-1. Die vier Fragen unten beantworten.
-2. Antworten und die beiden bereits entschiedenen Punkte ins Design-Dokument eintragen
-   (Tabelle "Entscheidungen", Abschnitte Backend / Hintergrundlauf / Uebernahme-Route).
-3. Design freigeben und committen.
-4. Danach den Umsetzungsplan schreiben (`superpowers:writing-plans`), Ablage wie bisher unter
-   `docs/superpowers/plans/`.
+Dieses Dokument bleibt als Protokoll der Entscheidungen stehen.
 
 ## Offene Fragen
 
@@ -45,7 +40,7 @@ und ein bewusst akzeptiertes Restrisiko.
 **Empfehlung:** Ja. Ein neues Release von `muckiware/restic` gehoert in den Plan, das Plugin hebt
 die Mindestversion an.
 
-**Antwort:** _offen_
+**Antwort (14.11.2026):** Ja, wie empfohlen. Neues Library-Release vor dem Plugin, Mindestversion wird angehoben. Im Design eingetragen.
 
 ### 2. Wie tief soll die Pruefung nach der Uebernahme gehen?
 
@@ -62,7 +57,7 @@ einen Messenger-Worker und haelt eine Sperre, waehrend der alte Cronjob womoegli
 **Empfehlung:** Nach der Uebernahme nur die Strukturpruefung ohne `--read-data` (Minuten statt
 Stunden). Die volle Pruefung laeuft wie gewohnt nach dem ersten Backup ueber das Plugin.
 
-**Antwort:** _offen_
+**Antwort (14.11.2026):** Nur Strukturpruefung ohne `--read-data`, wie empfohlen. Im Design eingetragen.
 
 ### 3. Welchen Hostnamen bekommt das uebernommene Repository?
 
@@ -86,7 +81,7 @@ Container-Namen), der Plugin-Default, oder der Host des juengsten uebernommenen 
 Tab Konfiguration aenderbar (das Feld gibt es dort schon). Bei einem Repository ohne Snapshots
 greift der Plugin-Default.
 
-**Antwort:** _offen_
+**Antwort (14.11.2026):** Hostname des juengsten Snapshots, aenderbar; ohne Snapshots Plugin-Default. Im Design eingetragen.
 
 ### 4. Repository lesbar, aber fuer den Webserver-Benutzer nicht schreibbar: ablehnen oder uebernehmen?
 
@@ -105,9 +100,9 @@ Text erklaert.
 **Empfehlung:** Vorab Schreibrechte pruefen und mit einer verstaendlichen Meldung ablehnen, die
 sagt, welcher Benutzer Schreibrecht auf welchen Pfad braucht.
 
-**Antwort:** _offen_
+**Antwort (14.11.2026):** Vorab Schreibrechte pruefen und mit verstaendlicher Meldung ablehnen, wie empfohlen. Im Design eingetragen.
 
-## Noch ins Design einzutragen (bereits entschieden, Claudes Entscheidung)
+## Ins Design eingetragen am 14.11.2026 (Claudes Entscheidung)
 
 - **"Nur lesen" praezisieren:** Gemeint ist kein `init`, `unlock`, `prune`, `forget` oder Backup
   im Zuge der Uebernahme. Die kurzlebige Sperrdatei, die restic bei `snapshots` und `check`
@@ -130,8 +125,10 @@ sagt, welcher Benutzer Schreibrecht auf welchen Pfad braucht.
 
 Vollstaendig in der Tabelle "Entscheidungen" des Design-Dokuments. Kurzfassung:
 
-- Eigene Seite, Einstieg ueber einen zweiten Button in der Repository-Liste.
-- Eingaben: Name, lokaler Pfad, Passwort; danach Sprung in den Tab Konfiguration.
+- ~~Eigene Seite, Einstieg ueber einen zweiten Button~~ — ersetzt am 14.11.2026: Der Button
+  "Repository anlegen" oeffnet ein Modal mit der Wahl "neu / uebernehmen".
+- Eingaben: lokaler Pfad und Passwort (Name aus dem Ordnernamen); danach Sprung in den Tab
+  Konfiguration.
 - Repository ist nach der Uebernahme inaktiv, die uebrige Konfiguration bleibt leer.
 - Im Klick: `restic snapshots` (Zugriffspruefung und Import) und Datensatz. Ueber die Message
   Queue: Check und Statistik.

@@ -122,6 +122,45 @@ Finally, click on the __Create new Repository__-button, for to create a new back
 like this:<br>
 ![backup-rep-folder.png](img%2Fbackup-rep-folder.png)
 
+## Take over an existing repository
+An existing local restic repository (for example one that was filled by a shell script and a cronjob)
+can be added to the management instead of creating a new empty one.
+
+Settings -> Extensions -> Backup Repositories -> __Add Repository__ opens a dialog with two options:
+__New repository__ leads to the unchanged create page, __Take over existing repository__ asks for
+the path of the restic repository and its password.
+
+What happens:
+- The repository stays where it is. It is only read (`restic snapshots`); the takeover never calls
+  `init`, `unlock`, `prune` or `forget` and does not start a backup.
+- The snapshots are imported into the snapshot list. The name of the new configuration is the folder
+  name of the repository, the hostname is taken from the most recent snapshot (without snapshots the
+  plugin default is used). The password is stored encrypted like for every other repository and is
+  never part of a log entry or an API response.
+- Afterwards the detail page opens on the tab __Configuration__, where you complete the rest of the
+  configuration. In this tab the backup paths of the existing snapshots are offered as suggestions
+  (__Adopt__ copies them into the backup paths; save to keep them).
+
+Requirements and notes:
+- Only local paths are supported (no `sftp:`, `s3:` or other restic backends).
+- The web server user (the user running the shop and the worker) needs write permission on the
+  repository folder. Otherwise the takeover is rejected with a message in the dialog and no record is
+  created. A repository that is already managed is rejected as well. The duplicate check matches the
+  normalized path and its variant with a trailing slash; a record created via the normal create page
+  is stored as typed, so a differently written path (e.g. with a double slash) may not be detected.
+  The path must not be longer than 255 characters after normalization. If restic cannot read the
+  repository (wrong password, unreadable files, e.g. owned by root), the dialog shows restic's error
+  text. Other storage errors are reported as `MUWA_TAKEOVER_SAVE_FAILED`.
+- Switch off the old cronjob or script. Otherwise two places back up to and clean up the same
+  repository.
+- The forget rules of the configuration also apply to the old snapshots of the repository. Check the
+  retention values before the first backup run.
+- The status tab (check result and repository statistics) is filled after the worker has run the
+  follow-up check, that is started by the takeover (`bin/console messenger:consume async`). You can
+  also fill it manually with `bin/console muckiware:backup:check <backupRepositoryId>` and
+  `bin/console muckiware:repository:stats <backupRepositoryId>`. When the check is finished an
+  administration notification appears.
+
 ## Create Backup
 ### cli
 You can create a backup by the command line interface with the following command:

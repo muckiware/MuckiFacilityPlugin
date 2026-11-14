@@ -15,6 +15,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -91,6 +92,22 @@ class BackupRepository
     }
 
     /**
+     * Sucht ein Repository ueber den Pfad, auch wenn er mit Schraegstrich am Ende gespeichert wurde.
+     * Loest das Passwort bewusst nicht auf.
+     */
+    public function getBackupRepositoryByPath(string $repositoryPath): ?BackupRepositoryEntity
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsAnyFilter('repositoryPath', [$repositoryPath, $repositoryPath . '/']));
+        $criteria->setLimit(1);
+
+        /** @var BackupRepositoryEntity|null $backupRepository */
+        $backupRepository = $this->backupRepository->search($criteria, Context::createDefaultContext())->first();
+
+        return $backupRepository;
+    }
+
+    /**
      * Repositories einer Passwortquelle als id => name.
      *
      * Loest das Passwort bewusst nicht auf: die Liste wird unter anderem gebraucht, um
@@ -147,6 +164,19 @@ class BackupRepository
             Context::SYSTEM_SCOPE,
             function (Context $systemScopedContext) use ($payload): void {
                 $this->backupRepository->create([$payload], $systemScopedContext);
+            }
+        );
+    }
+
+    /**
+     * Entfernt einen Datensatz (System-Scope, wie beim Anlegen). Das restic-Repository bleibt unberuehrt.
+     */
+    public function removeBackupRepository(string $backupRepositoryId): void
+    {
+        Context::createDefaultContext()->scope(
+            Context::SYSTEM_SCOPE,
+            function (Context $systemScopedContext) use ($backupRepositoryId): void {
+                $this->backupRepository->delete([['id' => $backupRepositoryId]], $systemScopedContext);
             }
         );
     }

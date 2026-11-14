@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use MuckiRestic\Library\Backup;
 use MuckiRestic\Library\Manage;
 use MuckiFacilityPlugin\Events\AfterRepositoryCleanedUpEvent;
 use MuckiFacilityPlugin\Events\AfterSnapshotDeletedEvent;
@@ -125,6 +126,66 @@ class ManageRepository
     protected function createManageClient(): Manage
     {
         return Manage::create();
+    }
+
+    protected function createBackupClient(): Backup
+    {
+        return Backup::create();
+    }
+
+    /**
+     * Reads the snapshot list of a repository without taking a lock.
+     *
+     * @return array<int, mixed>
+     * @throws \RuntimeException when the output is not a JSON list; process failures are passed through
+     */
+    public function readSnapshots(string $repositoryPath, string $repositoryPassword): array
+    {
+        $manageClient = $this->createManageClient();
+        if($this->pluginSettings->hasOwnResticBinaryPath()) {
+            $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
+        }
+        $manageClient->setNoLock(true);
+        $manageClient->setJsonOutput(true);
+        $manageClient->setRepositoryPath($repositoryPath);
+        $manageClient->setRepositoryPassword($repositoryPassword);
+
+        $snapshots = json_decode($manageClient->getSnapshots()->getOutput() ?? '', true);
+        if (!is_array($snapshots) || !array_is_list($snapshots)) {
+            throw new \RuntimeException('restic snapshots returned no valid JSON list');
+        }
+
+        return $snapshots;
+    }
+
+    /**
+     * Runs `restic check` (structure only, no --read-data) and stores the resulting status.
+     *
+     * @throws \RuntimeException when the repository is unknown or no status can be read
+     */
+    public function checkRepositoryStructure(string $backupRepositoryId): string
+    {
+        $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+        if ($backupRepository === null) {
+            throw new \RuntimeException('Backup repository not found: ' . $backupRepositoryId);
+        }
+
+        $backupClient = $this->createBackupClient();
+        if($this->pluginSettings->hasOwnResticBinaryPath()) {
+            $backupClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
+        }
+        $backupClient->setRepositoryPath($backupRepository->getRepositoryPath());
+        $backupClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
+        $backupClient->setCheckReadData(false);
+
+        $checkResults = $this->pluginHelper->getCheckResults($backupClient->checkBackup()->getOutput() ?? '');
+        $status = end($checkResults);
+        if (!is_string($status)) {
+            throw new \RuntimeException('restic check returned no readable status');
+        }
+        $this->backupRepositoryChecks->saveNewCheck($backupRepositoryId, $status);
+
+        return $status;
     }
 
     /**

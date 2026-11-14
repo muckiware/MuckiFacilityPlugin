@@ -26,7 +26,8 @@ Component.register('muwa-backup-repository-list', {
             backupRepository: null,
             isLoading: true,
             total: 0,
-            limit: 25
+            limit: 25,
+            showAddModal: false
         };
     },
 

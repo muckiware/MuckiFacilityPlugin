@@ -16,10 +16,14 @@
                     variant="primary"
                     position-identifier="muwa-backup-repository-create-button"
                     :disabled="!acl.can('muwa_backup_repository.creator')"
-                    :routerLink="{name: 'muwa.backup.repository.create'}"
+                    @click="showAddModal = true"
                 >
                     {{ $tc('muwa-backup-repository.list.header.createButtonLabel') }}
                 </sw-button>
+                <muwa-backup-repository-add-modal
+                    v-if="showAddModal"
+                    @modal-close="showAddModal = false"
+                />
             </template>
         {% endblock %}
 

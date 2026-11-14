@@ -1,0 +1,89 @@
+{% block muwa_backup_repository_add_modal %}
+    <sw-modal
+        class="muwa-backup-repository-add-modal"
+        :title="$t('muwa-backup-repository.takeover.modalTitle')"
+        variant="small"
+        :closable="!isLoading"
+        @modal-close="onClose"
+    >
+        {% block muwa_backup_repository_add_modal_choice %}
+            <div v-if="step === 'choice'" class="muwa-backup-repository-add-modal__options">
+                <button
+                    type="button"
+                    class="muwa-backup-repository-add-modal__option"
+                    @click="onChooseNew"
+                >
+                    <strong class="muwa-backup-repository-add-modal__option-title">
+                        {{ $t('muwa-backup-repository.takeover.optionNewTitle') }}
+                    </strong>
+                    <span class="muwa-backup-repository-add-modal__option-description">
+                        {{ $t('muwa-backup-repository.takeover.optionNewDescription') }}
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    class="muwa-backup-repository-add-modal__option"
+                    @click="onChooseTakeover"
+                >
+                    <strong class="muwa-backup-repository-add-modal__option-title">
+                        {{ $t('muwa-backup-repository.takeover.optionTakeoverTitle') }}
+                    </strong>
+                    <span class="muwa-backup-repository-add-modal__option-description">
+                        {{ $t('muwa-backup-repository.takeover.optionTakeoverDescription') }}
+                    </span>
+                </button>
+            </div>
+        {% endblock %}
+
+        {% block muwa_backup_repository_add_modal_takeover %}
+            <div v-else class="muwa-backup-repository-add-modal__takeover">
+                <sw-alert variant="info">
+                    {{ $t('muwa-backup-repository.takeover.hint') }}
+                </sw-alert>
+
+                <muwa-backup-repository-path-field
+                    v-model:value="repositoryPath"
+                    :label="$t('muwa-backup-repository.takeover.repositoryPathLabel')"
+                    maxlength="255"
+                    required
+                />
+
+                <sw-password-field
+                    v-model:value="repositoryPassword"
+                    :label="$t('muwa-backup-repository.takeover.passwordLabel')"
+                    autocomplete="off"
+                    required
+                />
+
+                <sw-alert v-if="errorMessage" variant="error">
+                    {{ errorMessage }}
+                </sw-alert>
+            </div>
+        {% endblock %}
+
+        {% block muwa_backup_repository_add_modal_footer %}
+            <template #modal-footer>
+                <template v-if="step === 'choice'">
+                    <sw-button size="small" :disabled="isLoading" @click="onClose">
+                        {{ $t('muwa-backup-repository.takeover.cancel') }}
+                    </sw-button>
+                </template>
+                <template v-else>
+                    <sw-button size="small" :disabled="isLoading" @click="onBack">
+                        {{ $t('muwa-backup-repository.takeover.back') }}
+                    </sw-button>
+                    <sw-button-process
+                        variant="primary"
+                        size="small"
+                        :is-loading="isLoading"
+                        :process-success="false"
+                        :disabled="isSubmitDisabled"
+                        @click="onSubmit"
+                    >
+                        {{ $t('muwa-backup-repository.takeover.next') }}
+                    </sw-button-process>
+                </template>
+            </template>
+        {% endblock %}
+    </sw-modal>
+{% endblock %}

@@ -390,6 +390,50 @@
                         >
                             {{ $tc('muwa-backup-repository.detail.addBackupPathLabel') }}
                         </sw-button>
+                        <div
+                            v-if="openPathSuggestions.length > 0 || isLoadingPathSuggestions || pathSuggestionsError"
+                            class="muwa-backup-repository-detail-path-suggestions"
+                        >
+                            <div class="muwa-backup-repository-detail-path-suggestions__title">
+                                {{ $t('muwa-backup-repository.takeover.suggestions.title') }}
+                            </div>
+                            <sw-loader v-if="isLoadingPathSuggestions" size="24px" />
+                            <p v-if="pathSuggestionsError" class="muwa-backup-repository-detail-path-suggestions__hint">
+                                {{ $t('muwa-backup-repository.takeover.suggestions.error') }}
+                            </p>
+                            <ul v-if="openPathSuggestions.length > 0" class="muwa-backup-repository-detail-path-suggestions__list">
+                                <li
+                                    v-for="suggestion in openPathSuggestions"
+                                    :key="suggestion.path"
+                                    class="muwa-backup-repository-detail-path-suggestions__item"
+                                >
+                                    <div class="muwa-backup-repository-detail-path-suggestions__info">
+                                        <code class="muwa-backup-repository-detail-path-suggestions__path">{{ suggestion.path }}</code>
+                                        <span
+                                            class="muwa-backup-repository-detail-path-suggestions__state"
+                                            :class="{ 'is--missing': suggestion.state === 'missing' }"
+                                        >
+                                            <template v-if="suggestion.state === 'directory'">{{ $t('muwa-backup-repository.takeover.suggestions.stateDirectory') }}</template>
+                                            <template v-else-if="suggestion.state === 'file'">{{ $t('muwa-backup-repository.takeover.suggestions.stateFile') }}</template>
+                                            <template v-else>{{ $t('muwa-backup-repository.takeover.suggestions.stateMissing') }}</template>
+                                        </span>
+                                        <span v-if="suggestion.lastSeenAt" class="muwa-backup-repository-detail-path-suggestions__meta">
+                                            {{ $t('muwa-backup-repository.takeover.suggestions.lastSeen') }}: {{ dateFilter(suggestion.lastSeenAt, { hour: '2-digit', minute: '2-digit' }) }}
+                                        </span>
+                                        <span v-if="suggestion.hostname" class="muwa-backup-repository-detail-path-suggestions__meta">
+                                            {{ $t('muwa-backup-repository.takeover.suggestions.host') }}: {{ suggestion.hostname }}
+                                        </span>
+                                    </div>
+                                    <sw-button size="small" @click="onAdoptPathSuggestion(suggestion)">
+                                        {{ $t('muwa-backup-repository.takeover.suggestions.adopt') }}
+                                    </sw-button>
+                                </li>
+                            </ul>
+                            <p v-if="pathSuggestionsTruncated" class="muwa-backup-repository-detail-path-suggestions__hint">
+                                {{ $t('muwa-backup-repository.takeover.suggestions.truncated') }}
+                            </p>
+                        </div>
+
                         {% block muwa_search_structure_detail_backup_paths_description %}
                             <div
                                 v-html="$tc('muwa-backup-repository.detail.backupPathsDescription')"

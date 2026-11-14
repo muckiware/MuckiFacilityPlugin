@@ -18,6 +18,7 @@ use MuckiFacilityPlugin\Controller\ResticController;
 use MuckiFacilityPlugin\Controller\RestoreDirectoryController;
 use MuckiFacilityPlugin\Controller\RestoreSnapshotController;
 use MuckiFacilityPlugin\Controller\ScheduleController;
+use MuckiFacilityPlugin\Controller\TakeoverBackupRepositoryController;
 
 /**
  * Jede API-Route des Plugins muss ein ACL-Recht mitbringen.
@@ -48,6 +49,16 @@ class RouteAclTest extends TestCase
                 InitBackupRepositoryController::class,
                 'initRepository',
                 ['muwa_backup_repository:create'],
+            ],
+            'repository takeover' => [
+                TakeoverBackupRepositoryController::class,
+                'takeover',
+                ['muwa_backup_repository:create'],
+            ],
+            'repository path suggestions' => [
+                TakeoverBackupRepositoryController::class,
+                'pathSuggestions',
+                ['muwa_backup_repository:update'],
             ],
             'restore process' => [
                 RestoreSnapshotController::class,

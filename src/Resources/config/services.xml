@@ -25,6 +25,13 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service id="MuckiFacilityPlugin\Controller\TakeoverBackupRepositoryController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryTakeover"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\BackupPathSuggestions"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service id="MuckiFacilityPlugin\Controller\ManageController" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
@@ -342,6 +349,32 @@
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
             <tag name="messenger.message_handler"/>
+        </service>
+        <service id="MuckiFacilityPlugin\MessageQueue\Handler\TakeoverRepositoryCheckHandler">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\AdminNotification"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="MuckiFacilityPlugin\Services\RepositoryTakeover" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\DirectoryBrowser"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <argument type="service" id="messenger.default_bus"/>
+        </service>
+
+        <service id="MuckiFacilityPlugin\Services\BackupPathSuggestions" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
 
         <service id="MuckiFacilityPlugin\Services\ManageRepository">

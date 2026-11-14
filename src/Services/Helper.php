@@ -144,7 +144,7 @@ class Helper
 
     public function createDateTimeFromString(string $dateString): ?\DateTime
     {
-        $dateString = preg_replace('/(\.\d+)(\+|\-)/', '.000$2', $dateString);
+        $dateString = preg_replace('/(\.\d+)(Z|\+|\-)/', '.000$2', $dateString);
         $dateTime = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
 
         if (!$dateTime) {

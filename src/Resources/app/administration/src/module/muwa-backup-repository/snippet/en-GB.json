@@ -208,7 +208,9 @@
       "backupSucceeded": "Backup “{name}” completed successfully.",
       "backupFailed": "Backup “{name}” failed: {error}",
       "restoreSucceeded": "Restore of snapshot “{snapshot}” from “{name}” completed successfully.",
-      "restoreFailed": "Restore of snapshot “{snapshot}” from “{name}” failed: {error}"
+      "restoreFailed": "Restore of snapshot “{snapshot}” from “{name}” failed: {error}",
+      "takeoverCheckSucceeded": "Repository “{name}” taken over and checked: {status}",
+      "takeoverCheckFailed": "Check of taken-over repository “{name}” failed: {error}"
     },
     "schedule": {
       "title": "Automatic backup",
@@ -276,6 +278,44 @@
       "selectHelpText": "Database the dump is created from. The default connection is the database of this shop.",
       "types": {
         "mysql": "MySQL / MariaDB"
+      }
+    },
+    "takeover": {
+      "modalTitle": "Add repository",
+      "optionNewTitle": "New repository",
+      "optionNewDescription": "Creates an empty restic repository.",
+      "optionTakeoverTitle": "Take over existing repository",
+      "optionTakeoverDescription": "Adds an existing local restic repository, including its snapshots, to the management.",
+      "hint": "The repository stays where it is and is only read. The snapshots are taken over, you add the remaining configuration afterwards. Disable the previous batch or cron job so that two places do not back up to and clean up the same repository. Future retention rules (forget) also apply to the snapshots taken over.",
+      "repositoryPathLabel": "Path of the restic repository",
+      "passwordLabel": "Repository password",
+      "cancel": "Cancel",
+      "back": "Back",
+      "next": "Next",
+      "successTitle": "Repository taken over",
+      "successMessage": "{count} snapshots taken over. Please complete the configuration.",
+      "errors": {
+        "MUWA_TAKEOVER_INVALID_INPUT": "Path or password is invalid.",
+        "MUWA_TAKEOVER_PATH_NOT_FOUND": "The path does not exist or is not readable.",
+        "MUWA_TAKEOVER_NOT_A_REPOSITORY": "There is no restic repository at this path.",
+        "MUWA_TAKEOVER_NOT_WRITABLE": "The user “{user}” needs write permission on “{path}”.",
+        "MUWA_TAKEOVER_DUPLICATE": "This repository is already managed as “{name}”.",
+        "MUWA_TAKEOVER_PASSWORD_NOT_STORABLE": "The password cannot be stored encrypted (check MUWA_FACILITY_SECRET).",
+        "MUWA_TAKEOVER_ACCESS_FAILED": "Access to the repository failed: {detail}",
+        "MUWA_TAKEOVER_SAVE_FAILED": "The repository could not be saved.",
+        "MUWA_TAKEOVER_IMPORT_FAILED": "The snapshots could not be taken over. Nothing was saved.",
+        "unknown": "The takeover failed."
+      },
+      "suggestions": {
+        "title": "Paths from existing snapshots",
+        "adopt": "Adopt",
+        "stateDirectory": "present",
+        "stateFile": "file",
+        "stateMissing": "not found",
+        "lastSeen": "last backed up",
+        "host": "Host",
+        "error": "The suggestions could not be loaded.",
+        "truncated": "Only the first 200 paths are shown."
       }
     }
   },

@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 ### [0.9.0]
 
 ### Added
+- Take over an existing local restic repository: the button **Add Repository** opens a dialog with
+  the choice **New repository** (unchanged create page) or **Take over existing repository**. The
+  takeover reads the repository (`restic snapshots --no-lock`), imports the snapshots, names the
+  configuration after the folder, takes the hostname from the most recent snapshot and opens the tab
+  **Configuration**. It never calls `init`, `unlock`, `prune`, `forget` or a backup. New route
+  `POST /api/_action/muwa/backup/repository/takeover` (privilege `muwa_backup_repository:create`,
+  error codes `MUWA_TAKEOVER_*`), services `RepositoryTakeover` and `BackupPathSuggestions`.
+- After a takeover a background check runs (`TakeoverRepositoryCheckMessage` /
+  `TakeoverRepositoryCheckHandler`: check, repository statistics, administration notification).
+  The handler never throws.
+- Path suggestions: the tab **Configuration** of a repository lists the paths of the existing
+  snapshots with their state on this server (present, file, not found) and can adopt them into the
+  backup paths. New route `POST /api/_action/muwa/backup/repository/path-suggestions` (privilege
+  `muwa_backup_repository:update`).
+
+### Changed
+- Requires `muckiware/restic ^1.6` (was `^1.4`).
+- The `shopware/core` constraint is widened from `~6.6.10.14 || ~6.7.6.0` to
+  `~6.6.10.14 || ~6.7.6`; the old form only allowed 6.7.6.x.
+- The column `paths` of the snapshot table is `LONGTEXT` now (migration `Migration1794614400`), so
+  snapshots with many paths fit.
+- The snapshot import is tolerant: snapshots with missing or unusual fields no longer abort the
+  import.
+- Snapshot timestamps ending in `Z` with fractional seconds are parsed now (before, such snapshots
+  got the import time).
+- Repository takeover: storage errors are reported as `MUWA_TAKEOVER_SAVE_FAILED`; the error
+  `MUWA_TAKEOVER_ACCESS_FAILED` shows the restic error text (`meta.detail`); hostnames longer than
+  128 characters are truncated (snapshots) or not adopted (repository).
+
+
+### Added
 - Restored database dumps can be browsed and downloaded in the **Snapshots** tab of a backup
   repository. The new panel "Restored database files" shows the restore path as a read-only tree. Only
   database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.tar.gz`) can be downloaded;

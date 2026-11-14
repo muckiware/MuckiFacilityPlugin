@@ -46,6 +46,14 @@ class DirectoryBrowserTest extends TestCase
         $this->removeRecursive($this->root);
     }
 
+    public function testNormalizeRepositoryPath(): void
+    {
+        static::assertSame('/srv/repo', $this->browser->normalizeRepositoryPath('/srv//repo/'));
+
+        $this->expectException(InvalidBrowsePathException::class);
+        $this->browser->normalizeRepositoryPath('../x');
+    }
+
     public function testListReturnsSortedSubdirectoriesOnly(): void
     {
         foreach (['b', 'c10', 'c2'] as $name) {

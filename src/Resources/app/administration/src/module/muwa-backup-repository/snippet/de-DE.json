@@ -208,7 +208,9 @@
       "backupSucceeded": "Backup „{name}“ wurde erfolgreich abgeschlossen.",
       "backupFailed": "Backup „{name}“ ist fehlgeschlagen: {error}",
       "restoreSucceeded": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ wurde erfolgreich abgeschlossen.",
-      "restoreFailed": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ ist fehlgeschlagen: {error}"
+      "restoreFailed": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ ist fehlgeschlagen: {error}",
+      "takeoverCheckSucceeded": "Repository „{name}“ übernommen und geprüft: {status}",
+      "takeoverCheckFailed": "Prüfung des übernommenen Repositorys „{name}“ fehlgeschlagen: {error}"
     },
     "schedule": {
       "title": "Automatische Sicherung",
@@ -276,6 +278,44 @@
       "selectHelpText": "Datenbank, von der der Dump erstellt wird. Die Standardverbindung ist die Datenbank dieses Shops.",
       "types": {
         "mysql": "MySQL / MariaDB"
+      }
+    },
+    "takeover": {
+      "modalTitle": "Repository hinzufügen",
+      "optionNewTitle": "Neues Repository",
+      "optionNewDescription": "Legt ein leeres restic-Repository an.",
+      "optionTakeoverTitle": "Bestehendes Repository übernehmen",
+      "optionTakeoverDescription": "Nimmt ein vorhandenes lokales restic-Repository samt Snapshots in die Verwaltung auf.",
+      "hint": "Das Repository bleibt, wo es ist, und wird nur gelesen. Die Snapshots werden übernommen, die übrige Konfiguration ergänzt du danach. Schalte den bisherigen Batch- oder Cronjob ab, damit nicht zwei Stellen in dasselbe Repository sichern und aufräumen. Künftige Aufbewahrungsregeln (Forget) betreffen auch die übernommenen Snapshots.",
+      "repositoryPathLabel": "Pfad des restic-Repositorys",
+      "passwordLabel": "Repository-Passwort",
+      "cancel": "Abbrechen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "successTitle": "Repository übernommen",
+      "successMessage": "{count} Snapshots übernommen. Bitte ergänze die Konfiguration.",
+      "errors": {
+        "MUWA_TAKEOVER_INVALID_INPUT": "Pfad oder Passwort ist ungültig.",
+        "MUWA_TAKEOVER_PATH_NOT_FOUND": "Der Pfad existiert nicht oder ist nicht lesbar.",
+        "MUWA_TAKEOVER_NOT_A_REPOSITORY": "Unter diesem Pfad liegt kein restic-Repository.",
+        "MUWA_TAKEOVER_NOT_WRITABLE": "Der Benutzer „{user}“ braucht Schreibrecht auf „{path}“.",
+        "MUWA_TAKEOVER_DUPLICATE": "Dieses Repository wird bereits als „{name}“ verwaltet.",
+        "MUWA_TAKEOVER_PASSWORD_NOT_STORABLE": "Das Passwort kann nicht verschlüsselt gespeichert werden (MUWA_FACILITY_SECRET prüfen).",
+        "MUWA_TAKEOVER_ACCESS_FAILED": "Zugriff auf das Repository fehlgeschlagen: {detail}",
+        "MUWA_TAKEOVER_SAVE_FAILED": "Das Repository konnte nicht gespeichert werden.",
+        "MUWA_TAKEOVER_IMPORT_FAILED": "Die Snapshots konnten nicht übernommen werden. Es wurde nichts gespeichert.",
+        "unknown": "Die Übernahme ist fehlgeschlagen."
+      },
+      "suggestions": {
+        "title": "Pfade aus vorhandenen Snapshots",
+        "adopt": "Übernehmen",
+        "stateDirectory": "vorhanden",
+        "stateFile": "Datei",
+        "stateMissing": "nicht gefunden",
+        "lastSeen": "zuletzt gesichert",
+        "host": "Host",
+        "error": "Die Vorschläge konnten nicht geladen werden.",
+        "truncated": "Es werden nur die ersten 200 Pfade angezeigt."
       }
     }
   },
