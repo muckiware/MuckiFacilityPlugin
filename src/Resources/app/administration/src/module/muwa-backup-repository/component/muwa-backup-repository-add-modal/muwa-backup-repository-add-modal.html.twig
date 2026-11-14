@@ -55,6 +55,14 @@
                     required
                 />
 
+                <muwa-backup-repository-path-field
+                    v-model:value="restorePath"
+                    :label="$t('muwa-backup-repository.takeover.restorePathLabel')"
+                    :help-text="$t('muwa-backup-repository.takeover.restorePathHelpText')"
+                    maxlength="255"
+                    required
+                />
+
                 <sw-alert v-if="errorMessage" variant="error">
                     {{ errorMessage }}
                 </sw-alert>

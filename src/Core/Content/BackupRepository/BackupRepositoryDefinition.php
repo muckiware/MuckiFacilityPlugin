@@ -16,6 +16,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\CreatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\FkField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\AllowEmptyString;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\CascadeDelete;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Inherited;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
@@ -98,17 +99,17 @@ class BackupRepositoryDefinition extends EntityDefinition
                 'backupRepositoryChecks',
                 BackupRepositoryChecksDefinition::class,
                 'backup_repository_id'
-            )),
+            ))->addFlags(new CascadeDelete()),
             (new OneToManyAssociationField(
                 'backupRepositorySnapshots',
                 BackupRepositorySnapshotsDefinition::class,
                 'backup_repository_id'
-            )),
+            ))->addFlags(new CascadeDelete()),
             (new OneToManyAssociationField(
                 'backupRepositoryStats',
                 BackupRepositoryStatsDefinition::class,
                 'backup_repository_id'
-            )),
+            ))->addFlags(new CascadeDelete()),
 
             new OneToOneAssociationField(
                 'schedule', 'id', 'backup_repository_id', BackupScheduleDefinition::class, false

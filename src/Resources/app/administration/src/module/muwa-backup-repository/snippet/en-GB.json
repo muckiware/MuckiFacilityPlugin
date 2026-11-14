@@ -289,6 +289,8 @@
       "hint": "The repository stays where it is and is only read. The snapshots are taken over, you add the remaining configuration afterwards. Disable the previous batch or cron job so that two places do not back up to and clean up the same repository. Future retention rules (forget) also apply to the snapshots taken over.",
       "repositoryPathLabel": "Path of the restic repository",
       "passwordLabel": "Repository password",
+      "restorePathLabel": "Restore Path",
+      "restorePathHelpText": "Target folder for restores. It must not overlap with the repository path or the dump path.",
       "cancel": "Cancel",
       "back": "Back",
       "next": "Next",
@@ -296,6 +298,7 @@
       "successMessage": "{count} snapshots taken over. Please complete the configuration.",
       "errors": {
         "MUWA_TAKEOVER_INVALID_INPUT": "Path or password is invalid.",
+        "MUWA_TAKEOVER_INVALID_RESTORE_PATH": "The restore path is empty or not allowed. It must not overlap with the repository or dump path and must not be a project or system folder.",
         "MUWA_TAKEOVER_PATH_NOT_FOUND": "The path does not exist or is not readable.",
         "MUWA_TAKEOVER_NOT_A_REPOSITORY": "There is no restic repository at this path.",
         "MUWA_TAKEOVER_NOT_WRITABLE": "The user “{user}” needs write permission on “{path}”.",

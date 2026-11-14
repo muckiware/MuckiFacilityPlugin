@@ -16,6 +16,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
+use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -24,6 +25,7 @@ use Symfony\Component\Process\Process;
 
 use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
 use MuckiFacilityPlugin\Core\Defaults;
+use MuckiFacilityPlugin\Core\DumpPathRejection;
 use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Exception\RepositoryTakeoverException;
@@ -34,6 +36,7 @@ use MuckiFacilityPlugin\Services\DirectoryBrowser;
 use MuckiFacilityPlugin\Services\Helper;
 use MuckiFacilityPlugin\Services\ManageRepository;
 use MuckiFacilityPlugin\Services\RepositoryTakeover;
+use MuckiFacilityPlugin\Services\Settings;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 
 class RepositoryTakeoverTest extends TestCase
@@ -42,6 +45,7 @@ class RepositoryTakeoverTest extends TestCase
 
     private string $root;
     private string $repoPath;
+    private string $restorePath;
     /** @var BackupRepository&MockObject */
     private BackupRepository $backupRepository;
     /** @var BackupFileSnapshotsRepository&MockObject */
@@ -56,6 +60,7 @@ class RepositoryTakeoverTest extends TestCase
     {
         $this->root = sys_get_temp_dir() . '/muwa-takeover-' . uniqid();
         $this->repoPath = $this->root . '/myrepo';
+        $this->restorePath = $this->root . '/restore';
         $this->createRepositoryFolder($this->repoPath);
 
         $kernel = $this->createMock(KernelInterface::class);
@@ -73,7 +78,13 @@ class RepositoryTakeoverTest extends TestCase
             $this->manageRepository,
             new DirectoryBrowser($this->createMock(SettingsInterface::class), $kernel),
             new Helper(),
-            $this->messageBus
+            $this->messageBus,
+            new Settings(
+                $this->createMock(SystemConfigService::class),
+                $kernel,
+                new Helper(),
+                $this->createMock(LoggerInterface::class)
+            )
         );
     }
 
@@ -97,6 +108,10 @@ class RepositoryTakeoverTest extends TestCase
             'duplicate' => [RepositoryTakeoverException::DUPLICATE . '|duplicate'],
             'password not storable' => [RepositoryTakeoverException::PASSWORD_NOT_STORABLE . '|passwordNotStorable'],
             'restic fails' => [RepositoryTakeoverException::ACCESS_FAILED . '|resticFails'],
+            'empty restore path' => [RepositoryTakeoverException::INVALID_RESTORE_PATH . '|emptyRestorePath'],
+            'restore path is repository' => [RepositoryTakeoverException::INVALID_RESTORE_PATH . '|restoreIsRepository'],
+            'restore path inside repository' => [RepositoryTakeoverException::INVALID_RESTORE_PATH . '|restoreInsideRepository'],
+            'restore path relative segment' => [RepositoryTakeoverException::INVALID_RESTORE_PATH . '|restoreRelativeSegment'],
         ];
     }
 
@@ -158,7 +173,7 @@ class RepositoryTakeoverTest extends TestCase
         $this->snapshotsRepository->expects(static::once())->method('createNewSnapshots')->willReturn(2);
         $this->expectDispatch($id);
 
-        $count = $this->takeover->takeover($id, $this->root . '/myrepo/', ' pa ss ');
+        $count = $this->takeover->takeover($id, $this->root . '/myrepo/', ' pa ss ', $this->restorePath);
 
         static::assertSame(2, $count);
         static::assertInstanceOf(BackupRepositorySettings::class, $captured);
@@ -171,9 +186,24 @@ class RepositoryTakeoverTest extends TestCase
         static::assertSame(0, $captured->getForgetWeekly());
         static::assertSame(0, $captured->getForgetMonthly());
         static::assertSame(0, $captured->getForgetYearly());
-        static::assertSame('', $captured->getRestorePath());
+        static::assertSame($this->restorePath, $captured->getRestorePath());
         static::assertNull($captured->getDbDumpPath());
         static::assertNull($captured->getDatabaseConnectionId());
+    }
+
+    public function testRestorePathIsStoredNormalized(): void
+    {
+        $this->manageRepository->method('readSnapshots')->willReturn([]);
+        $this->restorePath = $this->root . '/restore//';
+
+        static::assertSame($this->root . '/restore', $this->takeoverAndCapture(0)->getRestorePath());
+    }
+
+    public function testRestorePathInsideRepositoryNamesReason(): void
+    {
+        $exception = $this->runRejection('restoreInsideRepository', 'pw');
+
+        static::assertSame(DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH->value, $exception->getMeta()['reason']);
     }
 
     public function testHostnameComesFromLatestSnapshotByTime(): void
@@ -223,7 +253,7 @@ class RepositoryTakeoverTest extends TestCase
         $this->backupRepository->expects(static::never())->method('createBackupRepository');
 
         try {
-            $this->takeover->takeover(Uuid::randomHex(), $longPath, 'pw');
+            $this->takeover->takeover(Uuid::randomHex(), $longPath, 'pw', $this->restorePath);
             static::fail('Expected invalid input');
         } catch (RepositoryTakeoverException $e) {
             static::assertSame(RepositoryTakeoverException::INVALID_INPUT, $e->getErrorCode());
@@ -239,7 +269,7 @@ class RepositoryTakeoverTest extends TestCase
         $this->messageBus->expects(static::never())->method('dispatch');
 
         try {
-            $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, self::PASSWORD);
+            $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, self::PASSWORD, $this->restorePath);
             static::fail('Expected save failure');
         } catch (RepositoryTakeoverException $e) {
             static::assertSame(RepositoryTakeoverException::SAVE_FAILED, $e->getErrorCode());
@@ -254,7 +284,7 @@ class RepositoryTakeoverTest extends TestCase
         $this->backupRepository->expects(static::never())->method('createBackupRepository');
 
         try {
-            $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, 'pw');
+            $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, 'pw', $this->restorePath);
             static::fail('Expected save failure');
         } catch (RepositoryTakeoverException $e) {
             static::assertSame(RepositoryTakeoverException::SAVE_FAILED, $e->getErrorCode());
@@ -320,7 +350,7 @@ class RepositoryTakeoverTest extends TestCase
             ->with($this->root . '/repo')->willReturn(new BackupRepositoryEntity());
 
         try {
-            $this->takeover->takeover(Uuid::randomHex(), $this->root . '/repo//', 'pw');
+            $this->takeover->takeover(Uuid::randomHex(), $this->root . '/repo//', 'pw', $this->restorePath);
             static::fail('Expected duplicate');
         } catch (RepositoryTakeoverException $e) {
             static::assertSame(RepositoryTakeoverException::DUPLICATE, $e->getErrorCode());
@@ -347,7 +377,7 @@ class RepositoryTakeoverTest extends TestCase
         $this->messageBus->expects(static::never())->method('dispatch');
 
         try {
-            $this->takeover->takeover($id, $this->repoPath, 'pw');
+            $this->takeover->takeover($id, $this->repoPath, 'pw', $this->restorePath);
             static::fail('Expected import failure');
         } catch (RepositoryTakeoverException $e) {
             static::assertSame(RepositoryTakeoverException::IMPORT_FAILED, $e->getErrorCode());
@@ -365,7 +395,7 @@ class RepositoryTakeoverTest extends TestCase
             ->willThrowException(new \RuntimeException('FK violation'));
 
         try {
-            $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, 'pw');
+            $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, 'pw', $this->restorePath);
             static::fail('Expected import failure');
         } catch (RepositoryTakeoverException $e) {
             static::assertSame(RepositoryTakeoverException::IMPORT_FAILED, $e->getErrorCode());
@@ -380,7 +410,7 @@ class RepositoryTakeoverTest extends TestCase
         $this->messageBus->method('dispatch')->willThrowException(new \RuntimeException('bus down'));
         $this->backupRepository->expects(static::never())->method('removeBackupRepository');
 
-        static::assertSame(0, $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, 'pw'));
+        static::assertSame(0, $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, 'pw', $this->restorePath));
     }
 
     private function takeoverAndCapture(int $imported = 1): BackupRepositorySettings
@@ -395,7 +425,7 @@ class RepositoryTakeoverTest extends TestCase
             static fn (object $message): Envelope => new Envelope($message)
         );
 
-        static::assertSame($imported, $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, 'pw'));
+        static::assertSame($imported, $this->takeover->takeover(Uuid::randomHex(), $this->repoPath, 'pw', $this->restorePath));
         static::assertInstanceOf(BackupRepositorySettings::class, $captured);
 
         return $captured;
@@ -417,6 +447,18 @@ class RepositoryTakeoverTest extends TestCase
         $path = $this->repoPath;
 
         switch ($scenario) {
+            case 'emptyRestorePath':
+                $this->restorePath = '  ';
+                break;
+            case 'restoreIsRepository':
+                $this->restorePath = $this->repoPath . '/';
+                break;
+            case 'restoreInsideRepository':
+                $this->restorePath = $this->repoPath . '/restore';
+                break;
+            case 'restoreRelativeSegment':
+                $this->restorePath = $this->root . '/../restore';
+                break;
             case 'invalidId':
                 $id = 'nope';
                 break;
@@ -456,7 +498,7 @@ class RepositoryTakeoverTest extends TestCase
         $this->messageBus->expects(static::never())->method('dispatch');
 
         try {
-            $this->takeover->takeover($id, $path, $password);
+            $this->takeover->takeover($id, $path, $password, $this->restorePath);
         } catch (RepositoryTakeoverException $e) {
             return $e;
         }

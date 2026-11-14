@@ -128,7 +128,10 @@ can be added to the management instead of creating a new empty one.
 
 Settings -> Extensions -> Backup Repositories -> __Add Repository__ opens a dialog with two options:
 __New repository__ leads to the unchanged create page, __Take over existing repository__ asks for
-the path of the restic repository and its password.
+the path of the restic repository, its password and the restore path (required). The restore path
+follows the same rules as the restore directory (`Settings::getRestorePathRejection()`: no overlap
+with the repository or dump path, no project or system folder); otherwise the takeover is rejected
+with `MUWA_TAKEOVER_INVALID_RESTORE_PATH` (`meta.reason`).
 
 What happens:
 - The repository stays where it is. It is only read (`restic snapshots`); the takeover never calls

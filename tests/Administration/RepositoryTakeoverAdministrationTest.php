@@ -11,6 +11,7 @@ final class RepositoryTakeoverAdministrationTest extends TestCase
 
     private const ERROR_CODES = [
         'MUWA_TAKEOVER_INVALID_INPUT',
+        'MUWA_TAKEOVER_INVALID_RESTORE_PATH',
         'MUWA_TAKEOVER_PATH_NOT_FOUND',
         'MUWA_TAKEOVER_NOT_A_REPOSITORY',
         'MUWA_TAKEOVER_NOT_WRITABLE',
@@ -94,6 +95,16 @@ final class RepositoryTakeoverAdministrationTest extends TestCase
         self::assertStringContainsString("tab: 'backupRepositoryConfig'", $modal);
         self::assertStringContainsString("name: 'muwa.backup.repository.create'", $modal);
         self::assertStringNotContainsString('console.', $modal);
+    }
+
+    public function testModalRequiresRestorePath(): void
+    {
+        $modal = $this->read(self::MODAL . 'index.js');
+        $template = $this->read(self::MODAL . 'muwa-backup-repository-add-modal.html.twig');
+
+        self::assertStringContainsString("this.restorePath.trim() === ''", $this->methodBody($modal, 'isSubmitDisabled'));
+        self::assertStringContainsString('restorePath: this.restorePath', $modal);
+        self::assertMatchesRegularExpression('/v-model:value="restorePath"[^>]*required/s', $template);
     }
 
     public function testModalUsesTWithPlaceholdersNotTc(): void

@@ -367,6 +367,7 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\DirectoryBrowser"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
             <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
         </service>
 
         <service id="MuckiFacilityPlugin\Services\BackupPathSuggestions" public="true">

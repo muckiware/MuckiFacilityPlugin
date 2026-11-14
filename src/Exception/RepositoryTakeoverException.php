@@ -14,6 +14,7 @@ namespace MuckiFacilityPlugin\Exception;
 class RepositoryTakeoverException extends \RuntimeException
 {
     public const INVALID_INPUT = 'MUWA_TAKEOVER_INVALID_INPUT';
+    public const INVALID_RESTORE_PATH = 'MUWA_TAKEOVER_INVALID_RESTORE_PATH';
     public const PATH_NOT_FOUND = 'MUWA_TAKEOVER_PATH_NOT_FOUND';
     public const NOT_A_REPOSITORY = 'MUWA_TAKEOVER_NOT_A_REPOSITORY';
     public const NOT_WRITABLE = 'MUWA_TAKEOVER_NOT_WRITABLE';

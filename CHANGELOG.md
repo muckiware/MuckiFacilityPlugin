@@ -9,7 +9,8 @@ All notable changes to this project will be documented in this file.
   the choice **New repository** (unchanged create page) or **Take over existing repository**. The
   takeover reads the repository (`restic snapshots --no-lock`), imports the snapshots, names the
   configuration after the folder, takes the hostname from the most recent snapshot and opens the tab
-  **Configuration**. It never calls `init`, `unlock`, `prune`, `forget` or a backup. New route
+  **Configuration**. The dialog also asks for the restore path (required, checked with
+  `Settings::getRestorePathRejection()`, error code `MUWA_TAKEOVER_INVALID_RESTORE_PATH`). It never calls `init`, `unlock`, `prune`, `forget` or a backup. New route
   `POST /api/_action/muwa/backup/repository/takeover` (privilege `muwa_backup_repository:create`,
   error codes `MUWA_TAKEOVER_*`), services `RepositoryTakeover` and `BackupPathSuggestions`.
 - After a takeover a background check runs (`TakeoverRepositoryCheckMessage` /
@@ -33,6 +34,14 @@ All notable changes to this project will be documented in this file.
 - Repository takeover: storage errors are reported as `MUWA_TAKEOVER_SAVE_FAILED`; the error
   `MUWA_TAKEOVER_ACCESS_FAILED` shows the restic error text (`meta.detail`); hostnames longer than
   128 characters are truncated (snapshots) or not adopted (repository).
+
+### Fixed
+- Deleting a backup repository failed with `SQLSTATE[23000] ... 1451 Cannot delete or update a
+  parent row` as soon as the repository had checks, snapshots or statistics. The foreign keys of
+  `muwa_backup_repository_checks`, `muwa_backup_repository_snapshots` and
+  `muwa_backup_repository_stats` now use `ON DELETE CASCADE` (migration `Migration1794700800`), and
+  the associations in `BackupRepositoryDefinition` carry the `CascadeDelete` flag, so these rows are
+  deleted together with the repository.
 
 
 ### Added

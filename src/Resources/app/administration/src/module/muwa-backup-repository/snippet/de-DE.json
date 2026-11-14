@@ -289,6 +289,8 @@
       "hint": "Das Repository bleibt, wo es ist, und wird nur gelesen. Die Snapshots werden übernommen, die übrige Konfiguration ergänzt du danach. Schalte den bisherigen Batch- oder Cronjob ab, damit nicht zwei Stellen in dasselbe Repository sichern und aufräumen. Künftige Aufbewahrungsregeln (Forget) betreffen auch die übernommenen Snapshots.",
       "repositoryPathLabel": "Pfad des restic-Repositorys",
       "passwordLabel": "Repository-Passwort",
+      "restorePathLabel": "Wiederherstellungspfad",
+      "restorePathHelpText": "Zielordner für Wiederherstellungen. Er darf sich nicht mit dem Repository- oder dem Dump-Pfad überschneiden.",
       "cancel": "Abbrechen",
       "back": "Zurück",
       "next": "Weiter",
@@ -296,6 +298,7 @@
       "successMessage": "{count} Snapshots übernommen. Bitte ergänze die Konfiguration.",
       "errors": {
         "MUWA_TAKEOVER_INVALID_INPUT": "Pfad oder Passwort ist ungültig.",
+        "MUWA_TAKEOVER_INVALID_RESTORE_PATH": "Der Restore-Pfad ist leer oder nicht zulässig. Er darf sich nicht mit dem Repository- oder Dump-Pfad überschneiden und kein Projekt- oder Systemordner sein.",
         "MUWA_TAKEOVER_PATH_NOT_FOUND": "Der Pfad existiert nicht oder ist nicht lesbar.",
         "MUWA_TAKEOVER_NOT_A_REPOSITORY": "Unter diesem Pfad liegt kein restic-Repository.",
         "MUWA_TAKEOVER_NOT_WRITABLE": "Der Benutzer „{user}“ braucht Schreibrecht auf „{path}“.",

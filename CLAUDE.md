@@ -334,7 +334,8 @@ Repository Path bleibt auf der Detail-Seite gesperrt.
 
 **Uebernahme-Modal.** `component/muwa-backup-repository-add-modal` ersetzt auf der Liste den direkten
 Sprung auf `create`: Auswahl "Neues Repository" (unveraenderte Create-Seite) oder "Bestehendes
-Repository uebernehmen" (Pfad + Passwort, Aufruf der `takeover`-Route, Fehlercodes werden ueber
+Repository uebernehmen" (Pfad + Passwort + Pflichtfeld Restore-Pfad, geprueft ueber
+`Settings::getRestorePathRejection()`, Fehler `MUWA_TAKEOVER_INVALID_RESTORE_PATH`; Aufruf der `takeover`-Route, Fehlercodes werden ueber
 Snippets `takeover.errors.*` angezeigt, danach Sprung in den Tab Konfiguration). Der Tab Konfiguration
 zeigt ueber `Services\BackupPathSuggestions` die Pfade der vorhandenen Snapshots als Vorschlaege
 (Uebernehmen traegt sie in die Backup-Pfade ein). Snippets mit Platzhaltern immer per

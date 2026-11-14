@@ -47,7 +47,8 @@ class RepositoryTakeover
         protected ManageRepository $manageRepository,
         protected DirectoryBrowser $directoryBrowser,
         protected PluginHelper $pluginHelper,
-        protected MessageBusInterface $messageBus
+        protected MessageBusInterface $messageBus,
+        protected SettingsInterface $settings
     )
     {}
 
@@ -55,9 +56,15 @@ class RepositoryTakeover
      * @return int number of imported snapshots
      * @throws RepositoryTakeoverException
      */
-    public function takeover(string $backupRepositoryId, string $repositoryPath, string $repositoryPassword): int
+    public function takeover(
+        string $backupRepositoryId,
+        string $repositoryPath,
+        string $repositoryPassword,
+        string $restorePath
+    ): int
     {
         $path = $this->validateInput($backupRepositoryId, $repositoryPath, $repositoryPassword);
+        $restorePath = $this->validateRestorePath($restorePath, $path);
         $name = basename($path);
         if ($name === '') {
             $name = self::FALLBACK_NAME;
@@ -68,10 +75,9 @@ class RepositoryTakeover
         $storedPassword = $this->prepareStoredPassword($repositoryPassword);
         $snapshots = $this->readSnapshots($path, $repositoryPassword);
 
-        $this->saveRepository(
-            $this->createSettings($backupRepositoryId, $name, $path, $repositoryPassword, $snapshots),
-            $storedPassword
-        );
+        $settings = $this->createSettings($backupRepositoryId, $name, $path, $repositoryPassword, $snapshots);
+        $settings->setRestorePath($restorePath);
+        $this->saveRepository($settings, $storedPassword);
 
         $imported = $this->importSnapshots($backupRepositoryId, $snapshots);
         $this->dispatchCheck($backupRepositoryId);
@@ -103,6 +109,42 @@ class RepositoryTakeover
             throw new RepositoryTakeoverException(
                 RepositoryTakeoverException::INVALID_INPUT,
                 'Repository path must not be longer than ' . self::MAX_PATH_LENGTH . ' characters'
+            );
+        }
+
+        return $path;
+    }
+
+    /**
+     * Required restore target. Beyond the format checks the rules come from
+     * Settings::getRestorePathRejection() (same source as the restore directory browser);
+     * the rejection reason is passed on as meta "reason".
+     *
+     * @throws RepositoryTakeoverException
+     */
+    protected function validateRestorePath(string $restorePath, string $repositoryPath): string
+    {
+        if (trim($restorePath) === '') {
+            throw new RepositoryTakeoverException(RepositoryTakeoverException::INVALID_RESTORE_PATH, 'Restore path must not be empty');
+        }
+
+        try {
+            $path = $this->directoryBrowser->normalizeRepositoryPath($restorePath);
+        } catch (InvalidBrowsePathException $e) {
+            throw new RepositoryTakeoverException(RepositoryTakeoverException::INVALID_RESTORE_PATH, $e->getMessage(), [], $e);
+        }
+        if (mb_strlen($path) > self::MAX_PATH_LENGTH) {
+            throw new RepositoryTakeoverException(
+                RepositoryTakeoverException::INVALID_RESTORE_PATH,
+                'Restore path must not be longer than ' . self::MAX_PATH_LENGTH . ' characters'
+            );
+        }
+        $rejection = $this->settings->getRestorePathRejection($path, $repositoryPath, null);
+        if ($rejection !== null) {
+            throw new RepositoryTakeoverException(
+                RepositoryTakeoverException::INVALID_RESTORE_PATH,
+                'Restore path is not allowed: ' . $rejection->value,
+                ['reason' => $rejection->value]
             );
         }
 

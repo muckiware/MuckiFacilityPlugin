@@ -31,6 +31,7 @@ export default {
             step: 'choice',
             repositoryPath: '',
             repositoryPassword: '',
+            restorePath: '',
             isLoading: false,
             errorMessage: null,
             httpClient: null,
@@ -51,7 +52,9 @@ export default {
         },
 
         isSubmitDisabled() {
-            return this.repositoryPath.trim() === '' || this.repositoryPassword === '';
+            return this.repositoryPath.trim() === ''
+                || this.repositoryPassword === ''
+                || this.restorePath.trim() === '';
         }
     },
 
@@ -109,7 +112,8 @@ export default {
                     {
                         id: Shopware.Utils.createId(),
                         repositoryPath: this.repositoryPath,
-                        repositoryPassword: this.repositoryPassword
+                        repositoryPassword: this.repositoryPassword,
+                        restorePath: this.restorePath
                     },
                     { headers: this.getApiHeader() }
                 );

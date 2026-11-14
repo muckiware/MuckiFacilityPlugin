@@ -55,7 +55,8 @@ class TakeoverBackupRepositoryController extends AbstractController
             $snapshotsCount = $this->repositoryTakeover->takeover(
                 $id,
                 $this->readString($data, 'repositoryPath'),
-                $this->readString($data, 'repositoryPassword')
+                $this->readString($data, 'repositoryPassword'),
+                $this->readString($data, 'restorePath')
             );
         } catch (RepositoryTakeoverException $exception) {
             return new JsonResponse(

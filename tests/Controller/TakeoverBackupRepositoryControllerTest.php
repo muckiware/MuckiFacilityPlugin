@@ -31,6 +31,7 @@ class TakeoverBackupRepositoryControllerTest extends TestCase
             'id' => $id,
             'repositoryPath' => '/srv/repo',
             'repositoryPassword' => self::PASSWORD,
+            'restorePath' => '/srv/restore',
         ]);
     }
 
@@ -39,7 +40,7 @@ class TakeoverBackupRepositoryControllerTest extends TestCase
         $id = Uuid::randomHex();
         $takeover = $this->createMock(RepositoryTakeover::class);
         $takeover->expects(static::once())->method('takeover')
-            ->with($id, '/srv/repo', self::PASSWORD)->willReturn(7);
+            ->with($id, '/srv/repo', self::PASSWORD, '/srv/restore')->willReturn(7);
 
         $response = (new TakeoverBackupRepositoryController($takeover, $this->createMock(BackupPathSuggestions::class)))
             ->takeover($this->input($id), Context::createDefaultContext());
@@ -54,7 +55,7 @@ class TakeoverBackupRepositoryControllerTest extends TestCase
     public function testTakeoverMissingValuesBecomeEmptyStrings(): void
     {
         $takeover = $this->createMock(RepositoryTakeover::class);
-        $takeover->expects(static::once())->method('takeover')->with('', '', '')->willReturn(0);
+        $takeover->expects(static::once())->method('takeover')->with('', '', '', '')->willReturn(0);
 
         (new TakeoverBackupRepositoryController($takeover, $this->createMock(BackupPathSuggestions::class)))
             ->takeover(new RequestDataBag([]), Context::createDefaultContext());
