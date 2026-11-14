@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\tests\Services;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -70,9 +71,7 @@ class DatabaseConnectionResolverTest extends TestCase
         static::assertSame('shopware', $target->getConnection()->getDatabaseName());
     }
 
-    /**
-     * @dataProvider databaseUrlSchemeProvider
-     */
+    #[DataProvider('databaseUrlSchemeProvider')]
     public function testDefaultTypeIsDerivedFromDatabaseUrlScheme(string $databaseUrl): void
     {
         $dispatcher = new EventDispatcher();

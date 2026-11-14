@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\tests\Subscriber;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Context;
 
@@ -126,9 +127,8 @@ class MysqlDatabaseConnectionSubscriberTest extends TestCase
 
     /**
      * Defence in depth: spatie writes host and user unescaped into the mysqldump credentials file.
-     *
-     * @dataProvider controlCharacterProvider
      */
+    #[DataProvider('controlCharacterProvider')]
     public function testOwnConnectionWithControlCharacterInTargetFieldIsRejected(string $field, string $value): void
     {
         $passwordResolver = $this->createMock(DatabasePasswordResolver::class);

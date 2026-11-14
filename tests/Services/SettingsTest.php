@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\tests\Services;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -72,9 +73,7 @@ class SettingsTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider emptyDumpPathProvider
-     */
+    #[DataProvider('emptyDumpPathProvider')]
     public function testGetBackupPathWithEmptyOwnDumpPathReturnsDefault(?string $dumpPath): void
     {
         static::assertSame(
@@ -132,9 +131,7 @@ class SettingsTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider dangerousDumpPathProvider
-     */
+    #[DataProvider('dangerousDumpPathProvider')]
     public function testGetBackupPathRejectsDangerousOwnDumpPath(string $dumpPath): void
     {
         $logger = $this->createMock(LoggerInterface::class);
@@ -147,9 +144,7 @@ class SettingsTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider blockedDumpPathProvider
-     */
+    #[DataProvider('blockedDumpPathProvider')]
     public function testGetBackupPathRejectsBlockedSystemOrProjectPath(string $dumpPath): void
     {
         $logger = $this->createMock(LoggerInterface::class);
@@ -344,9 +339,7 @@ class SettingsTest extends TestCase
         $this->assertNull($settings->getOwnDumpPathRejection(null));
     }
 
-    /**
-     * @dataProvider rejectionProvider
-     */
+    #[DataProvider('rejectionProvider')]
     public function testGetOwnDumpPathRejectionReturnsReason(
         string $path,
         ?string $repositoryPath,
@@ -396,7 +389,7 @@ class SettingsTest extends TestCase
         $this->assertSame('/mnt/a', $settings->resolveDumpPathValue(' /mnt/a '));
     }
 
-    /** @dataProvider rejectedRestorePathProvider */
+    #[DataProvider('rejectedRestorePathProvider')]
     public function testRestorePathIsRejected(string $restorePath, ?string $repositoryPath, ?string $ownDumpPath, DumpPathRejection $expected): void
     {
         static::assertSame($expected, $this->createSettings()->getRestorePathRejection($restorePath, $repositoryPath, $ownDumpPath));

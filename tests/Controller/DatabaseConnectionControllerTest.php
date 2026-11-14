@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MuckiFacilityPlugin\tests\Controller;
 
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Api\Context\AdminApiSource;
 use Shopware\Core\Framework\Context;
@@ -184,8 +185,8 @@ class DatabaseConnectionControllerTest extends TestCase
 
     /**
      * @param array<string, mixed> $override
-     * @dataProvider invalidInputProvider
      */
+    #[DataProvider('invalidInputProvider')]
     public function testSaveRejectsInvalidInput(array $override): void
     {
         $response = $this->controller->save(new RequestDataBag($this->input($override)), $this->context(true));

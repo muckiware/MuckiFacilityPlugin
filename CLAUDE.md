@@ -353,17 +353,23 @@ composer run-script phpstan          # PHPStan Level 6, nur src/
 ./vendor/bin/phpunit --configuration="custom/plugins/MuckiFacilityPlugin"
 ```
 
-**Achtung:** Der `phpunit.xml`-Pfad (Shopware-Test-Bootstrap) laeuft in `sw67` derzeit **nicht** —
-das Bootstrap scheitert mit `Unknown column 'language.translation_auto_update'`. Fuer echte
-Unit-Tests ohne Shopware-Bootstrap gibt es stattdessen `tests/UnitTestBootstrap.php` +
-`phpunit.unit.xml`:
+**PHPUnit 11** — lokal (`composer.json`) und in der CI (`.github/workflows/main.yml`, Schritt
+"Install code-Tools"). Data-Provider nur als Attribut `#[DataProvider('...')]` mit `static`
+Provider-Methode, keine `@dataProvider`-Annotationen (in 11 deprecated, ab 12 entfernt). Beide
+Versionen beim Anheben immer gemeinsam aendern: Laeuft die CI mit einer aelteren PHPUnit-Version als
+lokal, werden Attribute dort ignoriert und Provider-Tests scheitern mit `ArgumentCountError`.
+
+In `sw67` laufen beide Konfigurationen, Tests nur per `ddev exec` (Host-PHP ist unbrauchbar):
 
 ```bash
+# komplette Suite mit Shopware-Test-Bootstrap (tests/TestBootstrap.php)
+ddev exec "cd custom/static-plugins/MuckiFacilityPlugin && /var/www/html/vendor/bin/phpunit -c phpunit.xml"
+
+# reine Unit-Tests ohne Shopware-Bootstrap (tests/UnitTestBootstrap.php), deutlich schneller
 ddev exec "cd custom/static-plugins/MuckiFacilityPlugin && /var/www/html/vendor/bin/phpunit -c phpunit.unit.xml"
 ```
 
-Das ist der Weg, der in diesem Environment tatsaechlich funktioniert — bis der Bootstrap-Bug
-behoben ist, hier ansetzen statt eine Stunde mit `phpunit.xml` zu verlieren.
+`phpunit.unit.xml` listet die Testdateien einzeln — neue Unit-Tests dort eintragen.
 
 `tests/` mischt echte Unit-Tests (`HelperTest`, `SettingsTest`, `BackupRunnerFactoryTest`) mit
 Integrationstests, die eine laufende Shopware-Instanz und ein reales restic-Binary brauchen

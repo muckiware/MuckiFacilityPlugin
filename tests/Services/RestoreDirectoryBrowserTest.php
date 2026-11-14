@@ -12,6 +12,7 @@
 namespace MuckiFacilityPlugin\tests\Services;
 
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
@@ -197,9 +198,7 @@ class RestoreDirectoryBrowserTest extends TestCase
         static::assertSame([], $result['files']);
     }
 
-    /**
-     * @dataProvider invalidRelativePathProvider
-     */
+    #[DataProvider('invalidRelativePathProvider')]
     public function testInvalidRelativePathThrows(string $path): void
     {
         $this->expectException(InvalidBrowsePathException::class);
@@ -207,9 +206,7 @@ class RestoreDirectoryBrowserTest extends TestCase
         $this->browser->listDirectory(self::ID, $path);
     }
 
-    /**
-     * @dataProvider invalidRelativePathProvider
-     */
+    #[DataProvider('invalidRelativePathProvider')]
     public function testInvalidRelativePathThrowsOnDownload(string $path): void
     {
         $this->expectException(InvalidBrowsePathException::class);

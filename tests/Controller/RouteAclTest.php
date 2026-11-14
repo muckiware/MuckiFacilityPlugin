@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MuckiFacilityPlugin\tests\Controller;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\PlatformRequest;
 use Symfony\Component\Routing\Attribute\Route;
@@ -143,8 +144,8 @@ class RouteAclTest extends TestCase
 
     /**
      * @param class-string $controllerClass
-     * @dataProvider publicTokenRouteProvider
      */
+    #[DataProvider('publicTokenRouteProvider')]
     public function testPublicRoutesRequireNoAuthButAreExplicitlyListed(
         string $controllerClass,
         string $methodName
@@ -159,9 +160,8 @@ class RouteAclTest extends TestCase
     /**
      * @param class-string $controllerClass
      * @param array<int, string> $expectedPrivileges
-     *
-     * @dataProvider routeAclProvider
      */
+    #[DataProvider('routeAclProvider')]
     public function testRouteRequiresAclPrivileges(
         string $controllerClass,
         string $methodName,
