@@ -85,8 +85,17 @@ export default {
         },
 
         onChooseNew() {
-            this.$emit('modal-close');
-            this.$router.push({ name: 'muwa.backup.repository.create' });
+            this.navigateAway({ name: 'muwa.backup.repository.create' });
+        },
+
+        /**
+         * Navigates without emitting modal-close: the route change unmounts the list together
+         * with this modal. Closing it first (v-if of the parent) while the route changes makes
+         * Vue fail with "insertBefore ... not a child", and the list stays rendered although
+         * the URL already points to the target route.
+         */
+        async navigateAway(route) {
+            await this.$router.push(route);
         },
 
         onChooseTakeover() {
@@ -106,8 +115,9 @@ export default {
             this.isLoading = true;
             this.errorMessage = null;
 
+            let response;
             try {
-                const response = await this.httpClient.post(
+                response = await this.httpClient.post(
                     this.requestTakeover,
                     {
                         id: Shopware.Utils.createId(),
@@ -123,15 +133,16 @@ export default {
                     message: this.$t('muwa-backup-repository.takeover.successMessage', { count: response.data.snapshotsCount })
                 });
                 this.isLoading = false;
-                this.$emit('modal-close');
-                this.$router.push({
-                    name: 'muwa.backup.repository.detail',
-                    params: { id: response.data.id, tab: 'backupRepositoryConfig' }
-                });
             } catch (exception) {
                 this.isLoading = false;
                 this.errorMessage = this.getErrorMessage(exception);
+                return;
             }
+
+            await this.navigateAway({
+                name: 'muwa.backup.repository.detail',
+                params: { id: response.data.id, tab: 'backupRepositoryConfig' }
+            });
         },
 
         /**
