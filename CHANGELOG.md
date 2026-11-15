@@ -55,7 +55,9 @@ All notable changes to this project will be documented in this file.
   `Settings::getRestorePathRejection()`), but only when browsing and downloading restored files.
   Saving the configuration and the restore itself are unchanged.
 - Downloads are guarded by a single-use token that is valid for 60 seconds, because the browser
-  download cannot send the administration bearer token.
+  download cannot send the administration bearer token. The tokens are stored in the new table
+  `muwa_restore_download_token` (Symfony `DoctrineDbalAdapter`), so they work in every environment
+  and with several app servers; expired tokens are pruned when a new one is issued.
 - Database connections: a backup configuration can dump another database than the system
   database. Connections (name, type, host, port, database name, user, password) are managed in the
   new tab **Database connections** of the backup module and are chosen per backup configuration in

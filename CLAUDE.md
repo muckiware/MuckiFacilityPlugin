@@ -243,8 +243,13 @@ nicht mit JSON und die Repository-Initialisierung scheitert mit "JSON Syntax err
 
 **Token-geschuetzte Public-Route.** Der Browser-Download kann keinen Bearer-Header senden, daher ist
 `GET .../restore/download` oeffentlich (`auth_required: false`). Schutz: `Services\RestoreDownloadToken`
-(`cache.object`, 60 s TTL, einmalig einloesbar, an Repository-ID + relativen Pfad gebunden), ausgestellt
-durch die ACL-geschuetzte `prepare`-Route. `RestoreDirectoryBrowser` listet Ordner und alle regulaeren
+(60 s TTL, einmalig einloesbar, an Repository-ID + relativen Pfad gebunden), ausgestellt
+durch die ACL-geschuetzte `prepare`-Route. Gespeichert werden die Tokens im Service
+`muwa.restore_download_token.cache` (`DoctrineDbalAdapter`, Tabelle `muwa_restore_download_token` aus
+`Migration1794744000`, bei jedem `issue()` per `prune()` aufgeraeumt). **Nicht** zurueck auf
+`cache.object` stellen: Shopware setzt `cache.app` in `dev` auf `cache.adapter.array`, dort ueberlebt
+der Token den Prepare-Request nicht (404 `MUWA_INVALID_DOWNLOAD_TOKEN`). Die test-Umgebung biegt
+`cache.object` auf Filesystem um und verdeckt das — daher `RestoreDownloadTokenStorageTest`. `RestoreDirectoryBrowser` listet Ordner und alle regulaeren
 Dateien, `downloadable` ist nur fuer Dumps (`.backup.sql`, `.backup.sql.gz`, `.backup.sql.tar.gz`) true;
 `resolveDownloadFile()` lehnt alles andere ab. Symlinks werden uebersprungen, und der Browser liefert die Zustaende
 `ok`/`notConfigured`/`notAllowed`/`empty`. `RouteAclTest` fuehrt diese Route explizit als einzige

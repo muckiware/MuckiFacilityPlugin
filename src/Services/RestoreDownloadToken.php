@@ -12,11 +12,15 @@
 namespace MuckiFacilityPlugin\Services;
 
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Cache\PruneableInterface;
 
 /**
  * Short-lived, single-use tokens for dump downloads. The download route carries no admin session
  * (the browser navigates to it directly), so the token is the only credential: random, bound to one
  * repository and path, valid for TTL_SECONDS and deleted on first redeem.
+ *
+ * The pool must outlive the request (issue and redeem run in two of them), see the
+ * muwa.restore_download_token.cache service.
  */
 class RestoreDownloadToken
 {
@@ -36,6 +40,11 @@ class RestoreDownloadToken
         $item->set(['backupRepositoryId' => $backupRepositoryId, 'path' => $relativePath]);
         $item->expiresAfter(self::TTL_SECONDS);
         $this->cache->save($item);
+
+        // Tokens that were issued but never redeemed would otherwise stay in the table forever
+        if ($this->cache instanceof PruneableInterface) {
+            $this->cache->prune();
+        }
 
         return $token;
     }

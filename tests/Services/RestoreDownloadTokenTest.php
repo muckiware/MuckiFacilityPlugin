@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace MuckiFacilityPlugin\tests\Services;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\PruneableInterface;
 
 use MuckiFacilityPlugin\Services\RestoreDownloadToken;
 
@@ -33,6 +35,15 @@ class RestoreDownloadTokenTest extends TestCase
     public function testUnknownTokenReturnsNull(): void
     {
         static::assertNull((new RestoreDownloadToken(new ArrayAdapter()))->redeem('unknown'));
+    }
+
+    public function testIssuePrunesExpiredTokens(): void
+    {
+        $cache = $this->createMockForIntersectionOfInterfaces([CacheItemPoolInterface::class, PruneableInterface::class]);
+        $cache->method('getItem')->willReturn((new ArrayAdapter())->getItem('item'));
+        $cache->expects(static::once())->method('prune');
+
+        (new RestoreDownloadToken($cache))->issue('id', 'a');
     }
 
     public function testTokenIsRandomAnd64HexChars(): void

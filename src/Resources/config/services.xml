@@ -306,8 +306,17 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
         </service>
+        <!-- Not cache.object: that is a request-local ArrayAdapter in the dev environment -->
+        <service id="muwa.restore_download_token.cache" class="Symfony\Component\Cache\Adapter\DoctrineDbalAdapter">
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument/>
+            <argument type="constant">MuckiFacilityPlugin\Services\RestoreDownloadToken::TTL_SECONDS</argument>
+            <argument type="collection">
+                <argument key="db_table" type="constant">MuckiFacilityPlugin\Migration\Migration1794744000::TABLE</argument>
+            </argument>
+        </service>
         <service id="MuckiFacilityPlugin\Services\RestoreDownloadToken" public="true">
-            <argument type="service" id="cache.object"/>
+            <argument type="service" id="muwa.restore_download_token.cache"/>
         </service>
         <service id="MuckiFacilityPlugin\Controller\RestoreDirectoryController" public="true">
             <argument type="service" id="MuckiFacilityPlugin\Services\RestoreDirectoryBrowser"/>
