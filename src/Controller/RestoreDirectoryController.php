@@ -85,6 +85,28 @@ class RestoreDirectoryController extends AbstractController
         return new JsonResponse(['accessToken' => $this->downloadToken->issue($repositoryId, $path)]);
     }
 
+    #[Route(
+        path: '/api/_action/muwa/restore/delete',
+        name: 'api.action.muwa.restore.delete',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:restore']],
+        methods: ['POST']
+    )]
+    public function delete(RequestDataBag $data, Context $context): JsonResponse
+    {
+        $repositoryId = $this->getString($data, 'backupRepositoryId') ?? '';
+        if (!Uuid::isValid($repositoryId)) {
+            return $this->invalidPathResponse(new InvalidBrowsePathException('Invalid backup repository id.'));
+        }
+
+        try {
+            $this->restoreDirectoryBrowser->deleteDumpFile($repositoryId, $this->getString($data, 'path') ?? '');
+        } catch (InvalidBrowsePathException $exception) {
+            return $this->invalidPathResponse($exception);
+        }
+
+        return new JsonResponse(['success' => true]);
+    }
+
     /**
      * Reachable without an admin session on purpose: the browser navigates here directly, so the
      * single-use access token from downloadPrepare() is the credential. The path is re-validated

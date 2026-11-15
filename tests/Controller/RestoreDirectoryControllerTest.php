@@ -99,6 +99,48 @@ class RestoreDirectoryControllerTest extends TestCase
         static::assertSame(['accessToken' => 'tok'], json_decode((string) $response->getContent(), true));
     }
 
+    public function testDeleteCallsBrowserAndReturnsSuccess(): void
+    {
+        $browser = $this->createMock(RestoreDirectoryBrowser::class);
+        $browser->expects(static::once())->method('deleteDumpFile')->with(self::REPO_ID, 'a.backup.sql');
+
+        $response = $this->controller($browser)->delete(
+            new RequestDataBag(['backupRepositoryId' => self::REPO_ID, 'path' => 'a.backup.sql']),
+            Context::createDefaultContext()
+        );
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame(['success' => true], json_decode((string) $response->getContent(), true));
+    }
+
+    public function testDeleteReturns400OnInvalidPath(): void
+    {
+        $browser = $this->createMock(RestoreDirectoryBrowser::class);
+        $browser->method('deleteDumpFile')->willThrowException(new InvalidBrowsePathException('bad'));
+
+        $response = $this->controller($browser)->delete(
+            new RequestDataBag(['backupRepositoryId' => self::REPO_ID, 'path' => 'notes.txt']),
+            Context::createDefaultContext()
+        );
+
+        static::assertSame(400, $response->getStatusCode());
+        $body = json_decode((string) $response->getContent(), true);
+        static::assertSame('MUWA_INVALID_PATH', $body['errors'][0]['code']);
+    }
+
+    public function testDeleteWithInvalidRepositoryIdDoesNotCallBrowser(): void
+    {
+        $browser = $this->createMock(RestoreDirectoryBrowser::class);
+        $browser->expects(static::never())->method('deleteDumpFile');
+
+        $response = $this->controller($browser)->delete(
+            new RequestDataBag(['backupRepositoryId' => 'not-a-uuid', 'path' => 'a.backup.sql']),
+            Context::createDefaultContext()
+        );
+
+        static::assertSame(400, $response->getStatusCode());
+    }
+
     public function testDownloadWithUnknownTokenReturns404(): void
     {
         $token = $this->createMock(RestoreDownloadToken::class);

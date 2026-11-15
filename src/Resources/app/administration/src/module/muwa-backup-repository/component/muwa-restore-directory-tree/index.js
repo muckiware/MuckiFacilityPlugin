@@ -6,7 +6,7 @@ const { Mixin } = Shopware;
 const SNIPPET_PREFIX = 'muwa-backup-repository.restoreDirectory';
 
 /**
- * Read-only tree of the restore directory with token based dump download.
+ * Tree of the restore directory with token based dump download and dump deletion.
  * Usage: <muwa-restore-directory-tree :backup-repository-id="id" />
  */
 export default {
@@ -30,9 +30,12 @@ export default {
             httpClient: null,
             requestDirectory: '/_action/muwa/restore/directory',
             requestDownloadPrepare: '/_action/muwa/restore/download/prepare',
+            requestDelete: '/_action/muwa/restore/delete',
             // relative path => { expanded, loading, loaded, state, directories, files, truncated }
             nodes: {},
             downloadingPath: null,
+            deleteCandidate: null,
+            deletingPath: null,
             loadGeneration: 0,
         };
     },
@@ -209,6 +212,45 @@ export default {
                 });
             } finally {
                 this.downloadingPath = null;
+            }
+        },
+
+        onDelete(file) {
+            this.deleteCandidate = file;
+        },
+
+        onCloseDeleteModal() {
+            this.deleteCandidate = null;
+        },
+
+        async onConfirmDelete() {
+            const file = this.deleteCandidate;
+            if (!file || this.deletingPath) {
+                return;
+            }
+            this.deletingPath = file.path;
+
+            try {
+                await this.httpClient.post(
+                    this.requestDelete,
+                    { backupRepositoryId: this.backupRepositoryId, path: file.path },
+                    { headers: this.getApiHeader() },
+                );
+                this.createNotificationSuccess({
+                    title: this.$tc('global.default.success'),
+                    message: this.$t(`${SNIPPET_PREFIX}.deleteSuccess`, { name: file.name }),
+                });
+                this.refresh();
+            } catch (exception) {
+                this.createNotificationError({
+                    title: this.$tc(`${SNIPPET_PREFIX}.errorTitle`),
+                    message: this.$t(`${SNIPPET_PREFIX}.deleteError`, {
+                        status: this.formatStatus(this.getHttpStatus(exception)),
+                    }),
+                });
+            } finally {
+                this.deletingPath = null;
+                this.deleteCandidate = null;
             }
         },
 

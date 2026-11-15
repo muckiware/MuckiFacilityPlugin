@@ -236,7 +236,11 @@
       "downloadStarted": "Download gestartet",
       "errorTitle": "Fehler",
       "loadError": "Ordner konnte nicht geladen werden (HTTP-Status: {status}).",
-      "downloadError": "Download fehlgeschlagen (HTTP-Status: {status})."
+      "downloadError": "Download fehlgeschlagen (HTTP-Status: {status}).",
+      "deleteAction": "Löschen",
+      "deleteConfirm": "Soll die wiederhergestellte Datei „{name}“ wirklich gelöscht werden?",
+      "deleteSuccess": "„{name}“ wurde gelöscht.",
+      "deleteError": "Löschen fehlgeschlagen (HTTP-Status: {status})."
     },
     "databaseConnection": {
       "tabLabel": "Datenbankverbindungen",

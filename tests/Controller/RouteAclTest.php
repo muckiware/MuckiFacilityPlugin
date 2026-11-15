@@ -77,6 +77,11 @@ class RouteAclTest extends TestCase
                 'downloadPrepare',
                 ['muwa_backup_repository:restore'],
             ],
+            'restore delete' => [
+                RestoreDirectoryController::class,
+                'delete',
+                ['muwa_backup_repository:restore'],
+            ],
             'get snapshots' => [
                 ManageController::class,
                 'getSnapshots',

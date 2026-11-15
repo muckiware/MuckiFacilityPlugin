@@ -78,6 +78,42 @@ class RestoreDirectoryBrowser
     }
 
     /**
+     * Deletes one restored dump file and prunes the directories that became empty by it, up to
+     * (excluding) the restore path itself.
+     *
+     * @throws InvalidBrowsePathException
+     */
+    public function deleteDumpFile(string $backupRepositoryId, string $relativePath): void
+    {
+        $relativePath = $this->validateRelativePath($relativePath);
+        $root = $this->resolveRoot($backupRepositoryId, $state, $rejection);
+        if ($root === null) {
+            throw new InvalidBrowsePathException('Restore path is not available');
+        }
+
+        $file = $this->resolveInside($root, $relativePath);
+        if ($relativePath === '' || is_link($root . '/' . $relativePath) || !is_file($file) || !$this->isDumpFile($file)) {
+            throw new InvalidBrowsePathException('File is not a deletable dump');
+        }
+        if (!unlink($file)) {
+            throw new InvalidBrowsePathException('File could not be deleted');
+        }
+
+        $this->pruneEmptyDirectories($root, dirname($file));
+    }
+
+    protected function pruneEmptyDirectories(string $root, string $directory): void
+    {
+        while (str_starts_with($directory, $root . '/')) {
+            $entries = scandir($directory);
+            if ($entries === false || count($entries) > 2 || !rmdir($directory)) {
+                return;
+            }
+            $directory = dirname($directory);
+        }
+    }
+
+    /**
      * Returns the real restore path, or null and the resulting state when it cannot be browsed.
      *
      * @throws InvalidBrowsePathException

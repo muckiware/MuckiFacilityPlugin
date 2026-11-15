@@ -56,6 +56,15 @@
                 <span class="muwa-restore-directory-tree__meta">
                     {{ formatSize(row.entry.size) }} · {{ formatDate(row.entry.modifiedAt) }}
                 </span>
+                <button
+                    v-if="row.entry.downloadable"
+                    type="button"
+                    class="muwa-restore-directory-tree__delete"
+                    :disabled="!!deletingPath"
+                    @click="onDelete(row.entry)"
+                >
+                    {{ $tc('muwa-backup-repository.restoreDirectory.deleteAction') }}
+                </button>
             </template>
 
             <sw-loader
@@ -71,5 +80,35 @@
             </span>
         </li>
     </ul>
+
+    <sw-modal
+        v-if="deleteCandidate"
+        :title="$t('global.default.warning')"
+        variant="small"
+        @modal-close="onCloseDeleteModal"
+    >
+        <p class="muwa-restore-directory-tree__confirm-delete-text">
+            {{ $t('muwa-backup-repository.restoreDirectory.deleteConfirm', { name: deleteCandidate.name }) }}
+        </p>
+
+        <template #modal-footer>
+            <sw-button
+                size="small"
+                :disabled="!!deletingPath"
+                @click="onCloseDeleteModal"
+            >
+                {{ $t('global.default.cancel') }}
+            </sw-button>
+            <sw-button-process
+                variant="danger"
+                size="small"
+                :is-loading="!!deletingPath"
+                :process-success="false"
+                @click="onConfirmDelete"
+            >
+                {{ $t('global.default.delete') }}
+            </sw-button-process>
+        </template>
+    </sw-modal>
 </div>
 {% endblock %}

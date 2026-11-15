@@ -236,7 +236,11 @@
       "downloadStarted": "Download started",
       "errorTitle": "Error",
       "loadError": "Folder could not be loaded (HTTP status: {status}).",
-      "downloadError": "Download failed (HTTP status: {status})."
+      "downloadError": "Download failed (HTTP status: {status}).",
+      "deleteAction": "Delete",
+      "deleteConfirm": "Do you really want to delete the restored file \"{name}\"?",
+      "deleteSuccess": "\"{name}\" has been deleted.",
+      "deleteError": "Deletion failed (HTTP status: {status})."
     },
     "databaseConnection": {
       "tabLabel": "Database connections",

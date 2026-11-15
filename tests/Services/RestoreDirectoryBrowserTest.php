@@ -297,6 +297,73 @@ class RestoreDirectoryBrowserTest extends TestCase
         $this->browser->resolveDownloadFile(self::ID, 'a.backup.sql');
     }
 
+    public function testDeleteDumpFileRemovesFileAndPrunesEmptyParents(): void
+    {
+        mkdir($this->restore . '/var/www/dbDump', 0777, true);
+        file_put_contents($this->restore . '/var/www/dbDump/a.backup.sql.gz', 'x');
+        file_put_contents($this->restore . '/var/keep.txt', 'x');
+
+        $this->browser->deleteDumpFile(self::ID, 'var/www/dbDump/a.backup.sql.gz');
+
+        static::assertFileDoesNotExist($this->restore . '/var/www/dbDump/a.backup.sql.gz');
+        static::assertDirectoryDoesNotExist($this->restore . '/var/www');
+        static::assertFileExists($this->restore . '/var/keep.txt');
+        static::assertDirectoryExists($this->restore);
+    }
+
+    public function testDeleteDumpFileKeepsRestoreRootWhenEmpty(): void
+    {
+        file_put_contents($this->restore . '/a.backup.sql', 'x');
+
+        $this->browser->deleteDumpFile(self::ID, 'a.backup.sql');
+
+        static::assertDirectoryExists($this->restore);
+        static::assertSame([], $this->browser->listDirectory(self::ID, '')['files']);
+    }
+
+    public function testDeleteDumpFileRejectsNonDumpsDirectoriesAndSymlinks(): void
+    {
+        file_put_contents($this->restore . '/notes.txt', 'x');
+        mkdir($this->restore . '/dir.backup.sql');
+        file_put_contents($this->restore . '/real.backup.sql', 'x');
+        symlink($this->restore . '/real.backup.sql', $this->restore . '/link.backup.sql');
+
+        foreach (['notes.txt', 'dir.backup.sql', 'missing.backup.sql', 'link.backup.sql', ''] as $path) {
+            try {
+                $this->browser->deleteDumpFile(self::ID, $path);
+                static::fail('Expected exception for "' . $path . '"');
+            } catch (InvalidBrowsePathException) {
+                static::assertTrue(true);
+            }
+        }
+        static::assertFileExists($this->restore . '/notes.txt');
+        static::assertFileExists($this->restore . '/real.backup.sql');
+        static::assertTrue(is_link($this->restore . '/link.backup.sql'));
+    }
+
+    public function testDeleteDumpFileRejectsSymlinkOutsideRestorePath(): void
+    {
+        $outside = $this->base . '/outside';
+        mkdir($outside);
+        file_put_contents($outside . '/x.backup.sql', 'secret');
+        symlink($outside, $this->restore . '/out');
+
+        try {
+            $this->browser->deleteDumpFile(self::ID, 'out/x.backup.sql');
+            static::fail('Deleting through an outside symlink must throw');
+        } catch (InvalidBrowsePathException) {
+            static::assertFileExists($outside . '/x.backup.sql');
+        }
+    }
+
+    #[DataProvider('invalidRelativePathProvider')]
+    public function testInvalidRelativePathThrowsOnDelete(string $path): void
+    {
+        $this->expectException(InvalidBrowsePathException::class);
+
+        $this->browser->deleteDumpFile(self::ID, $path);
+    }
+
     public function testUnknownRepositoryThrows(): void
     {
         $this->expectException(InvalidBrowsePathException::class);
