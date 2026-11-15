@@ -24,6 +24,8 @@ use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChe
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
+use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition;
+use MuckiFacilityPlugin\Migration\Migration1794744000;
 
 /**
  * Add dependencies from composer
@@ -62,11 +64,13 @@ class MuckiFacilityPlugin extends Plugin
         $connection = $this->container->get(Connection::class);
 
         foreach ([
+            Migration1794744000::TABLE,
             BackupScheduleDefinition::ENTITY_NAME,
             BackupRepositoryStatsDefinition::ENTITY_NAME,
             BackupRepositorySnapshotsDefinition::ENTITY_NAME,
             BackupRepositoryChecksDefinition::ENTITY_NAME,
             BackupRepositoryDefinition::ENTITY_NAME,
+            DatabaseConnectionDefinition::ENTITY_NAME,
         ] as $tableName) {
             $connection->executeStatement('DROP TABLE IF EXISTS `'.$tableName.'`');
         }

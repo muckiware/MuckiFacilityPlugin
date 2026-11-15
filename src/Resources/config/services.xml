@@ -7,12 +7,28 @@
         </service>
         <service id="MuckiFacilityPlugin\Controller\BackupController" public="true">
             <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="MuckiFacilityPlugin\Controller\DatabaseConnectionController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabaseConnectionRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\DatabaseConnectionResolver"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
         </service>
         <service id="MuckiFacilityPlugin\Controller\InitBackupRepositoryController" public="true">
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabaseConnectionRepository"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="MuckiFacilityPlugin\Controller\TakeoverBackupRepositoryController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryTakeover"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\BackupPathSuggestions"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
@@ -31,8 +47,20 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service id="MuckiFacilityPlugin\Controller\BackupRepositoryHooksController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service id="MuckiFacilityPlugin\Controller\FilesystemController" public="true">
             <argument type="service" id="MuckiFacilityPlugin\Services\DirectoryBrowser"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="MuckiFacilityPlugin\Controller\ResticController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\ResticBinaryInfo"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
@@ -61,11 +89,15 @@
             <tag name="shopware.entity.definition" entity="muwa_backup_repository_stats" />
         </service>
 
+        <service id="MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition">
+            <tag name="shopware.entity.definition" entity="muwa_database_connection" />
+        </service>
+
         <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
-            <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\DatabaseConnectionResolver"/>
         </service>
         <service id="MuckiFacilityPlugin\Database\DatabaseHelper">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
@@ -190,6 +222,28 @@
         <service id="MuckiFacilityPlugin\Services\Content\RepositoryPasswordResolver">
             <argument type="service" id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
         </service>
+        <service id="MuckiFacilityPlugin\Services\Content\DatabasePasswordResolver">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
+            <argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper">
+            <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Subscriber\MysqlDatabaseConnectionSubscriber">
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabasePasswordResolver"/>
+            <argument type="service" id="MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Content\DatabaseConnectionRepository">
+            <argument type="service" id="muwa_database_connection.repository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabasePasswordResolver"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\DatabaseConnectionResolver">
+            <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="muwa_database_connection.repository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+        </service>
         <service id="MuckiFacilityPlugin\Services\Content\BackupRepository" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
@@ -248,6 +302,32 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
             <argument type="service" id="kernel"/>
         </service>
+        <service id="MuckiFacilityPlugin\Services\RestoreDirectoryBrowser" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+        </service>
+        <!-- Not cache.object: that is a request-local ArrayAdapter in the dev environment -->
+        <service id="muwa.restore_download_token.cache" class="Symfony\Component\Cache\Adapter\DoctrineDbalAdapter">
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument/>
+            <argument type="constant">MuckiFacilityPlugin\Services\RestoreDownloadToken::TTL_SECONDS</argument>
+            <argument type="collection">
+                <argument key="db_table" type="constant">MuckiFacilityPlugin\Migration\Migration1794744000::TABLE</argument>
+            </argument>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\RestoreDownloadToken" public="true">
+            <argument type="service" id="muwa.restore_download_token.cache"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Controller\RestoreDirectoryController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\RestoreDirectoryBrowser"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\RestoreDownloadToken"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\ResticBinaryInfo">
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+        </service>
         <service id="MuckiFacilityPlugin\Services\Helper" public="true"/>
         <service id="MuckiFacilityPlugin\Services\CliOutput" />
         <service id="MuckiFacilityPlugin\Services\DbTableCleanup" public="true">
@@ -285,6 +365,33 @@
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
             <tag name="messenger.message_handler"/>
+        </service>
+        <service id="MuckiFacilityPlugin\MessageQueue\Handler\TakeoverRepositoryCheckHandler">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\AdminNotification"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="MuckiFacilityPlugin\Services\RepositoryTakeover" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\DirectoryBrowser"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+        </service>
+
+        <service id="MuckiFacilityPlugin\Services\BackupPathSuggestions" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\ManageRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Helper"/>
         </service>
 
         <service id="MuckiFacilityPlugin\Services\ManageRepository">

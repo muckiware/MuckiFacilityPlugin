@@ -171,6 +171,8 @@ class Settings implements SettingsInterface
                 'Own database dump path must not overlap with the repository or restore path, using default path instead: '.$resolvedDumpPath,
             DumpPathRejection::BLOCKED_PATH =>
                 'Own database dump path must not be a system directory or a sensitive project directory, using default path instead: '.$resolvedDumpPath,
+            DumpPathRejection::OVERLAPS_DUMP_PATH =>
+                'Path must not overlap with the database dump path: '.$resolvedDumpPath,
         };
     }
 
@@ -202,33 +204,75 @@ class Settings implements SettingsInterface
             return null;
         }
 
-        $ownDumpPath = rtrim($ownDumpPath, '/');
-        if($ownDumpPath === '') {
+        $protectedPaths = [];
+        foreach (array_filter([$repositoryPath, $restorePath]) as $protectedPath) {
+            $protectedPaths[rtrim($protectedPath, '/')] = DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH;
+        }
+
+        return $this->getPathRejection($ownDumpPath, $protectedPaths);
+    }
+
+    /**
+     * Returns why a configured restore path would be rejected, or null when it is allowed or empty
+     * (the caller reports a missing restore path itself). Does not log.
+     */
+    public function getRestorePathRejection(
+        string $restorePath,
+        ?string $repositoryPath,
+        ?string $ownDumpPath
+    ): ?DumpPathRejection
+    {
+        $restorePath = trim($restorePath);
+        if($restorePath === '') {
+            return null;
+        }
+
+        $protectedPaths = [];
+        if(trim((string) $repositoryPath) !== '') {
+            $protectedPaths[rtrim((string) $repositoryPath, '/')] = DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH;
+        }
+        if(trim((string) $ownDumpPath) !== '') {
+            $protectedPaths[$this->resolveDumpPathValue((string) $ownDumpPath)] = DumpPathRejection::OVERLAPS_DUMP_PATH;
+        }
+        $protectedPaths[rtrim($this->kernel->getProjectDir(), '/').PluginDefaults::DATABASE_BACKUP_PATH] = DumpPathRejection::OVERLAPS_DUMP_PATH;
+
+        return $this->getPathRejection($restorePath, $protectedPaths);
+    }
+
+    /**
+     * Shared rule set for dump and restore paths.
+     *
+     * @param array<string, DumpPathRejection> $protectedPaths path => reason reported when the checked path overlaps it
+     */
+    protected function getPathRejection(string $path, array $protectedPaths): ?DumpPathRejection
+    {
+        $path = rtrim($path, '/');
+        if($path === '') {
             return DumpPathRejection::ROOT_DIRECTORY;
         }
 
-        if($this->hasRelativePathSegment($ownDumpPath)) {
+        if($this->hasRelativePathSegment($path)) {
             return DumpPathRejection::RELATIVE_SEGMENT;
         }
 
         $projectDir = rtrim($this->kernel->getProjectDir(), '/');
-        $resolvedDumpPath = $this->resolveDumpPathValue($ownDumpPath);
+        $resolvedPath = $this->resolveDumpPathValue($path);
 
-        if(str_starts_with($projectDir.'/', $resolvedDumpPath.'/')) {
+        if(str_starts_with($projectDir.'/', $resolvedPath.'/')) {
             return DumpPathRejection::PROJECT_DIR_OR_PARENT;
         }
 
-        // The dump path and the repository's own storage must not overlap in either direction:
-        // deleting the dump path would otherwise delete the backup repository itself (or the
-        // restore target), and both fields sit on the same admin form, so a copy-paste mistake
-        // is a realistic way to end up here.
-        foreach (array_filter([$repositoryPath, $restorePath]) as $protectedPath) {
-            if($this->pathsOverlap($resolvedDumpPath, rtrim($protectedPath, '/'))) {
-                return DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH;
+        // The path and every protected path must not overlap in either direction: deleting the dump
+        // path would otherwise delete the backup repository itself (or the restore target), and
+        // these fields sit on the same admin form, so a copy-paste mistake is a realistic way to
+        // end up here.
+        foreach ($protectedPaths as $protectedPath => $rejection) {
+            if($this->pathsOverlap($resolvedPath, (string) $protectedPath)) {
+                return $rejection;
             }
         }
 
-        if($this->isBlockedPath($resolvedDumpPath, $projectDir)) {
+        if($this->isBlockedPath($resolvedPath, $projectDir)) {
             return DumpPathRejection::BLOCKED_PATH;
         }
 

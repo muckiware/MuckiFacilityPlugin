@@ -25,9 +25,9 @@ jobs:
       max-parallel: 15
       fail-fast: false
       matrix:
-        php-versions: [ '8.2', '8.4' ]
+        php-versions: [ '8.4', '8.5' ]
         mysql-versions: [ '8.0', '8.4' ]
-        shopware-versions: [ 'v6.6.10.1', 'v6.7.4.0' ]
+        shopware-versions: [ 'v6.6.10.25', 'v6.7.14.1' ]
     services:
       mysql:
         image: mysql:${{ matrix.mysql-versions }}
@@ -43,7 +43,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xdebug, curl, dom, fileinfo, gd, iconv, intl, json, xml, mbstring, pdo, phar, zip, sodium, pdo_mysql
-          tools: composer:2.7.7
+          tools: composer:v2
 
       - name: "Check PHP Version"
         run: php -v
@@ -73,7 +73,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ matrix.operating-system }}-${{ matrix.php-versions }}-${{ matrix.shopware-versions }}-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-${{ matrix.php-versions }}-${{ matrix.shopware-versions }}-${{ hashFiles('composer.json', 'custom/plugins/*/composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.php-versions }}-${{ matrix.shopware-versions }}-
 
       - name: "Install Shopware dependencies"
         # Install Shopware with --no-dev to prevent that dev-tools of the module got in conflict with the tools of shopware
@@ -88,7 +90,7 @@ jobs:
           composer install
 
       - name: "Install code-Tools"
-        run: composer req phpunit/phpunit:^9.5 phpstan/phpstan
+        run: composer req phpunit/phpunit:^11.5 phpstan/phpstan
 
       - name: "Install Shopware"
         run: |

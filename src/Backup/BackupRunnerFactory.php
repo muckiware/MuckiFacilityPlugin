@@ -18,10 +18,11 @@ use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Backup\Database\CompleteFileRunner;
 use MuckiFacilityPlugin\Backup\Database\CompleteFilesRunner;
 use MuckiFacilityPlugin\Backup\Database\DumpArchiver;
+use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 use MuckiFacilityPlugin\Exception\InvalidBackupTypeException;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\SettingsInterface;
-use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
+use MuckiFacilityPlugin\Services\DatabaseConnectionResolver;
 use MuckiFacilityPlugin\Backup\Files\FilesRunner;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
@@ -31,12 +32,15 @@ class BackupRunnerFactory
     public function __construct(
         protected LoggerInterface $logger,
         protected SettingsInterface $settings,
-        protected CoreDatabase $database,
-        protected ServicesCliOutput $servicesCliOutput
+        protected ServicesCliOutput $servicesCliOutput,
+        protected DatabaseConnectionResolver $connectionResolver
     ) {}
 
     /**
+     * The database connection is only resolved for the two database backup types.
+     *
      * @throws InvalidBackupTypeException
+     * @throws DatabaseBackupFailedException
      */
     public function createBackupRunner(BackupRepositorySettings $createBackup): BackupInterface
     {
@@ -47,6 +51,7 @@ class BackupRunnerFactory
                     $this->logger,
                     $this->settings,
                     $createBackup,
+                    $this->connectionResolver->resolveForBackup($createBackup),
                     new DumpArchiver($this->logger)
                 );
                 break;
@@ -56,7 +61,7 @@ class BackupRunnerFactory
                     $this->logger,
                     $this->settings,
                     $createBackup,
-                    $this->database,
+                    $this->connectionResolver->resolveForBackup($createBackup),
                     new DumpArchiver($this->logger)
                 );
                 break;

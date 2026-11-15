@@ -76,6 +76,7 @@
       "column-check-status": "Check Status",
       "column-last-backup-at": "Letzter Backup-Lauf",
       "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
+      "textDeleteRepositoryConfirm": "Sind Sie sicher, dieses Repository löschen zu wollen?",
       "totalFileSizeLabel": "Gesamt Dateigröße",
       "stats": "Repository Status",
       "statsItemLabel": "Name",
@@ -194,12 +195,23 @@
       "emptyTitle": "Keine aktiven Backup Repositories",
       "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an."
     },
+    "resticInfo": {
+      "loading": "restic wird geprüft …",
+      "current": "Verwendetes restic: {path}, Version {version}",
+      "unsupported": "Version {version} ist zu alt, benötigt wird mindestens {minVersion}.",
+      "notFound": "Unter „{path}“ wurde kein ausführbares restic gefunden.",
+      "versionUnreadable": "restic unter {path} gefunden, die Version konnte aber nicht gelesen werden.",
+      "loadError": "Die restic-Informationen konnten nicht geladen werden.",
+      "savedConfigHint": "Bezieht sich auf die gespeicherte Konfiguration."
+    },
     "notification": {
       "backupStarted": "Backup „{name}“ wurde gestartet.",
       "backupSucceeded": "Backup „{name}“ wurde erfolgreich abgeschlossen.",
       "backupFailed": "Backup „{name}“ ist fehlgeschlagen: {error}",
       "restoreSucceeded": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ wurde erfolgreich abgeschlossen.",
-      "restoreFailed": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ ist fehlgeschlagen: {error}"
+      "restoreFailed": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ ist fehlgeschlagen: {error}",
+      "takeoverCheckSucceeded": "Repository „{name}“ übernommen und geprüft: {status}",
+      "takeoverCheckFailed": "Prüfung des übernommenen Repositorys „{name}“ fehlgeschlagen: {error}"
     },
     "schedule": {
       "title": "Automatische Sicherung",
@@ -213,6 +225,106 @@
       "lastError": "Letzter Fehler",
       "save": "Zeitplan speichern",
       "error": "Zeitplan konnte nicht gespeichert werden"
+    },
+    "restoreDirectory": {
+      "rootLoadError": "Das Restore-Verzeichnis konnte nicht geladen werden (HTTP-Status: {status}).",
+      "title": "Wiederhergestellte Datenbank Dateien",
+      "emptyState": "Noch nichts wiederhergestellt. Stelle zuerst einen Snapshot wieder her.",
+      "notConfigured": "Für dieses Repository ist kein Restore Path konfiguriert.",
+      "notAllowed": "Restore Path nicht zulässig – Anzeige gesperrt.",
+      "truncated": "Liste gekürzt (max. 1000 Einträge).",
+      "downloadStarted": "Download gestartet",
+      "errorTitle": "Fehler",
+      "loadError": "Ordner konnte nicht geladen werden (HTTP-Status: {status}).",
+      "downloadError": "Download fehlgeschlagen (HTTP-Status: {status}).",
+      "deleteAction": "Löschen",
+      "deleteConfirm": "Soll die wiederhergestellte Datei „{name}“ wirklich gelöscht werden?",
+      "deleteSuccess": "„{name}“ wurde gelöscht.",
+      "deleteError": "Löschen fehlgeschlagen (HTTP-Status: {status})."
+    },
+    "databaseConnection": {
+      "tabLabel": "Datenbankverbindungen",
+      "createButton": "Verbindung hinzufügen",
+      "cardTitle": "Datenbankverbindung",
+      "passwordCardTitle": "Passwort",
+      "nameLabel": "Name",
+      "typeLabel": "Typ",
+      "hostLabel": "Host",
+      "portLabel": "Port",
+      "databaseNameLabel": "Datenbank",
+      "usernameLabel": "Benutzer",
+      "passwordSourceLabel": "Passwort-Quelle",
+      "passwordSources": {
+        "encrypted": "Verschlüsselt gespeichert",
+        "env": "Umgebungsvariable",
+        "file": "Datei"
+      },
+      "passwordValueLabels": {
+        "encrypted": "Passwort",
+        "env": "Name der Umgebungsvariable",
+        "file": "Pfad zur Passwort-Datei"
+      },
+      "passwordRepeatLabel": "Passwort wiederholen",
+      "passwordKeepPlaceholder": "Leer lassen, um das gespeicherte Passwort zu behalten",
+      "passwordSourceHelpText": "<b>Verschlüsselt gespeichert:</b> das Passwort wird verschlüsselt in der Datenbank abgelegt.<br><b>Umgebungsvariable:</b> Name einer Variable, die mit <code>MUWA_DB_</code> beginnt (z. B. <code>MUWA_DB_BACKUP_PASSWORD</code>).<br><b>Datei:</b> Pfad zu einer Datei innerhalb von <code>&lt;Projektverzeichnis&gt;/var/secrets/</code>.<br>Das Passwort wird nie an die Administration zurückgegeben. Bei Änderung von Host, Port, Typ oder Benutzer muss es neu eingegeben werden.",
+      "passwordMismatch": "Die Passwörter stimmen nicht überein.",
+      "testButton": "Verbindung prüfen",
+      "testSuccessTitle": "Verbindung erfolgreich",
+      "testSuccessMessage": "Die Datenbank ist mit diesen Angaben erreichbar.",
+      "testErrorTitle": "Verbindung fehlgeschlagen",
+      "saveButton": "Speichern",
+      "saveSuccess": "Die Datenbankverbindung wurde gespeichert.",
+      "saveError": "Die Datenbankverbindung konnte nicht gespeichert werden",
+      "deleteSuccess": "Die Datenbankverbindung wurde gelöscht.",
+      "deleteInUse": "Die Verbindung wird noch von diesen Backup-Konfigurationen verwendet und kann nicht gelöscht werden: {names}",
+      "emptyState": "Keine Datenbankverbindungen vorhanden.",
+      "defaultConnection": "Standardverbindung (System)",
+      "selectLabel": "Datenbankverbindung",
+      "selectHelpText": "Datenbank, von der der Dump erstellt wird. Die Standardverbindung ist die Datenbank dieses Shops.",
+      "types": {
+        "mysql": "MySQL / MariaDB"
+      }
+    },
+    "takeover": {
+      "modalTitle": "Repository hinzufügen",
+      "optionNewTitle": "Neues Repository",
+      "optionNewDescription": "Legt ein leeres restic-Repository an.",
+      "optionTakeoverTitle": "Bestehendes Repository übernehmen",
+      "optionTakeoverDescription": "Nimmt ein vorhandenes lokales restic-Repository samt Snapshots in die Verwaltung auf.",
+      "hint": "Das Repository bleibt, wo es ist, und wird nur gelesen. Die Snapshots werden übernommen, die übrige Konfiguration ergänzt du danach. Schalte den bisherigen Batch- oder Cronjob ab, damit nicht zwei Stellen in dasselbe Repository sichern und aufräumen. Künftige Aufbewahrungsregeln (Forget) betreffen auch die übernommenen Snapshots.",
+      "repositoryPathLabel": "Pfad des restic-Repositorys",
+      "passwordLabel": "Repository-Passwort",
+      "restorePathLabel": "Wiederherstellungspfad",
+      "restorePathHelpText": "Zielordner für Wiederherstellungen. Er darf sich nicht mit dem Repository- oder dem Dump-Pfad überschneiden.",
+      "cancel": "Abbrechen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "successTitle": "Repository übernommen",
+      "successMessage": "{count} Snapshots übernommen. Bitte ergänze die Konfiguration.",
+      "errors": {
+        "MUWA_TAKEOVER_INVALID_INPUT": "Pfad oder Passwort ist ungültig.",
+        "MUWA_TAKEOVER_INVALID_RESTORE_PATH": "Der Restore-Pfad ist leer oder nicht zulässig. Er darf sich nicht mit dem Repository- oder Dump-Pfad überschneiden und kein Projekt- oder Systemordner sein.",
+        "MUWA_TAKEOVER_PATH_NOT_FOUND": "Der Pfad existiert nicht oder ist nicht lesbar.",
+        "MUWA_TAKEOVER_NOT_A_REPOSITORY": "Unter diesem Pfad liegt kein restic-Repository.",
+        "MUWA_TAKEOVER_NOT_WRITABLE": "Der Benutzer „{user}“ braucht Schreibrecht auf „{path}“.",
+        "MUWA_TAKEOVER_DUPLICATE": "Dieses Repository wird bereits als „{name}“ verwaltet.",
+        "MUWA_TAKEOVER_PASSWORD_NOT_STORABLE": "Das Passwort kann nicht verschlüsselt gespeichert werden (MUWA_FACILITY_SECRET prüfen).",
+        "MUWA_TAKEOVER_ACCESS_FAILED": "Zugriff auf das Repository fehlgeschlagen: {detail}",
+        "MUWA_TAKEOVER_SAVE_FAILED": "Das Repository konnte nicht gespeichert werden.",
+        "MUWA_TAKEOVER_IMPORT_FAILED": "Die Snapshots konnten nicht übernommen werden. Es wurde nichts gespeichert.",
+        "unknown": "Die Übernahme ist fehlgeschlagen."
+      },
+      "suggestions": {
+        "title": "Pfade aus vorhandenen Snapshots",
+        "adopt": "Übernehmen",
+        "stateDirectory": "vorhanden",
+        "stateFile": "Datei",
+        "stateMissing": "nicht gefunden",
+        "lastSeen": "zuletzt gesichert",
+        "host": "Host",
+        "error": "Die Vorschläge konnten nicht geladen werden.",
+        "truncated": "Es werden nur die ersten 200 Pfade angezeigt."
+      }
     }
   },
   "sw-privileges": {

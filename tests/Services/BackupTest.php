@@ -37,6 +37,8 @@ use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryEntity;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
+use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
+use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
 
 class BackupTest extends TestCase
 {
@@ -141,6 +143,40 @@ class BackupTest extends TestCase
         static::assertSame('php', $prepareCreateBackup->getPostBackupCommandType());
         static::assertSame('cache:clear', $prepareCreateBackup->getPostBackupCommand());
         static::assertTrue($prepareCreateBackup->isPostBackupFailOnError());
+    }
+
+    public function testPrepareCreateBackupCarriesDatabaseConnectionId(): void
+    {
+        $connectionId = Uuid::randomHex();
+        $backupRepositoryId = Uuid::randomHex();
+
+        foreach ([$connectionId, null] as $expected) {
+            $entity = CreateBackup::getBackupRepositoryEntity(BackupTypes::FILES->value, $backupRepositoryId);
+            $entity->setName('Daily backup');
+            $entity->setDatabaseConnectionId($expected);
+            $backupRepository = $this->createMock(BackupRepository::class);
+            $backupRepository->method('getBackupRepositoryById')->willReturn($entity);
+
+            $backupService = new BackupService(
+                $this->createMock(LoggerInterface::class),
+                $this->createMock(BackupRunnerFactory::class),
+                $backupRepository,
+                $this->createMock(BackupRepositoryChecks::class),
+                $this->createMock(PluginSettings::class),
+                $this->createMock(PluginHelper::class),
+                $this->createMock(ManageService::class),
+                $this->createMock(ServicesCliOutput::class),
+                $this->createMock(RepositoryStats::class),
+                $this->createMock(EventDispatcherInterface::class)
+            );
+
+            static::assertSame($expected, $backupService->prepareCreateBackup($backupRepositoryId)->getDatabaseConnectionId());
+        }
+    }
+
+    public function testNewSettingsDefaultToStandardConnection(): void
+    {
+        static::assertNull((new BackupRepositorySettings())->getDatabaseConnectionId());
     }
 
     public function testCreateBackupWithoutFilePathsRunsNoFilesBackup(): void
@@ -275,5 +311,51 @@ class BackupTest extends TestCase
             'stats',
             ['php', 'cache:clear', false],
         ], $sequence);
+    }
+
+    public function testOwnConnectionResolveFailureAbortsBackupRun(): void
+    {
+        $settings = new BackupRepositorySettings();
+        $settings->setBackupRepositoryId(Uuid::randomHex());
+        $settings->setBackupType(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
+        $settings->setBackupPaths([]);
+        $settings->setDbDumpPath('/tmp/muwa-db-dump');
+
+        $runnerTypes = [];
+        $factory = $this->createMock(BackupRunnerFactory::class);
+        $factory->method('createBackupRunner')->willReturnCallback(
+            static function (BackupRepositorySettings $s) use (&$runnerTypes): BackupInterface {
+                $runnerTypes[] = $s->getBackupType();
+                throw new DatabaseBackupFailedException('Database connection "x" not found');
+            }
+        );
+
+        $events = [];
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(AfterBackupCreatedEvent::NAME, static function () use (&$events): void {
+            $events[] = AfterBackupCreatedEvent::NAME;
+        });
+
+        $service = new BackupService(
+            $this->createMock(LoggerInterface::class),
+            $factory,
+            $this->createMock(BackupRepository::class),
+            $this->createMock(BackupRepositoryChecks::class),
+            $this->createMock(PluginSettings::class),
+            $this->createMock(PluginHelper::class),
+            $this->createMock(ManageService::class),
+            $this->createMock(ServicesCliOutput::class),
+            $this->createMock(RepositoryStats::class),
+            $dispatcher
+        );
+
+        try {
+            $service->createBackup($settings, false);
+            static::fail('Expected DatabaseBackupFailedException');
+        } catch (DatabaseBackupFailedException) {
+        }
+
+        static::assertSame([BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value], $runnerTypes, 'No files runner for the dump folder');
+        static::assertSame([], $events, 'No AfterBackupCreatedEvent');
     }
 }

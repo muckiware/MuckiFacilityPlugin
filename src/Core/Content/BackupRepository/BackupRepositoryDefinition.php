@@ -16,6 +16,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\CreatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\FkField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\AllowEmptyString;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\CascadeDelete;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Inherited;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
@@ -26,6 +27,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IntField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\JsonField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\LongTextField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\ManyToOneAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToManyAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToOneAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
@@ -36,6 +38,7 @@ use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChe
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
+use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition;
 
 class BackupRepositoryDefinition extends EntityDefinition
 {
@@ -69,35 +72,47 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new StringField('password_source', 'passwordSource', 16))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
             (new StringField('restore_path', 'restorePath')),
             (new StringField('db_dump_path', 'dbDumpPath')),
-            (new StringField('pre_backup_command_type', 'preBackupCommandType')),
-            (new StringField('pre_backup_command', 'preBackupCommand', 4096)),
-            (new LongTextField('pre_backup_command_arguments', 'preBackupCommandArguments'))->addFlags(new AllowEmptyString()),
-            (new BoolField('pre_backup_fail_on_error', 'preBackupFailOnError')),
-            (new StringField('post_backup_command_type', 'postBackupCommandType')),
-            (new StringField('post_backup_command', 'postBackupCommand', 4096)),
-            (new LongTextField('post_backup_command_arguments', 'postBackupCommandArguments'))->addFlags(new AllowEmptyString()),
-            (new BoolField('post_backup_fail_on_error', 'postBackupFailOnError')),
+            // Pre-/post-backup commands run shell code on the worker. Their fields are
+            // only writable through BackupRepositoryHooksController (system scope,
+            // privilege muwa_backup_repository:execute_commands) — security finding S-02.
+            (new StringField('pre_backup_command_type', 'preBackupCommandType'))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new StringField('pre_backup_command', 'preBackupCommand', 4096))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new LongTextField('pre_backup_command_arguments', 'preBackupCommandArguments'))->addFlags(new AllowEmptyString(), new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new BoolField('pre_backup_fail_on_error', 'preBackupFailOnError'))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new StringField('post_backup_command_type', 'postBackupCommandType'))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new StringField('post_backup_command', 'postBackupCommand', 4096))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new LongTextField('post_backup_command_arguments', 'postBackupCommandArguments'))->addFlags(new AllowEmptyString(), new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new BoolField('post_backup_fail_on_error', 'postBackupFailOnError'))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
             (new JsonField('backup_paths', 'backupPaths', [], [])),
             (new IntField('forget_daily', 'forgetDaily')),
             (new IntField('forget_weekly', 'forgetWeekly')),
             (new IntField('forget_monthly', 'forgetMonthly')),
             (new IntField('forget_yearly', 'forgetYearly')),
+            (new FkField('database_connection_id', 'databaseConnectionId', DatabaseConnectionDefinition::class)),
+
+            (new ManyToOneAssociationField(
+                'databaseConnection',
+                'database_connection_id',
+                DatabaseConnectionDefinition::class,
+                'id',
+                false
+            )),
 
             (new OneToManyAssociationField(
                 'backupRepositoryChecks',
                 BackupRepositoryChecksDefinition::class,
                 'backup_repository_id'
-            )),
+            ))->addFlags(new CascadeDelete()),
             (new OneToManyAssociationField(
                 'backupRepositorySnapshots',
                 BackupRepositorySnapshotsDefinition::class,
                 'backup_repository_id'
-            )),
+            ))->addFlags(new CascadeDelete()),
             (new OneToManyAssociationField(
                 'backupRepositoryStats',
                 BackupRepositoryStatsDefinition::class,
                 'backup_repository_id'
-            )),
+            ))->addFlags(new CascadeDelete()),
 
             new OneToOneAssociationField(
                 'schedule', 'id', 'backup_repository_id', BackupScheduleDefinition::class, false

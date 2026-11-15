@@ -5,13 +5,19 @@ import './page/muwa-backup-repository-create';
 import './page/muwa-backup-repository-detail';
 import './acl';
 import './component/muwa-backup-status-dashboard-widget';
+import './component/muwa-restic-binary-info';
 import './extension/sw-dashboard-index';
 
 import deDE from './snippet/de-DE.json';
 import enGB from './snippet/en-GB.json';
 
 Shopware.Component.register('muwa-backup-repository-entity-path-select', () => import('./component/muwa-backup-repository-entity-path-select'));
+Shopware.Component.register('muwa-restore-directory-tree', () => import('./component/muwa-restore-directory-tree'));
 Shopware.Component.register('muwa-backup-repository-path-field', () => import('./component/muwa-backup-repository-path-field'));
+Shopware.Component.register('muwa-backup-repository-add-modal', () => import('./component/muwa-backup-repository-add-modal'));
+Shopware.Component.register('muwa-database-connection-select', () => import('./component/muwa-database-connection-select'));
+Shopware.Component.register('muwa-database-connection-list', () => import('./page/muwa-database-connection-list'));
+Shopware.Component.register('muwa-database-connection-detail', () => import('./page/muwa-database-connection-detail'));
 
 Shopware.Module.register('muwa-backup-repository', {
 
@@ -54,6 +60,22 @@ Shopware.Module.register('muwa-backup-repository', {
                     };
                 },
             },
+            meta: {
+                parentPath: 'muwa.backup.repository.index',
+                privilege: 'muwa_backup_repository.viewer'
+            }
+        },
+        databaseConnectionCreate: {
+            component: 'muwa-database-connection-detail',
+            path: 'database-connection/create',
+            meta: {
+                parentPath: 'muwa.backup.repository.index',
+                privilege: 'muwa_backup_repository.creator'
+            }
+        },
+        databaseConnectionDetail: {
+            component: 'muwa-database-connection-detail',
+            path: 'database-connection/detail/:id',
             meta: {
                 parentPath: 'muwa.backup.repository.index',
                 privilege: 'muwa_backup_repository.viewer'

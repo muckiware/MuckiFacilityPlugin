@@ -20,12 +20,12 @@ Bug fixt, der auch andere Nutzer des Plugins betrifft, bumpt Version und `CHANGE
 
 | | |
 |---|---|
-| Composer-Paket | `muckiware/facility-plugin`, Version `v0.8.0` |
+| Composer-Paket | `muckiware/facility-plugin`, Version `v0.10.0` |
 | Plugin-Klasse | `MuckiFacilityPlugin\MuckiFacilityPlugin` |
 | Shopware im Projekt | `shopware/core` **v6.7.14.0** (Arbeitsprojekt `sw67`; das Repo liegt ggf. in mehreren Shops) |
 | Von Plugin unterstuetzt | Shopware 6.6.x + 6.7.x, PHP 8.2–8.4, restic >= 0.15 |
 | CI-Matrix | PHP 8.2, MySQL 8.0, Shopware v6.6.9.0 (`.github/workflows/main.yml`) |
-| Runtime-Deps | `muckiware/restic ^1.4`, `spatie/db-dumper ^3.7`, `gabrielelana/byte-units ^0.5` |
+| Runtime-Deps | `muckiware/restic ^1.6`, `spatie/db-dumper ^3.7`, `gabrielelana/byte-units ^0.5` |
 | Git-Stand | Branch `main` (tracked `origin/main`), letzter Commit `8077d42` |
 
 Es gibt **keine** Storefront-Integration (Controller/Templates/JS) — nur API-Routes, Admin-Modul
@@ -93,6 +93,11 @@ ist die einzige Stelle fuer die Dump-Pfad-Regeln: `resolveOwnDumpPath()` (Fallba
 `DirectoryBrowser::checkDumpPath()` (Warnung in der Administration) nutzen sie beide. Regeln nur
 dort aendern, sonst laufen Backup-Verhalten und Admin-Warnung auseinander.
 
+Analog fuer den Restore-Pfad: `Settings::getRestorePathRejection()` (ebenfalls `?Core\DumpPathRejection`)
+ist die einzige Regelquelle. Zusaetzlich zu den Standardregeln liefert sie
+`DumpPathRejection::OVERLAPS_DUMP_PATH`, wenn der Restore-Pfad sich mit dem Dump-Pfad (eigener oder
+Default) ueberschneidet. `RestoreDirectoryBrowser` nutzt sie und prueft den real aufgeloesten Restore-Root erneut.
+
 Das ist kein Schoenheitsthema: der Dump-Ordner wird vor **und** nach jedem DB-Backup per
 `Helper::deleteDirectory()` rekursiv geloescht. Diese Methode folgt keinen Symlinks mehr (weder
 als Top-Level-Pfad noch beim Durchlaufen), gibt `bool` zurueck statt `void`, und beide Aufrufer
@@ -127,6 +132,34 @@ Administration ruft danach explizit `ManageRepository::cleanupRepository()` auf.
 CLI-Befehl — bislang war das kein Problem, weil der automatische Unlock diesen Fall zufaellig mit
 abdeckte.
 
+**Datenbankverbindung (Event-basiert).** `Services\DatabaseConnectionResolver` loest vor jedem DB-Dump
+und jedem Verbindungstest `Events\ResolveDatabaseConnectionEvent` (`mucki_facility.database_connection.resolve`)
+aus und liefert ein `Entity\DatabaseBackupTarget` (`ResolvedDatabaseConnection`, `DatabaseDumperInterface`,
+`isDefault()`, Verbindungsname). `CompleteFileRunner`/`CompleteFilesRunner` bekommen das Target und
+dumpen nur ueber den Dumper; `CompleteFilesRunner` nimmt die Tabellenliste von `$dumper->listTables()`.
+`Core\Database\Database` (`CoreDatabase`) wird nur noch innerhalb von `Backup\Database\MysqlDatabaseDumper`
+fuer die Standardverbindung genutzt. Eingebauter Handler ist `Subscriber\MysqlDatabaseConnectionSubscriber`
+(Prioritaet 0, nur Typ `mysql`, fuellt nur, was noch fehlt); Plugins mit hoeherer Prioritaet duerfen
+Verbindung und/oder Dumper ersetzen. Typ der Standardverbindung kommt aus dem Schema von `DATABASE_URL`
+(unbekanntes Schema = eigener Typ, ohne Subscriber => Fehler; ohne Schema `mysql`).
+
+**Fehlersemantik.** Standardverbindung (`database_connection_id` NULL): exakt wie vor dem Feature, der
+Dump-Fehler wird nur geloggt und das Backup laeuft weiter. Eigene Verbindung: jeder Fehler (Verbindung
+nicht gefunden, Passwort nicht aufloesbar, kein Subscriber/Dumper, Dump fehlgeschlagen) wirft
+`DatabaseBackupFailedException` mit Verbindungsnamen und bricht den ganzen `createBackup()`-Lauf ab; es
+gibt **keinen** Fallback auf `DATABASE_URL` und keinen leeren Dump im restic-Repository.
+
+**DB-Passwort.** `Services\Content\DatabasePasswordResolver`: Quellen `encrypted`/`env`/`file`, kein
+`plain`. `env` nur mit Praefix `MUWA_DB_`, `file` nur unterhalb `<projectDir>/var/secrets/` (`realpath()`,
+relative Pfade gelten relativ zum Projektverzeichnis, nicht zum CWD), Pruefung beim Speichern und
+beim Aufloesen; NUL-Bytes in Referenzen werden abgewiesen. Passwoerter mit Zeilenumbruch werden
+abgewiesen (spatie schreibt sie ungeschuetzt in die mysqldump-Credentials-Datei); dasselbe gilt fuer
+Zeilenumbrueche/NUL in Name, Host, User und Datenbankname (beim Speichern in
+`DatabaseConnectionRepository`, beim Aufloesen nochmals im `MysqlDatabaseConnectionSubscriber`).
+Passwoerter mit `'` funktionieren mit spatie nicht. Aenderung von Host/Port/Typ/User oder der
+Passwortquelle verlangt ein neu eingegebenes Passwort. Loeschen einer genutzten Verbindung scheitert
+an `RestrictDelete` (DAL) bzw. am FK (`RESTRICT`), die Administration zeigt die nutzenden Konfigurationen.
+
 ### Cleanup-Pfad
 `CleanupTables`-Enum → `TableCleanupRunnerFactory` → `CartCleanupRunner` / `LogEntryCleanupRunner`
 (beide erben von `CleanupRunner`, implementieren `TableCleanupInterface`).
@@ -159,13 +192,19 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 
 | Entity / Tabelle | Zweck | Relationen |
 |---|---|---|
-| `muwa_backup_repository` | Repository-Konfiguration (Pfad, Passwort, Hostname, Restore-Pfad, `db_dump_path`, `backup_paths` als JsonField, forget-Policy) | 1:n Checks, 1:n Snapshots |
+| `muwa_backup_repository` | Repository-Konfiguration (Pfad, Passwort, Hostname, Restore-Pfad, `db_dump_path`, `backup_paths` als JsonField, forget-Policy, `database_connection_id` NULL = Standardverbindung) | 1:n Checks, 1:n Snapshots, n:1 Datenbankverbindung (`ON DELETE RESTRICT`) |
 | `muwa_backup_repository_checks` | Ergebnis von `restic check` je Backup-Lauf | n:1 Repository |
 | `muwa_backup_repository_snapshots` | gespiegelte restic-Snapshot-Liste (snapshotId, shortId, paths, hostname, size) | n:1 Repository |
 | `muwa_backup_repository_stats` | Historie der Repository-Statistik je Backup-Lauf (Rohwerte in Bytes/Anzahl) | n:1 Repository |
+| `muwa_database_connection` | Eigene Datenbankverbindung fuer das DB-Backup (`name`, `type`, `host`, `port`, `database_name`, `username`, `password`, `password_source`, `custom_fields`), Migration `Migration1794470400` | 1:n Backup-Repositories |
 
 `repository_password` traegt `removeFlag(ApiAware::class)` — das Passwort darf nie ueber die
-Admin-API rausgehen. Bei Aenderungen an der Definition darauf achten.
+Admin-API rausgehen. Bei Aenderungen an der Definition darauf achten. Gleiches gilt fuer `password` /
+`password_source` von `muwa_database_connection`. Dort sind **alle** Felder (`name`, `type`, `host`,
+`port`, `database_name`, `username`, `password`, `password_source`, `custom_fields`)
+`WriteProtected(SYSTEM_SCOPE)` und werden nur ueber `Services\Content\DatabaseConnectionRepository`
+im System-Scope geschrieben — sonst koennte ein Nutzer mit `update`-Recht die Verbindung per
+generischer Entity-API auf einen fremden Host umbiegen und bekaeme dort das gespeicherte Passwort.
 
 Plain-PHP-Structs (kein DAL) in `src/Entity/`: `BackupRepositorySettings` (das zentrale DTO, wird
 von `CreateBackupMessage` geerbt), `BackupPathEntity`, `ForgetTypes`, `RepositoryInitInputs`,
@@ -185,6 +224,37 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `GET /api/_action/muwa/repository/stats/{id}` | `ManageController::getRepositoryStats` | — (live `restic stats`, von der Administration nicht mehr aufgerufen; siehe Repository-Status-Tab) |
 | `POST /api/_action/muwa/filesystem/directories` | `FilesystemController::listDirectories` | Ordner-Browser (Pfad-Felder), ACL `muwa_backup_repository:update` |
 | `POST /api/_action/muwa/filesystem/check-dump-path` | `FilesystemController::checkDumpPath` | Live-Warnung am Dump-Pfad, ACL `muwa_backup_repository:update` |
+| `POST /api/_action/muwa/restore/directory` | `RestoreDirectoryController::directory` | Snapshot-Tab, Komponente `muwa-restore-directory-tree`, ACL `muwa_backup_repository:restore` |
+| `POST /api/_action/muwa/restore/download/prepare` | `RestoreDirectoryController::downloadPrepare` | wie oben; stellt ein Einmal-Token aus, ACL `muwa_backup_repository:restore` |
+| `POST /api/_action/muwa/restore/delete` | `RestoreDirectoryController::delete` | wie oben, Link "Löschen" je Dump mit Bestaetigungs-Modal; loescht nur Dumps (keine Symlinks) und raeumt leer gewordene Elternordner bis exkl. Restore-Root auf, ACL `muwa_backup_repository:restore` |
+| `GET /api/_action/muwa/restore/download` | `RestoreDirectoryController::download` | Browser-Download, **`auth_required: false`**, abgesichert nur ueber das Token |
+| `POST /api/_action/muwa/database-connection/save` | `DatabaseConnectionController::save` | Datenbankverbindungen-Tab, ACL `muwa_database_connection:update`, Neuanlage zusaetzlich `muwa_database_connection:create` (im Controller geprueft) |
+| `POST /api/_action/muwa/database-connection/test` | `DatabaseConnectionController::testConnection` | Button "Verbindung pruefen", ACL `muwa_database_connection:update`; ungueltige Felder 400 `MUWA_INVALID_DATABASE_CONNECTION`; Passwortprobleme (fehlt, Zeilenumbruch, Ziel geaendert ohne Passwort) und Verbindungsfehler HTTP 200 mit `success=false` |
+| `GET /api/_action/muwa/restic/info` | `ResticController::getInfo` | Plugin-Konfiguration, Komponente `muwa-restic-binary-info`, ACL `system_config:read` |
+| `POST /api/_action/muwa/backup/repository/takeover` | `TakeoverBackupRepositoryController::takeover` | Modal `muwa-backup-repository-add-modal` (Liste, "Repository hinzufuegen"), ACL `muwa_backup_repository:create`; Fehler 400 `{errors:[{code,detail,meta}]}` mit `MUWA_TAKEOVER_*` (u.a. `MUWA_TAKEOVER_INVALID_INPUT` fuer ungueltige Id; `MUWA_TAKEOVER_SAVE_FAILED` bei DB-Fehlern; `MUWA_TAKEOVER_ACCESS_FAILED` traegt die restic-Ausgabe in `meta.detail`); `MUWA_INVALID_ID` kommt nur von path-suggestions |
+| `POST /api/_action/muwa/backup/repository/path-suggestions` | `TakeoverBackupRepositoryController::pathSuggestions` | Detail-Seite, Tab Konfiguration (Pfad-Vorschlaege), ACL `muwa_backup_repository:update` |
+
+Die Rollen fuer `muwa_database_connection:*` (read/update/create/delete) haengen in den bestehenden
+Rollen von `muwa_backup_repository`, es gibt keine eigene Rollengruppe.
+
+`Services\ResticBinaryInfo` liefert Pfad und Version des restic-Binarys fuer die **gespeicherte**
+Konfiguration (eigener Pfad nur bei `useOwnResticPath` + gesetztem Pfad, sonst `restic` aus `PATH`)
+und markiert Versionen unter `MIN_SUPPORTED_VERSION` (0.15.0) — darunter antwortet `restic init`
+nicht mit JSON und die Repository-Initialisierung scheitert mit "JSON Syntax error".
+
+**Token-geschuetzte Public-Route.** Der Browser-Download kann keinen Bearer-Header senden, daher ist
+`GET .../restore/download` oeffentlich (`auth_required: false`). Schutz: `Services\RestoreDownloadToken`
+(60 s TTL, einmalig einloesbar, an Repository-ID + relativen Pfad gebunden), ausgestellt
+durch die ACL-geschuetzte `prepare`-Route. Gespeichert werden die Tokens im Service
+`muwa.restore_download_token.cache` (`DoctrineDbalAdapter`, Tabelle `muwa_restore_download_token` aus
+`Migration1794744000`, bei jedem `issue()` per `prune()` aufgeraeumt). **Nicht** zurueck auf
+`cache.object` stellen: Shopware setzt `cache.app` in `dev` auf `cache.adapter.array`, dort ueberlebt
+der Token den Prepare-Request nicht (404 `MUWA_INVALID_DOWNLOAD_TOKEN`). Die test-Umgebung biegt
+`cache.object` auf Filesystem um und verdeckt das — daher `RestoreDownloadTokenStorageTest`. `RestoreDirectoryBrowser` listet Ordner und alle regulaeren
+Dateien, `downloadable` ist nur fuer Dumps (`.backup.sql`, `.backup.sql.gz`, `.backup.sql.tar.gz`) true;
+`resolveDownloadFile()` lehnt alles andere ab. Symlinks werden uebersprungen, und der Browser liefert die Zustaende
+`ok`/`notConfigured`/`notAllowed`/`empty`. `RouteAclTest` fuehrt diese Route explizit als einzige
+erlaubte Public-Route; weitere Public-Routes duerfen dort nicht ohne Begruendung ergaenzt werden.
 
 Die beiden `filesystem`-Routes antworten bei ungueltiger Eingabe mit 400 `MUWA_INVALID_PATH`.
 `Services\DirectoryBrowser` ist rein lesend und listet nur Ordner: logische Pfade ohne
@@ -222,6 +292,13 @@ und setzt das Passwort erst dann (`setRepositoryPassword()`). Dieses Muster beib
 Die Message erbt **nicht** von `BackupRepositorySettings` — sie traegt nur die
 `backupRepositoryId` — und ist damit von der doppelten `CreateBackupMessage`-Typisierung
 (Auffaelligkeit 1) nicht betroffen.
+
+`TakeoverRepositoryCheckMessage` / `TakeoverRepositoryCheckHandler` werden nach einer Repository-
+Uebernahme (`Services\RepositoryTakeover`) dispatcht: `restic check` (ohne `--read-data`,
+`ManageRepository::checkRepositoryStructure()`), dann Statistik, dann Admin-Benachrichtigung. Der
+Handler wirft nie (Fehler werden als Benachrichtigung gemeldet); auch er hat Handler-Tag in
+`services.xml`. Die Uebernahme liest Snapshots per `ManageRepository::readSnapshots()`
+(`restic snapshots --no-lock`) und ruft kein `init`/`unlock`/`prune`/`forget` auf.
 
 ## Konfiguration
 
@@ -261,6 +338,16 @@ Am Dump-Pfad zeigt es live die Warnung (abgelehnt / nicht beschreibbar). Nur fue
 Backup Paths; Detail-Tab Configuration — Restore Path, Database dump path, Backup Paths. Der
 Repository Path bleibt auf der Detail-Seite gesperrt.
 
+**Uebernahme-Modal.** `component/muwa-backup-repository-add-modal` ersetzt auf der Liste den direkten
+Sprung auf `create`: Auswahl "Neues Repository" (unveraenderte Create-Seite) oder "Bestehendes
+Repository uebernehmen" (Pfad + Passwort + Pflichtfeld Restore-Pfad, geprueft ueber
+`Settings::getRestorePathRejection()`, Fehler `MUWA_TAKEOVER_INVALID_RESTORE_PATH`; Aufruf der `takeover`-Route, Fehlercodes werden ueber
+Snippets `takeover.errors.*` angezeigt, danach Sprung in den Tab Konfiguration). Der Tab Konfiguration
+zeigt ueber `Services\BackupPathSuggestions` die Pfade der vorhandenen Snapshots als Vorschlaege
+(Uebernehmen traegt sie in die Backup-Pfade ein). Snippets mit Platzhaltern immer per
+`$t(key, {...})`. Spalte `muwa_backup_repository_snapshots.paths` ist `LONGTEXT`
+(`Migration1794614400`).
+
 ## Tests & Statische Analyse
 
 ```bash
@@ -272,17 +359,23 @@ composer run-script phpstan          # PHPStan Level 6, nur src/
 ./vendor/bin/phpunit --configuration="custom/plugins/MuckiFacilityPlugin"
 ```
 
-**Achtung:** Der `phpunit.xml`-Pfad (Shopware-Test-Bootstrap) laeuft in `sw67` derzeit **nicht** —
-das Bootstrap scheitert mit `Unknown column 'language.translation_auto_update'`. Fuer echte
-Unit-Tests ohne Shopware-Bootstrap gibt es stattdessen `tests/UnitTestBootstrap.php` +
-`phpunit.unit.xml`:
+**PHPUnit 11** — lokal (`composer.json`) und in der CI (`.github/workflows/main.yml`, Schritt
+"Install code-Tools"). Data-Provider nur als Attribut `#[DataProvider('...')]` mit `static`
+Provider-Methode, keine `@dataProvider`-Annotationen (in 11 deprecated, ab 12 entfernt). Beide
+Versionen beim Anheben immer gemeinsam aendern: Laeuft die CI mit einer aelteren PHPUnit-Version als
+lokal, werden Attribute dort ignoriert und Provider-Tests scheitern mit `ArgumentCountError`.
+
+In `sw67` laufen beide Konfigurationen, Tests nur per `ddev exec` (Host-PHP ist unbrauchbar):
 
 ```bash
+# komplette Suite mit Shopware-Test-Bootstrap (tests/TestBootstrap.php)
+ddev exec "cd custom/static-plugins/MuckiFacilityPlugin && /var/www/html/vendor/bin/phpunit -c phpunit.xml"
+
+# reine Unit-Tests ohne Shopware-Bootstrap (tests/UnitTestBootstrap.php), deutlich schneller
 ddev exec "cd custom/static-plugins/MuckiFacilityPlugin && /var/www/html/vendor/bin/phpunit -c phpunit.unit.xml"
 ```
 
-Das ist der Weg, der in diesem Environment tatsaechlich funktioniert — bis der Bootstrap-Bug
-behoben ist, hier ansetzen statt eine Stunde mit `phpunit.xml` zu verlieren.
+`phpunit.unit.xml` listet die Testdateien einzeln — neue Unit-Tests dort eintragen.
 
 `tests/` mischt echte Unit-Tests (`HelperTest`, `SettingsTest`, `BackupRunnerFactoryTest`) mit
 Integrationstests, die eine laufende Shopware-Instanz und ein reales restic-Binary brauchen
@@ -411,12 +504,17 @@ muckiware/facility-plugin 6.8` laufen lassen — dort fallen die `sw-*`-Wrapper 
   `Database\TableCleanupRunnerFactory` + Runner mit `TableCleanupInterface`.
 - Services **immer** in `src/Resources/config/services.xml` eintragen — es gibt kein Autowiring
   in diesem Plugin.
-- Repository-Passwoerter nie loggen, nie in Messages serialisieren, nie `ApiAware` machen.
+- Repository-Passwoerter nie loggen, nie in Messages serialisieren, nie `ApiAware` machen. Gleiches
+  fuer Datenbank-Passwoerter: nie in Logs, Exception-Meldungen, API-Antworten oder Prozess-Argumenten.
+  Einschraenkungen fuer `env` (`MUWA_DB_`) und `file` (`var/secrets/`) nicht aufweichen.
+- Neuer Datenbanktyp = Subscriber auf `ResolveDatabaseConnectionEvent` + `DatabaseDumperInterface`,
+  nicht die Runner anfassen. Die Table-Cleanup-Runner bleiben auf der Systemverbindung.
 - Cleanup-Code nur gegen eine Wegwerf-Datenbank testen. Der Tabellentausch selbst ist seit dem
   `RENAME TABLE`-Umbau atomar, `removeOldTableItems()` loescht aber weiterhin direkt und ohne
   Rueckfrage aus der Live-Tabelle.
 - restic-Aufrufe laufen ausschliesslich ueber `muckiware/restic` (`Backup`, `Manage`, `Restore`)
   — keine eigenen `Process`/`exec`-Aufrufe hinzufuegen.
-- `bin/console plugin:uninstall MuckiFacilityPlugin` droppt ohne `--keep-user-data` alle vier
-  `muwa_*`-Tabellen (`MuckiFacilityPlugin::dropPluginTables()`), Repository-Passwoerter
-  eingeschlossen. Vor einem Uninstall im Dev-Shop pruefen, ob das Flag gesetzt werden soll.
+- `bin/console plugin:uninstall MuckiFacilityPlugin` droppt ohne `--keep-user-data` alle
+  `muwa_*`-Tabellen (`MuckiFacilityPlugin::dropPluginTables()`), inkl. `muwa_database_connection`
+  (nach `muwa_backup_repository` wegen FK), Repository-Passwoerter eingeschlossen. Vor einem
+  Uninstall im Dev-Shop pruefen, ob das Flag gesetzt werden soll.

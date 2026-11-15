@@ -12,16 +12,13 @@
 namespace MuckiFacilityPlugin\Backup\Database;
 
 use Psr\Log\LoggerInterface;
-use Spatie\DbDumper\Databases\MySql as MySqlDumper;
-use Spatie\DbDumper\Exceptions\CannotStartDump;
-use Spatie\DbDumper\Exceptions\DumpFailed;
-
-use MuckiRestic\Entity\Result\ResultEntity;
 
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Services\SettingsInterface;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
+use MuckiFacilityPlugin\Entity\DatabaseBackupTarget;
+use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 
 class CompleteFileRunner implements BackupInterface
 {
@@ -29,25 +26,32 @@ class CompleteFileRunner implements BackupInterface
         protected LoggerInterface $logger,
         protected SettingsInterface $pluginSettings,
         protected BackupRepositorySettings $createBackup,
+        protected DatabaseBackupTarget $target,
         protected DumpArchiver $dumpArchiver
     ) {}
+    /**
+     * @throws DatabaseBackupFailedException for a configured connection, the default connection only logs
+     */
     public function createBackupData(bool $isJsonOutput=true): void
     {
-        $mysqlDumper = MySqlDumper::create();
-        $mysqlDumper->setDatabaseUrl($this->pluginSettings->getDatabaseUrl());
-        $mysqlDumper->useSingleTransaction();
+        $connection = $this->target->getConnection();
 
         try {
-            $dumpFile = $this->createBackupFileName($mysqlDumper->getDbName());
-            $mysqlDumper->dumpToFile($dumpFile);
+            $dumpFile = $this->createBackupFileName($connection->getDatabaseName());
+            $this->target->getDumper()->dump($connection, $dumpFile);
 
             if($this->pluginSettings->isCompressDbBackupEnabled()) {
                 $this->dumpArchiver->archive($dumpFile);
             }
-        } catch (CannotStartDump $e) {
-            $this->logger->error('Cannot start dump:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-        } catch (DumpFailed $e) {
-            $this->logger->error('Dump failed:'.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        } catch (DatabaseBackupFailedException $e) {
+            if(!$this->target->isDefault()) {
+                throw new DatabaseBackupFailedException(sprintf(
+                    'Database backup for connection "%s" failed: %s',
+                    $this->target->getConnectionName(),
+                    $e->getMessage()
+                ), 0, $e);
+            }
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
     }
 

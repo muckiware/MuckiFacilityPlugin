@@ -34,7 +34,6 @@
       "batchArgumentsLabel": "Arguments",
       "batchArgumentsHelpText": "Arguments are passed separately from the script path. Wrap values containing spaces in single or double quotes.",
       "batchArgumentsPlaceholder": "/var/www/html --mode \"full\"",
-
       "phpCommandLabel": "Shopware CLI command",
       "phpCommandPlaceholder": "e.g. cache:clear",
       "failOnErrorLabel": "Fail backup when command fails"
@@ -77,6 +76,7 @@
       "column-check-status": "Check Status",
       "column-last-backup-at": "Last backup run",
       "textDeleteSnapshotConfirm": "Are you sure you want to delete the snapshot \"{snapshotShortId}\"?",
+      "textDeleteRepositoryConfirm": "Are you sure you want to delete this repository?",
       "totalFileSizeLabel": "Total File Size",
       "stats": "Repository Status",
       "statsItemLabel": "Name",
@@ -195,12 +195,23 @@
       "emptyTitle": "No active backup repositories",
       "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories."
     },
+    "resticInfo": {
+      "loading": "Checking restic …",
+      "current": "restic in use: {path}, version {version}",
+      "unsupported": "Version {version} is too old, at least {minVersion} is required.",
+      "notFound": "No executable restic binary found at “{path}”.",
+      "versionUnreadable": "restic found at {path}, but its version could not be read.",
+      "loadError": "The restic information could not be loaded.",
+      "savedConfigHint": "Based on the saved configuration."
+    },
     "notification": {
       "backupStarted": "Backup “{name}” started.",
       "backupSucceeded": "Backup “{name}” completed successfully.",
       "backupFailed": "Backup “{name}” failed: {error}",
       "restoreSucceeded": "Restore of snapshot “{snapshot}” from “{name}” completed successfully.",
-      "restoreFailed": "Restore of snapshot “{snapshot}” from “{name}” failed: {error}"
+      "restoreFailed": "Restore of snapshot “{snapshot}” from “{name}” failed: {error}",
+      "takeoverCheckSucceeded": "Repository “{name}” taken over and checked: {status}",
+      "takeoverCheckFailed": "Check of taken-over repository “{name}” failed: {error}"
     },
     "schedule": {
       "title": "Automatic backup",
@@ -214,6 +225,106 @@
       "lastError": "Last error",
       "save": "Save schedule",
       "error": "Could not save schedule"
+    },
+    "restoreDirectory": {
+      "rootLoadError": "The restore directory could not be loaded (HTTP status: {status}).",
+      "title": "Restored database files",
+      "emptyState": "Nothing restored yet. Restore a snapshot first.",
+      "notConfigured": "No restore path is configured for this repository.",
+      "notAllowed": "Restore path not allowed – view blocked.",
+      "truncated": "List truncated (max. 1000 entries).",
+      "downloadStarted": "Download started",
+      "errorTitle": "Error",
+      "loadError": "Folder could not be loaded (HTTP status: {status}).",
+      "downloadError": "Download failed (HTTP status: {status}).",
+      "deleteAction": "Delete",
+      "deleteConfirm": "Do you really want to delete the restored file \"{name}\"?",
+      "deleteSuccess": "\"{name}\" has been deleted.",
+      "deleteError": "Deletion failed (HTTP status: {status})."
+    },
+    "databaseConnection": {
+      "tabLabel": "Database connections",
+      "createButton": "Add connection",
+      "cardTitle": "Database connection",
+      "passwordCardTitle": "Password",
+      "nameLabel": "Name",
+      "typeLabel": "Type",
+      "hostLabel": "Host",
+      "portLabel": "Port",
+      "databaseNameLabel": "Database",
+      "usernameLabel": "User",
+      "passwordSourceLabel": "Password source",
+      "passwordSources": {
+        "encrypted": "Stored encrypted",
+        "env": "Environment variable",
+        "file": "File"
+      },
+      "passwordValueLabels": {
+        "encrypted": "Password",
+        "env": "Name of the environment variable",
+        "file": "Path to the password file"
+      },
+      "passwordRepeatLabel": "Repeat password",
+      "passwordKeepPlaceholder": "Leave empty to keep the stored password",
+      "passwordSourceHelpText": "<b>Stored encrypted:</b> the password is stored encrypted in the database.<br><b>Environment variable:</b> name of a variable starting with <code>MUWA_DB_</code> (e.g. <code>MUWA_DB_BACKUP_PASSWORD</code>).<br><b>File:</b> path to a file inside <code>&lt;project dir&gt;/var/secrets/</code>.<br>The password is never returned to the administration. It must be entered again when host, port, type or user change.",
+      "passwordMismatch": "The passwords do not match.",
+      "testButton": "Test connection",
+      "testSuccessTitle": "Connection successful",
+      "testSuccessMessage": "The database can be reached with these settings.",
+      "testErrorTitle": "Connection failed",
+      "saveButton": "Save",
+      "saveSuccess": "The database connection has been saved.",
+      "saveError": "The database connection could not be saved",
+      "deleteSuccess": "The database connection has been deleted.",
+      "deleteInUse": "The connection is still used by these backup configurations and cannot be deleted: {names}",
+      "emptyState": "No database connections available.",
+      "defaultConnection": "Default connection (system)",
+      "selectLabel": "Database connection",
+      "selectHelpText": "Database the dump is created from. The default connection is the database of this shop.",
+      "types": {
+        "mysql": "MySQL / MariaDB"
+      }
+    },
+    "takeover": {
+      "modalTitle": "Add repository",
+      "optionNewTitle": "New repository",
+      "optionNewDescription": "Creates an empty restic repository.",
+      "optionTakeoverTitle": "Take over existing repository",
+      "optionTakeoverDescription": "Adds an existing local restic repository, including its snapshots, to the management.",
+      "hint": "The repository stays where it is and is only read. The snapshots are taken over, you add the remaining configuration afterwards. Disable the previous batch or cron job so that two places do not back up to and clean up the same repository. Future retention rules (forget) also apply to the snapshots taken over.",
+      "repositoryPathLabel": "Path of the restic repository",
+      "passwordLabel": "Repository password",
+      "restorePathLabel": "Restore Path",
+      "restorePathHelpText": "Target folder for restores. It must not overlap with the repository path or the dump path.",
+      "cancel": "Cancel",
+      "back": "Back",
+      "next": "Next",
+      "successTitle": "Repository taken over",
+      "successMessage": "{count} snapshots taken over. Please complete the configuration.",
+      "errors": {
+        "MUWA_TAKEOVER_INVALID_INPUT": "Path or password is invalid.",
+        "MUWA_TAKEOVER_INVALID_RESTORE_PATH": "The restore path is empty or not allowed. It must not overlap with the repository or dump path and must not be a project or system folder.",
+        "MUWA_TAKEOVER_PATH_NOT_FOUND": "The path does not exist or is not readable.",
+        "MUWA_TAKEOVER_NOT_A_REPOSITORY": "There is no restic repository at this path.",
+        "MUWA_TAKEOVER_NOT_WRITABLE": "The user “{user}” needs write permission on “{path}”.",
+        "MUWA_TAKEOVER_DUPLICATE": "This repository is already managed as “{name}”.",
+        "MUWA_TAKEOVER_PASSWORD_NOT_STORABLE": "The password cannot be stored encrypted (check MUWA_FACILITY_SECRET).",
+        "MUWA_TAKEOVER_ACCESS_FAILED": "Access to the repository failed: {detail}",
+        "MUWA_TAKEOVER_SAVE_FAILED": "The repository could not be saved.",
+        "MUWA_TAKEOVER_IMPORT_FAILED": "The snapshots could not be taken over. Nothing was saved.",
+        "unknown": "The takeover failed."
+      },
+      "suggestions": {
+        "title": "Paths from existing snapshots",
+        "adopt": "Adopt",
+        "stateDirectory": "present",
+        "stateFile": "file",
+        "stateMissing": "not found",
+        "lastSeen": "last backed up",
+        "host": "Host",
+        "error": "The suggestions could not be loaded.",
+        "truncated": "Only the first 200 paths are shown."
+      }
     }
   },
   "sw-privileges": {

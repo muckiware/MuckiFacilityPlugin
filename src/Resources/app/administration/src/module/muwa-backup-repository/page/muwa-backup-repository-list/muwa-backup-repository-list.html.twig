@@ -3,13 +3,27 @@
         {% block muwa_backup_repository_list_smart_bar_actions %}
             <template #smart-bar-actions>
                 <sw-button
+                    v-if="tab === 'databaseConnectionList'"
+                    variant="primary"
+                    position-identifier="muwa-database-connection-create-button"
+                    :disabled="!acl.can('muwa_backup_repository.creator')"
+                    :routerLink="{ name: 'muwa.backup.repository.databaseConnectionCreate' }"
+                >
+                    {{ $t('muwa-backup-repository.databaseConnection.createButton') }}
+                </sw-button>
+                <sw-button
+                    v-else
                     variant="primary"
                     position-identifier="muwa-backup-repository-create-button"
                     :disabled="!acl.can('muwa_backup_repository.creator')"
-                    :routerLink="{name: 'muwa.backup.repository.create'}"
+                    @click="showAddModal = true"
                 >
                     {{ $tc('muwa-backup-repository.list.header.createButtonLabel') }}
                 </sw-button>
+                <muwa-backup-repository-add-modal
+                    v-if="showAddModal"
+                    @modal-close="showAddModal = false"
+                />
             </template>
         {% endblock %}
 
@@ -26,9 +40,20 @@
                             >
                                 {{ $tc('muwa-backup-repository.tabs.repositoryList') }}
                             </sw-tabs-item>
+                            <sw-tabs-item
+                                key="databaseConnectionList"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.index', params: { tab: 'databaseConnectionList' } }"
+                            >
+                                {{ $t('muwa-backup-repository.databaseConnection.tabLabel') }}
+                            </sw-tabs-item>
                         </template>
                     </sw-tabs>
                 {% endblock %}
+
+                <muwa-database-connection-list
+                    v-if="tab === 'databaseConnectionList'"
+                />
 
                 <sw-entity-listing
                         v-if="backupRepository && tab === 'repositoryList'"
@@ -112,9 +137,37 @@
                     {% endblock %}
                     {% block muwa_backup_repository_list_grid_columns_actions %}
                         <template #delete-action="{ item }">
-                            <sw-context-menu-item @click="deleteBackupRepository(item)" variant="danger">
+                            <sw-context-menu-item @click="onDelete(item.id)" variant="danger">
                                 {{ $tc('global.default.delete') }}
                             </sw-context-menu-item>
+                        </template>
+                    {% endblock %}
+
+                    {% block muwa_backup_repository_list_delete_modal %}
+                        <template #action-modals="{ item }">
+                            <sw-modal
+                                v-if="showDeleteModal === item.id"
+                                :title="$t('global.default.warning')"
+                                variant="small"
+                                @modal-close="onCloseDeleteModal"
+                            >
+                                {% block muwa_backup_repository_list_delete_modal_confirm_delete_text %}
+                                    <p class="muwa-backup-repository-list__confirm-delete-text">
+                                        {{ $t('muwa-backup-repository.list.textDeleteRepositoryConfirm') }}
+                                    </p>
+                                {% endblock %}
+
+                                {% block muwa_backup_repository_list_delete_modal_footer %}
+                                    <template #modal-footer>
+                                        <sw-button size="small" @click="onCloseDeleteModal">
+                                            {{ $t('global.default.cancel') }}
+                                        </sw-button>
+                                        <sw-button variant="danger" size="small" @click="onConfirmDelete(item)">
+                                            {{ $t('global.default.delete') }}
+                                        </sw-button>
+                                    </template>
+                                {% endblock %}
+                            </sw-modal>
                         </template>
                     {% endblock %}
                 </sw-entity-listing>

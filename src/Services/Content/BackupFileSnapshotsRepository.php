@@ -44,33 +44,70 @@ class BackupFileSnapshotsRepository
     {}
 
     /**
+     * Writes the given restic snapshots. Snapshots without an id are skipped and logged, missing
+     * optional fields (summary, hostname, paths, short_id) never abort the import. A failing DAL
+     * write is not caught.
+     *
      * @param string $backupRepositoryId
      * @param array<mixed> $snapshots
-     * @return void
+     * @return int number of written rows
      */
-    public function createNewSnapshots(string $backupRepositoryId, array $snapshots): void
+    public function createNewSnapshots(string $backupRepositoryId, array $snapshots): int
     {
         $data = array();
         foreach ($snapshots as $snapshot) {
 
-            $data[] = [
-                'id' => Uuid::randomHex(),
-                'backupRepositoryId' => $backupRepositoryId,
-                'snapshotId' => $snapshot['id'],
-                'snapshotShortId' => $snapshot['short_id'],
-                'paths' => implode(',', $snapshot['paths']),
-                'hostname' => $snapshot['hostname'],
-                'size' => \ByteUnits\Binary::bytes($snapshot['summary']['total_bytes_processed'])->asMetric()->format(),
-                'totalFilesProcessed' => (int) $snapshot['summary']['total_files_processed'],
-                'createdAt' => $this->pluginHelper->createDateTimeFromString($snapshot['time'])
-            ];
+            $payload = $this->createSnapshotPayload($backupRepositoryId, (array) $snapshot);
+            if ($payload === null) {
+                $this->logger->warning(
+                    'Snapshot without id skipped during import',
+                    PluginDefaults::DEFAULT_LOGGER_CONFIG
+                );
+                continue;
+            }
+
+            $data[] = $payload;
         }
 
-        if(!empty($data)) {
-
-            $this->logger->debug('saveSnapshots '. print_r($data, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
-            $this->backupFileSnapshotsRepository->create($data, Context::createDefaultContext());
+        if (empty($data)) {
+            return 0;
         }
+
+        $this->logger->debug('saveSnapshots '. print_r($data, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        $this->backupFileSnapshotsRepository->create($data, Context::createDefaultContext());
+
+        return count($data);
+    }
+
+    /**
+     * @param string $backupRepositoryId
+     * @param array<mixed> $snapshot
+     * @return array<string, mixed>|null null when the snapshot has no id
+     */
+    protected function createSnapshotPayload(string $backupRepositoryId, array $snapshot): ?array
+    {
+        $snapshotId = $snapshot['id'] ?? null;
+        if (!is_string($snapshotId) || $snapshotId === '') {
+            return null;
+        }
+
+        $summary = is_array($snapshot['summary'] ?? null) ? $snapshot['summary'] : [];
+        $bytes = $summary['total_bytes_processed'] ?? null;
+        $files = $summary['total_files_processed'] ?? null;
+        $time = $snapshot['time'] ?? null;
+
+        return [
+            'id' => Uuid::randomHex(),
+            'backupRepositoryId' => $backupRepositoryId,
+            'snapshotId' => $snapshotId,
+            'snapshotShortId' => (string) ($snapshot['short_id'] ?? substr($snapshotId, 0, 8)),
+            'paths' => is_array($snapshot['paths'] ?? null) ? implode(',', $snapshot['paths']) : '',
+            // snapshots.hostname is varchar(128): longer values are truncated instead of failing the insert
+            'hostname' => mb_substr((string) ($snapshot['hostname'] ?? ''), 0, 128),
+            'size' => is_numeric($bytes) ? \ByteUnits\Binary::bytes($bytes)->asMetric()->format() : null,
+            'totalFilesProcessed' => is_numeric($files) ? (int) $files : null,
+            'createdAt' => is_string($time) ? $this->pluginHelper->createDateTimeFromString($time) : null
+        ];
     }
 
     /**

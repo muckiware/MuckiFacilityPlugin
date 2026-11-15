@@ -4,17 +4,23 @@ declare(strict_types=1);
 
 namespace MuckiFacilityPlugin\tests\Controller;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Shopware\Core\PlatformRequest;
 use Symfony\Component\Routing\Attribute\Route;
 
 use MuckiFacilityPlugin\Controller\BackupController;
+use MuckiFacilityPlugin\Controller\BackupRepositoryHooksController;
 use MuckiFacilityPlugin\Controller\BatchFileController;
+use MuckiFacilityPlugin\Controller\DatabaseConnectionController;
 use MuckiFacilityPlugin\Controller\FilesystemController;
 use MuckiFacilityPlugin\Controller\InitBackupRepositoryController;
 use MuckiFacilityPlugin\Controller\ManageController;
+use MuckiFacilityPlugin\Controller\ResticController;
+use MuckiFacilityPlugin\Controller\RestoreDirectoryController;
 use MuckiFacilityPlugin\Controller\RestoreSnapshotController;
 use MuckiFacilityPlugin\Controller\ScheduleController;
+use MuckiFacilityPlugin\Controller\TakeoverBackupRepositoryController;
 
 /**
  * Jede API-Route des Plugins muss ein ACL-Recht mitbringen.
@@ -46,9 +52,34 @@ class RouteAclTest extends TestCase
                 'initRepository',
                 ['muwa_backup_repository:create'],
             ],
+            'repository takeover' => [
+                TakeoverBackupRepositoryController::class,
+                'takeover',
+                ['muwa_backup_repository:create'],
+            ],
+            'repository path suggestions' => [
+                TakeoverBackupRepositoryController::class,
+                'pathSuggestions',
+                ['muwa_backup_repository:update'],
+            ],
             'restore process' => [
                 RestoreSnapshotController::class,
                 'process',
+                ['muwa_backup_repository:restore'],
+            ],
+            'restore directory' => [
+                RestoreDirectoryController::class,
+                'directory',
+                ['muwa_backup_repository:restore'],
+            ],
+            'restore download prepare' => [
+                RestoreDirectoryController::class,
+                'downloadPrepare',
+                ['muwa_backup_repository:restore'],
+            ],
+            'restore delete' => [
+                RestoreDirectoryController::class,
+                'delete',
                 ['muwa_backup_repository:restore'],
             ],
             'get snapshots' => [
@@ -69,7 +100,12 @@ class RouteAclTest extends TestCase
             'batch file upload' => [
                 BatchFileController::class,
                 'upload',
-                ['muwa_backup_repository:update'],
+                ['muwa_backup_repository:execute_commands'],
+            ],
+            'backup repository hooks' => [
+                BackupRepositoryHooksController::class,
+                'update',
+                ['muwa_backup_repository:execute_commands'],
             ],
             'filesystem directories' => [
                 FilesystemController::class,
@@ -86,15 +122,57 @@ class RouteAclTest extends TestCase
                 'checkDumpPath',
                 ['muwa_backup_repository:update'],
             ],
+            'database connection save' => [
+                DatabaseConnectionController::class,
+                'save',
+                ['muwa_database_connection:update'],
+            ],
+            'database connection test' => [
+                DatabaseConnectionController::class,
+                'testConnection',
+                ['muwa_database_connection:update'],
+            ],
+            'restic info' => [
+                ResticController::class,
+                'getInfo',
+                ['system_config:read'],
+            ],
+        ];
+    }
+
+    /**
+     * Routes that are deliberately reachable without an authenticated admin session. Each one must
+     * protect itself otherwise (here: a short-lived single-use token) and is listed explicitly.
+     *
+     * @return array<string, array{class-string, string}>
+     */
+    public static function publicTokenRouteProvider(): array
+    {
+        return [
+            'restore download' => [RestoreDirectoryController::class, 'download'],
         ];
     }
 
     /**
      * @param class-string $controllerClass
-     * @param array<int, string> $expectedPrivileges
-     *
-     * @dataProvider routeAclProvider
      */
+    #[DataProvider('publicTokenRouteProvider')]
+    public function testPublicRoutesRequireNoAuthButAreExplicitlyListed(
+        string $controllerClass,
+        string $methodName
+    ): void {
+        $defaults = $this->getRouteDefaults($controllerClass, $methodName);
+
+        self::assertArrayHasKey('auth_required', $defaults);
+        self::assertFalse($defaults['auth_required']);
+        self::assertArrayNotHasKey(PlatformRequest::ATTRIBUTE_ACL, $defaults);
+    }
+
+    /**
+     * @param class-string $controllerClass
+     * @param array<int, string> $expectedPrivileges
+     */
+    #[DataProvider('routeAclProvider')]
     public function testRouteRequiresAclPrivileges(
         string $controllerClass,
         string $methodName,
@@ -117,6 +195,9 @@ class RouteAclTest extends TestCase
     {
         $covered = [];
         foreach (self::routeAclProvider() as $case) {
+            $covered[] = $case[0] . '::' . $case[1];
+        }
+        foreach (self::publicTokenRouteProvider() as $case) {
             $covered[] = $case[0] . '::' . $case[1];
         }
 

@@ -13,8 +13,8 @@ Muckiware Facility Plugin for Shopware 6 Web shops for to maintenance and backup
 - Cleanups tables like cart, if the database table grow up in too large.
 
 ## Requirements
-- Shopware 6.6.x or 6.7.x
-- PHP 8.2.x or greater
+- Shopware 6.6.10.11 or greater or 6.7.6.0 or greater
+- PHP 8.3.x or greater
 - restic 0.15.x or greater
 
 ## Installation
@@ -121,6 +121,48 @@ Finally, click on the __Create new Repository__-button, for to create a new back
 
 like this:<br>
 ![backup-rep-folder.png](img%2Fbackup-rep-folder.png)
+
+## Take over an existing repository
+An existing local restic repository (for example one that was filled by a shell script and a cronjob)
+can be added to the management instead of creating a new empty one.
+
+Settings -> Extensions -> Backup Repositories -> __Add Repository__ opens a dialog with two options:
+__New repository__ leads to the unchanged create page, __Take over existing repository__ asks for
+the path of the restic repository, its password and the restore path (required). The restore path
+follows the same rules as the restore directory (`Settings::getRestorePathRejection()`: no overlap
+with the repository or dump path, no project or system folder); otherwise the takeover is rejected
+with `MUWA_TAKEOVER_INVALID_RESTORE_PATH` (`meta.reason`).
+
+What happens:
+- The repository stays where it is. It is only read (`restic snapshots`); the takeover never calls
+  `init`, `unlock`, `prune` or `forget` and does not start a backup.
+- The snapshots are imported into the snapshot list. The name of the new configuration is the folder
+  name of the repository, the hostname is taken from the most recent snapshot (without snapshots the
+  plugin default is used). The password is stored encrypted like for every other repository and is
+  never part of a log entry or an API response.
+- Afterwards the detail page opens on the tab __Configuration__, where you complete the rest of the
+  configuration. In this tab the backup paths of the existing snapshots are offered as suggestions
+  (__Adopt__ copies them into the backup paths; save to keep them).
+
+Requirements and notes:
+- Only local paths are supported (no `sftp:`, `s3:` or other restic backends).
+- The web server user (the user running the shop and the worker) needs write permission on the
+  repository folder. Otherwise the takeover is rejected with a message in the dialog and no record is
+  created. A repository that is already managed is rejected as well. The duplicate check matches the
+  normalized path and its variant with a trailing slash; a record created via the normal create page
+  is stored as typed, so a differently written path (e.g. with a double slash) may not be detected.
+  The path must not be longer than 255 characters after normalization. If restic cannot read the
+  repository (wrong password, unreadable files, e.g. owned by root), the dialog shows restic's error
+  text. Other storage errors are reported as `MUWA_TAKEOVER_SAVE_FAILED`.
+- Switch off the old cronjob or script. Otherwise two places back up to and clean up the same
+  repository.
+- The forget rules of the configuration also apply to the old snapshots of the repository. Check the
+  retention values before the first backup run.
+- The status tab (check result and repository statistics) is filled after the worker has run the
+  follow-up check, that is started by the takeover (`bin/console messenger:consume async`). You can
+  also fill it manually with `bin/console muckiware:backup:check <backupRepositoryId>` and
+  `bin/console muckiware:repository:stats <backupRepositoryId>`. When the check is finished an
+  administration notification appears.
 
 ## Create Backup
 ### cli
@@ -244,6 +286,98 @@ The archive contains the plain `*.backup.sql` file and can be unpacked with:
 ```shell
 tar -xzvf 2026-11-03_07-44-36_db.backup.sql.tar.gz
 ```
+
+## Database connections
+By default a backup dumps the system database (`DATABASE_URL`). With a database connection a backup
+configuration dumps another database instead, on the same server or on another host.
+
+### Create a connection
+1. Open the backup module in the administration and switch to the tab **Database connections**.
+2. Create a connection: name, type (`MySQL / MariaDB`), host, port (empty = 3306), database name,
+   user, password source and password.
+3. Check it with **Check connection**. The check uses the form values, an empty password field
+   uses the stored password.
+4. Choose the connection in the dropdown of the backup configuration. The first entry,
+   **Default connection (system)**, is the previous behaviour and the only entry as long as no
+   connection exists. Existing configurations stay on the default connection.
+
+The database user needs a password. The password is never sent back to the administration; when
+editing, leave the field empty to keep it.
+
+### Password sources
+| Source      | Content                                                  | Restriction                                           |
+|:------------|:---------------------------------------------------------|:------------------------------------------------------|
+| `encrypted` | the password, stored as ciphertext                       | needs `MUWA_FACILITY_SECRET` (see above)              |
+| `env`       | name of an environment variable                          | the name must start with `MUWA_DB_`                   |
+| `file`      | path of a file containing the password                   | the file must live under `<projectDir>/var/secrets/`; a relative path (`var/secrets/db.pw`) is resolved against the project directory |
+
+`plain` is not available for database connections. The restrictions keep an administration user
+from sending `APP_SECRET` or any server file as "password" to a database host of their choice; they
+are checked when saving and again when the password is resolved.
+
+Passwords with line breaks are rejected, and so are line breaks and NUL bytes in name, host, user
+and database name (checked when saving and again before the dump). Passwords containing a single
+quote (`'`) are not supported: `spatie/db-dumper` writes the password in single quotes and without
+escaping into the mysqldump credentials file, so such a password fails to log in.
+
+If host, port, type or user of a stored connection change, or the password source changes, the
+password has to be entered again. All connection fields can only be written through the
+administration's save route (`POST /api/_action/muwa/database-connection/save`); the generic
+entity API cannot change them. So a stored password is only ever sent to the host, port, type and
+user it was entered for.
+
+### Deleting and errors
+- A connection that is still used by a backup configuration cannot be deleted; the administration
+  lists the configurations that use it.
+- Default connection: behaviour unchanged, a failing dump is logged.
+- Own connection: any error (connection not found, password not resolvable, no handler for the
+  type, failing dump) aborts the whole backup run with a message naming the connection. There is
+  no fallback to the system database and no incomplete dump is pushed to the repository.
+- Table cleanup and `bin/console muckiware:db:dump` always use the system database.
+
+### Support further database types
+Connection data and dumper are resolved through the event `mucki_facility.database_connection.resolve`
+(`ResolveDatabaseConnectionEvent`), dispatched before every dump and every connection check. The event
+carries the type (`getType()`), the stored connection (`getDatabaseConnection()`, `null` = default
+connection) and the backup settings (`getBackupSettings()`, `null` for a connection check). A listener
+sets a `ResolvedDatabaseConnection` and a `DatabaseDumperInterface` (`listTables()`, `dump()`,
+`testConnection()`). The built-in `MysqlDatabaseConnectionSubscriber` (priority 0) handles `mysql` and
+only fills what is still missing, so a listener with a higher priority can replace the connection (for
+example a password from a vault) and/or the dumper. Dumper errors must be thrown as
+`DatabaseBackupFailedException` and must not contain the password.
+
+```php
+// (imports and constructor omitted)
+class PostgresConnectionSubscriber implements EventSubscriberInterface
+{
+    public static function getSubscribedEvents(): array
+    {
+        return [ResolveDatabaseConnectionEvent::NAME => ['onResolve', 10]];
+    }
+
+    public function onResolve(ResolveDatabaseConnectionEvent $event): void
+    {
+        $connection = $event->getDatabaseConnection();
+        if ($event->getType() !== 'postgres' || $connection === null) {
+            return;
+        }
+
+        $event->setResolvedConnection(new ResolvedDatabaseConnection(
+            'postgres', $connection->getHost(), $connection->getPort() ?? 5432,
+            $connection->getDatabaseName(), $connection->getUsername(), $this->vault->read($connection)
+        ));
+        $event->setDumper($this->postgresDumper); // implements DatabaseDumperInterface
+    }
+}
+```
+
+A plugin that also replaces the default connection must handle `getDatabaseConnection() === null`
+(the example above leaves the default connection to the built-in subscriber).
+
+Register the subscriber with the tag `kernel.event_subscriber`. The type is a free string on the
+connection. The administration form offers `mysql` only; a connection of another type, created for
+example by a plugin, keeps its type when edited.
+
 ## Restore
 As long as the shopware instance is running, you can restore the backup data via cli like this:
 ```shell
@@ -256,6 +390,16 @@ Or you can choose the snapshot id from the list of snapshots in the administrati
 - And select in die list of snapshots the snapshot id for to restore the data.
   ![select_snapshot_for_restore.png](img%2Fselect_snapshot_for_restore.png)
 This action will start the restore process of the backup data as a background process.
+
+### Download restored database dumps
+After a restore, the **Snapshots**-tab shows the panel __Restored database files__ with a read-only tree of the
+restore path. Database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.tar.gz`) have a download
+button; other files are only listed.
+- You need the `muwa_backup_repository:restore` privilege.
+- The restore path of the repository must be an allowed path (it must not overlap with the database
+  dump path or point to a system directory); otherwise the panel only shows a generic "restore path not allowed" message.
+- The files must have been restored first, otherwise the panel is empty.
+- Symbolic links are not listed. A download link is valid for 60 seconds and can be used once.
 
 But if the shop instance is not running anymore, you can use the native restic commands for to restore the backup data.
 ```shell

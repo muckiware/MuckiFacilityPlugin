@@ -396,6 +396,7 @@ class Backup
             $createBackup->setPostBackupCommand($backupRepository->getPostBackupCommand());
             $createBackup->setPostBackupCommandArguments($backupRepository->getPostBackupCommandArguments());
             $createBackup->setPostBackupFailOnError($backupRepository->isPostBackupFailOnError());
+            $createBackup->setDatabaseConnectionId($backupRepository->getDatabaseConnectionId());
         }
 
         return $createBackup;

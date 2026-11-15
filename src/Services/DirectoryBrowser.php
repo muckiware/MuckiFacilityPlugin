@@ -135,6 +135,16 @@ class DirectoryBrowser
     }
 
     /**
+     * Validated and lexically normalized repository path (no trailing or double slashes).
+     *
+     * @throws InvalidBrowsePathException
+     */
+    public function normalizeRepositoryPath(string $path): string
+    {
+        return $this->normalize($this->validate($path));
+    }
+
+    /**
      * @throws InvalidBrowsePathException
      */
     protected function validate(?string $path): string

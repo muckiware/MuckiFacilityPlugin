@@ -75,7 +75,65 @@ class BackupCommandExecutor
             throw new \InvalidArgumentException('Backup batch file must use the .sh extension');
         }
 
-        return new Process(array_merge(['/bin/bash', $path], $this->parseArguments($arguments)), $this->kernel->getProjectDir());
+        // Batch hooks run arbitrary shell code. They never inherit the shop secrets of
+        // the worker process (DATABASE_URL, APP_SECRET, MUWA_FACILITY_SECRET, database
+        // passwords via MUWA_DB_*) — a leaked hook script must not be able to read or
+        // forward them (security finding S-02).
+        return new Process(
+            array_merge(['/bin/bash', $path], $this->parseArguments($arguments)),
+            $this->kernel->getProjectDir(),
+            $this->buildBatchEnvironment()
+        );
+    }
+
+    /**
+     * Base environment for batch hook processes, with all shop/plugin secrets
+     * explicitly overwritten with an empty value.
+     *
+     * Merely OMITTING a key is not enough: Symfony Process overlays the given env
+     * array on the environment inherited from the PHP process (getenv() and
+     * $_SERVER), so omitted keys would fall back to the inherited value — verified
+     * in the ddev container with symfony/process 7.4. Only an explicit empty
+     * override wins. Secrets that exist only in $_SERVER (e.g. loaded via Dotenv
+     * without putenv) are covered by the second loop.
+     *
+     * @return array<string, string>
+     */
+    private function buildBatchEnvironment(): array
+    {
+        $environment = [];
+        foreach (getenv() as $key => $value) {
+            $environment[(string) $key] = (string) $value;
+        }
+
+        foreach (array_keys($environment) as $key) {
+            if (self::isSensitiveEnvironmentKey((string) $key)) {
+                $environment[(string) $key] = '';
+            }
+        }
+
+        foreach ($_SERVER as $key => $value) {
+            if (\is_string($key) && self::isSensitiveEnvironmentKey($key)) {
+                $environment[$key] = '';
+            }
+        }
+
+        return $environment;
+    }
+
+    /**
+     * Shopware/Plugin secret carriers: exact names, the MUWA_DB_* password namespace
+     * and generic secret-bearing key names (passwords, secrets, tokens, api keys,
+     * private keys, credentials).
+     */
+    private function isSensitiveEnvironmentKey(string $key): bool
+    {
+        if (preg_match('/(?:PASSWO?RD|SECRET|TOKEN|API_?KEY|PRIVATE_?KEY|CREDENTIALS?)/i', $key) === 1) {
+            return true;
+        }
+
+        return preg_match('/^(DATABASE_URL|MAILER_DSN|ELASTICSEARCH_DSN|REDIS_URL)$/', $key) === 1
+            || str_starts_with($key, 'MUWA_DB_');
     }
 
     /**

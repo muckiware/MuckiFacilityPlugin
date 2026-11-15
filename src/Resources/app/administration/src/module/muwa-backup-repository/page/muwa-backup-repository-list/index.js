@@ -26,7 +26,9 @@ Component.register('muwa-backup-repository-list', {
             backupRepository: null,
             isLoading: true,
             total: 0,
-            limit: 25
+            limit: 25,
+            showAddModal: false,
+            showDeleteModal: false
         };
     },
 
@@ -145,10 +147,18 @@ Component.register('muwa-backup-repository-list', {
             this.total = total;
         },
 
-        deleteBackupRepository(item) {
+        onDelete(id) {
+            this.showDeleteModal = id;
+        },
 
-            let that = this;
-            that.repository.delete(item.id, Shopware.Context.api).then(() => {
+        onCloseDeleteModal() {
+            this.showDeleteModal = false;
+        },
+
+        onConfirmDelete(item) {
+            this.showDeleteModal = false;
+
+            this.repository.delete(item.id, Shopware.Context.api).then(() => {
                 this.getList();
             });
         }

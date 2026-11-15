@@ -2,6 +2,92 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.9.0]
+
+### Added
+- Take over an existing local restic repository: the button **Add Repository** opens a dialog with
+  the choice **New repository** (unchanged create page) or **Take over existing repository**. The
+  takeover reads the repository (`restic snapshots --no-lock`), imports the snapshots, names the
+  configuration after the folder, takes the hostname from the most recent snapshot and opens the tab
+  **Configuration**. The dialog also asks for the restore path (required, checked with
+  `Settings::getRestorePathRejection()`, error code `MUWA_TAKEOVER_INVALID_RESTORE_PATH`). It never calls `init`, `unlock`, `prune`, `forget` or a backup. New route
+  `POST /api/_action/muwa/backup/repository/takeover` (privilege `muwa_backup_repository:create`,
+  error codes `MUWA_TAKEOVER_*`), services `RepositoryTakeover` and `BackupPathSuggestions`.
+- After a takeover a background check runs (`TakeoverRepositoryCheckMessage` /
+  `TakeoverRepositoryCheckHandler`: check, repository statistics, administration notification).
+  The handler never throws.
+- Path suggestions: the tab **Configuration** of a repository lists the paths of the existing
+  snapshots with their state on this server (present, file, not found) and can adopt them into the
+  backup paths. New route `POST /api/_action/muwa/backup/repository/path-suggestions` (privilege
+  `muwa_backup_repository:update`).
+
+### Changed
+- Requires `muckiware/restic ^1.6` (was `^1.4`).
+- The `shopware/core` constraint is widened from `~6.6.10.14 || ~6.7.6.0` to
+  `~6.6.10.14 || ~6.7.6`; the old form only allowed 6.7.6.x.
+- The column `paths` of the snapshot table is `LONGTEXT` now (migration `Migration1794614400`), so
+  snapshots with many paths fit.
+- The snapshot import is tolerant: snapshots with missing or unusual fields no longer abort the
+  import.
+- Snapshot timestamps ending in `Z` with fractional seconds are parsed now (before, such snapshots
+  got the import time).
+- Repository takeover: storage errors are reported as `MUWA_TAKEOVER_SAVE_FAILED`; the error
+  `MUWA_TAKEOVER_ACCESS_FAILED` shows the restic error text (`meta.detail`); hostnames longer than
+  128 characters are truncated (snapshots) or not adopted (repository).
+
+### Fixed
+- Deleting a backup repository failed with `SQLSTATE[23000] ... 1451 Cannot delete or update a
+  parent row` as soon as the repository had checks, snapshots or statistics. The foreign keys of
+  `muwa_backup_repository_checks`, `muwa_backup_repository_snapshots` and
+  `muwa_backup_repository_stats` now use `ON DELETE CASCADE` (migration `Migration1794700800`), and
+  the associations in `BackupRepositoryDefinition` carry the `CascadeDelete` flag, so these rows are
+  deleted together with the repository.
+
+
+### Added
+- Restored database dumps can be browsed and downloaded in the **Snapshots** tab of a backup
+  repository. The new panel "Restored database files" shows the restore path as a read-only tree. Only
+  database dumps (`*.backup.sql`, `*.backup.sql.gz`, `*.backup.sql.tar.gz`) can be downloaded;
+  other files are listed but not downloadable. It requires the `muwa_backup_repository:restore`
+  privilege, the restore path must be an allowed path, and the files must have been restored first.
+- The restore path of a backup repository is checked against the same rules as the dump path (it must
+  not overlap with the database dump path; new rejection `OVERLAPS_DUMP_PATH`, checked by
+  `Settings::getRestorePathRejection()`), but only when browsing and downloading restored files.
+  Saving the configuration and the restore itself are unchanged.
+- Downloads are guarded by a single-use token that is valid for 60 seconds, because the browser
+  download cannot send the administration bearer token. The tokens are stored in the new table
+  `muwa_restore_download_token` (Symfony `DoctrineDbalAdapter`), so they work in every environment
+  and with several app servers; expired tokens are pruned when a new one is issued.
+- Database connections: a backup configuration can dump another database than the system
+  database. Connections (name, type, host, port, database name, user, password) are managed in the
+  new tab **Database connections** of the backup module and are chosen per backup configuration in
+  a dropdown. The first entry is always **Default connection (system)**; without a choice the
+  backup works exactly as before (`DATABASE_URL`). A connection can be checked with the button
+  **Check connection**. New table `muwa_database_connection`, new nullable column
+  `muwa_backup_repository.database_connection_id` (migration `Migration1794470400`, existing
+  configurations stay on the default connection), new API routes
+  `POST /api/_action/muwa/database-connection/save` and `.../test` and the privileges
+  `muwa_database_connection:*` inside the existing backup repository roles.
+- The database password of a connection uses the password sources `encrypted` (needs
+  `MUWA_FACILITY_SECRET`), `env` and `file`. `env` names must start with `MUWA_DB_`, files must be
+  inside `<projectDir>/var/secrets/` (relative paths are resolved against the project directory).
+  Passwords with line breaks are rejected, as are line breaks and NUL bytes in name, host, user and
+  database name. Passwords containing `'` are not supported. The password is never part of an API
+  response, log entry or error message. All connection fields are write protected for the generic
+  entity API; connections are written only through the save route, which asks for the password
+  again when host, port, type, user or password source change.
+- New event `mucki_facility.database_connection.resolve` (`ResolveDatabaseConnectionEvent`) and
+  interface `DatabaseDumperInterface`: other plugins can provide connection data and a dumper for
+  further database types. The built-in `MysqlDatabaseConnectionSubscriber` handles `mysql`.
+
+### Changed
+- The database backup runners (`CompleteFileRunner`, `CompleteFilesRunner`) get connection and
+  dumper from `DatabaseConnectionResolver` instead of building the dump themselves. The table
+  list of `completeDatabaseSeparateFiles` comes from the dumper of the target database. For the
+  default connection errors are still only logged, as before. A failing own connection aborts the
+  whole backup run with a `DatabaseBackupFailedException` naming the connection (no fallback to the
+  system database, no empty dump is pushed to restic).
+
 ### [0.8.2]
 
 ### Fixed

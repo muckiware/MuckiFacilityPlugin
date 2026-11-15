@@ -94,7 +94,13 @@ Component.register('muwa-backup-repository-detail', {
             statsHistoryView: 'table',
             historyFilterFrom: null,
             historyFilterTo: null,
-            historyActivePreset: null
+            historyActivePreset: null,
+            pathSuggestions: [],
+            isLoadingPathSuggestions: false,
+            pathSuggestionsError: null,
+            pathSuggestionsTruncated: false,
+            pathSuggestionsRequested: false,
+            requestPathSuggestions: '/_action/muwa/backup/repository/path-suggestions'
         };
     },
 
@@ -118,6 +124,12 @@ Component.register('muwa-backup-repository-detail', {
 
         this.httpClient = Shopware.Application.getContainer('init').httpClient;
         this.createdComponent();
+    },
+
+    watch: {
+        tab() {
+            this.maybeLoadPathSuggestions();
+        },
     },
 
     computed: {
@@ -482,6 +494,15 @@ Component.register('muwa-backup-repository-detail', {
         dateFilter() {
             return Shopware.Filter.getByName('date');
         },
+
+        openPathSuggestions() {
+            const paths = Array.isArray(this.backupRepository.backupPaths) ? this.backupRepository.backupPaths : [];
+            const existing = paths.map((entry) => entry.backupPath);
+
+            return this.pathSuggestions.filter((suggestion) => {
+                return !suggestion.configured && !existing.includes(suggestion.path);
+            });
+        },
     },
 
     methods: {
@@ -543,6 +564,7 @@ Component.register('muwa-backup-repository-detail', {
 
                 this.backupRepository = entity;
                 if (entity.schedule) { this.schedule = entity.schedule; }
+                this.maybeLoadPathSuggestions();
                 this.isLoading = false;
                 this.isBackupProcessInProgress = false;
                 this.isBackupProcessDisabled = false;
@@ -652,6 +674,7 @@ Component.register('muwa-backup-repository-detail', {
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
             this.fetchBackupRepositoryStats();
+            this.$refs.restoreDirectoryTree?.refresh();
         },
 
         onClickSave() {
@@ -665,8 +688,14 @@ Component.register('muwa-backup-repository-detail', {
             this.isLoading = true;
             this.isSaveSuccessful = false;
 
+            // Pre-/post-backup command fields are WriteProtected on the DAL side: they
+            // never travel through the generic repository save, only through their own
+            // action route (privilege muwa_backup_repository:execute_commands).
+            const hookConfiguration = this.extractHookConfiguration();
+
             this.repository
                 .save(this.backupRepository, Shopware.Context.api, this.criteria)
+                .then(() => this.saveHookConfiguration(hookConfiguration))
                 .then(() => {
 
                     this.getBackupRepository();
@@ -681,6 +710,52 @@ Component.register('muwa-backup-repository-detail', {
                     message: exception
                 });
             });
+        },
+
+        /**
+         * Removes the hook fields from the entity for the generic save and returns
+         * them for the dedicated hooks route. The values are restored on the entity
+         * right away, so the UI keeps showing them.
+         */
+        extractHookConfiguration() {
+            const hookFields = [
+                'preBackupCommandType',
+                'preBackupCommand',
+                'preBackupCommandArguments',
+                'preBackupFailOnError',
+                'postBackupCommandType',
+                'postBackupCommand',
+                'postBackupCommandArguments',
+                'postBackupFailOnError',
+            ];
+            const hookConfiguration = {};
+
+            hookFields.forEach((field) => {
+                hookConfiguration[field] = this.backupRepository[field];
+                delete this.backupRepository[field];
+            });
+
+            // restore for the UI; the server is the source of truth after the reload
+            Object.assign(this.backupRepository, hookConfiguration);
+
+            return hookConfiguration;
+        },
+
+        /**
+         * Persists the hook configuration through its own action route. Without the
+         * privilege nothing is sent — the fields are not part of the generic save
+         * payload either, so a user without the privilege can never change them.
+         */
+        saveHookConfiguration(hookConfiguration) {
+            if (!this.acl.can('muwa_backup_repository:execute_commands')) {
+                return Promise.resolve();
+            }
+
+            return this.httpClient.put(
+                `${this.requestSchedule}/${this.backupRepository.id}/hooks`,
+                hookConfiguration,
+                { headers: this.getApiHeader() },
+            );
         },
 
         onScheduleSave() {
@@ -740,6 +815,59 @@ Component.register('muwa-backup-repository-detail', {
                 id: createId(),
                 isDefault: false,
                 backupPath: '',
+                compress: false,
+                position: 0
+            });
+        },
+
+        maybeLoadPathSuggestions() {
+            if (this.pathSuggestionsRequested || this.tab !== 'backupRepositoryConfig' || !this.backupRepository.id) {
+                return;
+            }
+
+            this.loadPathSuggestions();
+        },
+
+        async loadPathSuggestions() {
+            if (!this.acl.can('muwa_backup_repository.editor')) {
+                return;
+            }
+
+            this.pathSuggestionsRequested = true;
+            this.isLoadingPathSuggestions = true;
+            this.pathSuggestionsError = null;
+
+            try {
+                const response = await this.httpClient.post(
+                    this.requestPathSuggestions,
+                    { id: this.backupRepository.id },
+                    { headers: this.getApiHeader() },
+                );
+                const data = response.data || {};
+
+                this.pathSuggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+                this.pathSuggestionsTruncated = data.truncated === true;
+                this.pathSuggestionsError = data.error || null;
+            } catch (exception) {
+                this.pathSuggestions = [];
+                this.pathSuggestionsTruncated = false;
+                this.pathSuggestionsError = this.$t('muwa-backup-repository.takeover.suggestions.error');
+            } finally {
+                this.isLoadingPathSuggestions = false;
+            }
+        },
+
+        onAdoptPathSuggestion(suggestion) {
+            if (!Array.isArray(this.backupRepository.backupPaths)) {
+                this.backupRepository.backupPaths = [];
+            }
+
+            this.backupRepository.backupPaths.forEach((currentBackupPath) => { currentBackupPath.position += 1; });
+
+            this.backupRepository.backupPaths.unshift({
+                id: createId(),
+                isDefault: false,
+                backupPath: suggestion.path,
                 compress: false,
                 position: 0
             });

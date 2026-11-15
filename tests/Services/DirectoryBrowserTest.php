@@ -12,6 +12,7 @@
 namespace MuckiFacilityPlugin\tests\Services;
 
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\KernelInterface;
 
@@ -44,6 +45,14 @@ class DirectoryBrowserTest extends TestCase
     protected function tearDown(): void
     {
         $this->removeRecursive($this->root);
+    }
+
+    public function testNormalizeRepositoryPath(): void
+    {
+        static::assertSame('/srv/repo', $this->browser->normalizeRepositoryPath('/srv//repo/'));
+
+        $this->expectException(InvalidBrowsePathException::class);
+        $this->browser->normalizeRepositoryPath('../x');
     }
 
     public function testListReturnsSortedSubdirectoriesOnly(): void
@@ -178,9 +187,7 @@ class DirectoryBrowserTest extends TestCase
         static::assertTrue($result['truncated']);
     }
 
-    /**
-     * @dataProvider invalidInputProvider
-     */
+    #[DataProvider('invalidInputProvider')]
     public function testListRejectsInvalidInput(string $path): void
     {
         $this->expectException(InvalidBrowsePathException::class);
@@ -202,9 +209,7 @@ class DirectoryBrowserTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider controlCharacterProvider
-     */
+    #[DataProvider('controlCharacterProvider')]
     public function testCheckDumpPathRejectsControlCharacters(string $dumpPath): void
     {
         $this->expectException(InvalidBrowsePathException::class);

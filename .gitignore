@@ -7,3 +7,4 @@ var/cache/*
 /src/Resources/public/
 /var/
 /.playwright-cli/
+.superpowers/

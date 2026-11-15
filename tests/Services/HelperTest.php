@@ -249,4 +249,19 @@ class HelperTest extends TestCase
 //        $checkBackupTypByInputResult = $helperClass->checkBackupTypByInput('test');
 //        static::assertFalse($checkBackupTypByInputResult, 'Backup type "test" should not valid');
 //    }
+
+    public function testUtcTimestampWithNanosecondsIsParsed(): void
+    {
+        $date = (new Helper())->createDateTimeFromString('2024-03-01T02:00:00.123456789Z');
+
+        self::assertNotNull($date);
+        self::assertSame('2024-03-01 02:00:00 +00:00', $date->format('Y-m-d H:i:s P'));
+    }
+
+    public function testOffsetTimestampWithNanosecondsStillParsed(): void
+    {
+        $date = (new Helper())->createDateTimeFromString('2024-03-01T02:00:00.123456789+01:00');
+
+        self::assertSame('2024-03-01 02:00:00 +01:00', $date?->format('Y-m-d H:i:s P'));
+    }
 }

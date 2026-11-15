@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Field;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\FkField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\LongTextField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\AllowEmptyString;
@@ -110,6 +112,41 @@ class BackupRepositoryDefinitionTest extends TestCase
 
             self::assertSame(4096, $reflectionProperty->getValue($field));
         }
+    }
+
+    /**
+     * S-02: pre-/post-backup commands run shell code on the worker. Their fields must
+     * never be writable through the generic DAL route — only through the hooks action
+     * route with the privilege muwa_backup_repository:execute_commands.
+     */
+    public function testBackupCommandFieldsAreWriteProtectedToSystemScope(): void
+    {
+        $commandFields = [
+            'preBackupCommandType',
+            'preBackupCommand',
+            'preBackupCommandArguments',
+            'preBackupFailOnError',
+            'postBackupCommandType',
+            'postBackupCommand',
+            'postBackupCommandArguments',
+            'postBackupFailOnError',
+        ];
+
+        foreach ($commandFields as $propertyName) {
+            $writeProtected = $this->getField($propertyName)->getFlag(WriteProtected::class);
+
+            self::assertInstanceOf(WriteProtected::class, $writeProtected, $propertyName);
+            self::assertTrue($writeProtected->isAllowed(Context::SYSTEM_SCOPE), $propertyName);
+            self::assertFalse($writeProtected->isAllowed(Context::CRUD_API_SCOPE), $propertyName);
+        }
+    }
+
+    public function testDatabaseConnectionIdIsOptionalForeignKey(): void
+    {
+        $field = $this->getField('databaseConnectionId');
+
+        self::assertInstanceOf(FkField::class, $field);
+        self::assertFalse($field->is(Required::class), 'NULL means the standard connection');
     }
 
     /**

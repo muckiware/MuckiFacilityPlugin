@@ -1,0 +1,164 @@
+{% block muwa_database_connection_detail %}
+    <sw-page class="muwa-database-connection-detail">
+        {% block muwa_database_connection_detail_smart_bar_actions %}
+            <template #smart-bar-actions>
+                <sw-button :router-link="{ name: 'muwa.backup.repository.index', params: { tab: 'databaseConnectionList' } }">
+                    {{ $t('muwa-backup-repository.list.header.cancelButtonLabel') }}
+                </sw-button>
+
+                <sw-button
+                    :is-loading="isTesting"
+                    :disabled="!acl.can('muwa_backup_repository.editor') || isLoading"
+                    @click="onClickTestConnection"
+                >
+                    {{ $t('muwa-backup-repository.databaseConnection.testButton') }}
+                </sw-button>
+
+                <sw-button-process
+                    variant="primary"
+                    :is-loading="isLoading"
+                    :process-success="processSuccess"
+                    :disabled="!canEdit"
+                    @process-finish="saveFinish"
+                    @click="onClickSave"
+                >
+                    {{ $t('muwa-backup-repository.databaseConnection.saveButton') }}
+                </sw-button-process>
+            </template>
+        {% endblock %}
+
+        <template #content>
+            {% block muwa_database_connection_detail_content %}
+                <sw-card-view>
+                    <sw-card
+                        position-identifier="muwaDatabaseConnection"
+                        :title="$t('muwa-backup-repository.databaseConnection.cardTitle')"
+                        :is-loading="isLoading"
+                    >
+                        <sw-text-field
+                            v-model:value="connection.name"
+                            :label="$t('muwa-backup-repository.databaseConnection.nameLabel')"
+                            :disabled="!canEdit"
+                            maxlength="255"
+                            required
+                        />
+
+                        {# From 6.7 on sw-select-field renders mt-select, which binds via modelValue. #}
+                        <sw-select-field
+                            v-if="isV6700"
+                            v-model="connection.type"
+                            :options="typeOptions"
+                            :disabled="!canEdit"
+                            :label="$t('muwa-backup-repository.databaseConnection.typeLabel')"
+                            required
+                        />
+                        <sw-select-field
+                            v-if="isV6600 && !isV6700"
+                            v-model:value="connection.type"
+                            :options="typeOptions"
+                            :disabled="!canEdit"
+                            :label="$t('muwa-backup-repository.databaseConnection.typeLabel')"
+                            required
+                        />
+
+                        <sw-container columns="3fr 1fr" gap="0px 30px">
+                            <sw-text-field
+                                v-model:value="connection.host"
+                                :label="$t('muwa-backup-repository.databaseConnection.hostLabel')"
+                                :disabled="!canEdit"
+                                maxlength="255"
+                                required
+                            />
+                            <sw-number-field
+                                v-model:value="connection.port"
+                                number-type="int"
+                                :min="1"
+                                :max="65535"
+                                :label="$t('muwa-backup-repository.databaseConnection.portLabel')"
+                                :disabled="!canEdit"
+                            />
+                        </sw-container>
+
+                        <sw-container columns="1fr 1fr" gap="0px 30px">
+                            <sw-text-field
+                                v-model:value="connection.databaseName"
+                                :label="$t('muwa-backup-repository.databaseConnection.databaseNameLabel')"
+                                :disabled="!canEdit"
+                                maxlength="255"
+                                required
+                            />
+                            <sw-text-field
+                                v-model:value="connection.username"
+                                :label="$t('muwa-backup-repository.databaseConnection.usernameLabel')"
+                                :disabled="!canEdit"
+                                maxlength="255"
+                                required
+                            />
+                        </sw-container>
+                    </sw-card>
+
+                    <sw-card
+                        position-identifier="muwaDatabaseConnectionPassword"
+                        :title="$t('muwa-backup-repository.databaseConnection.passwordCardTitle')"
+                        :is-loading="isLoading"
+                    >
+                        <sw-select-field
+                            v-if="isV6700"
+                            v-model="connection.passwordSource"
+                            :options="passwordSourceOptions"
+                            :disabled="!canEdit"
+                            :label="$t('muwa-backup-repository.databaseConnection.passwordSourceLabel')"
+                            required
+                        />
+                        <sw-select-field
+                            v-if="isV6600 && !isV6700"
+                            v-model:value="connection.passwordSource"
+                            :options="passwordSourceOptions"
+                            :disabled="!canEdit"
+                            :label="$t('muwa-backup-repository.databaseConnection.passwordSourceLabel')"
+                            required
+                        />
+
+                        <sw-container
+                            v-if="isEncryptedSource"
+                            columns="1fr 1fr"
+                            gap="0px 30px"
+                        >
+                            <sw-password-field
+                                v-model:value="password"
+                                :label="passwordLabel"
+                                :placeholder="passwordPlaceholder"
+                                :disabled="!canEdit"
+                                autocomplete="new-password"
+                                :required="isNew"
+                            />
+                            <sw-password-field
+                                v-model:value="passwordRepeat"
+                                :label="$t('muwa-backup-repository.databaseConnection.passwordRepeatLabel')"
+                                :placeholder="passwordPlaceholder"
+                                :disabled="!canEdit"
+                                autocomplete="new-password"
+                                :required="isNew"
+                            />
+                        </sw-container>
+                        <sw-text-field
+                            v-else
+                            v-model:value="password"
+                            :label="passwordLabel"
+                            :placeholder="passwordPlaceholder"
+                            :disabled="!canEdit"
+                            :required="isNew"
+                        />
+
+                        {% block muwa_database_connection_detail_password_description %}
+                            <div
+                                class="muwa-database-connection-detail-password__description"
+                                v-html="$t('muwa-backup-repository.databaseConnection.passwordSourceHelpText')"
+                            ></div>
+                        {% endblock %}
+                    </sw-card>
+                </sw-card-view>
+            {% endblock %}
+        </template>
+    </sw-page>
+{% endblock %}
