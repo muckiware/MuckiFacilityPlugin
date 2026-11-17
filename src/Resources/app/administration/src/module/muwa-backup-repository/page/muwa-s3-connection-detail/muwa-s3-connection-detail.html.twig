@@ -1,0 +1,157 @@
+{% block muwa_s3_connection_detail %}
+    <sw-page class="muwa-s3-connection-detail">
+        {% block muwa_s3_connection_detail_smart_bar_actions %}
+            <template #smart-bar-actions>
+                <sw-button :router-link="{ name: 'muwa.backup.repository.index', params: { tab: 's3ConnectionList' } }">
+                    {{ $t('muwa-backup-repository.list.header.cancelButtonLabel') }}
+                </sw-button>
+
+                <sw-button
+                    :is-loading="isTesting"
+                    :disabled="!acl.can('muwa_backup_repository.editor') || isLoading"
+                    @click="onClickTestConnection"
+                >
+                    {{ $t('muwa-backup-repository.s3Connection.testButton') }}
+                </sw-button>
+
+                <sw-button-process
+                    variant="primary"
+                    :is-loading="isLoading"
+                    :process-success="processSuccess"
+                    :disabled="!canEdit"
+                    @process-finish="saveFinish"
+                    @click="onClickSave"
+                >
+                    {{ $t('muwa-backup-repository.s3Connection.saveButton') }}
+                </sw-button-process>
+            </template>
+        {% endblock %}
+
+        <template #content>
+            {% block muwa_s3_connection_detail_content %}
+                <sw-card-view>
+                    <sw-card
+                        position-identifier="muwaS3Connection"
+                        :title="$t('muwa-backup-repository.s3Connection.cardTitle')"
+                        :is-loading="isLoading"
+                    >
+                        <sw-text-field
+                            v-model:value="connection.name"
+                            :label="$t('muwa-backup-repository.s3Connection.nameLabel')"
+                            :disabled="!canEdit"
+                            maxlength="255"
+                            required
+                        />
+
+                        {# From 6.7 on sw-select-field renders mt-select, which binds via modelValue. #}
+                        <sw-select-field
+                            v-if="isV6700"
+                            v-model="connection.provider"
+                            :options="providerOptions"
+                            :disabled="!canEdit"
+                            :label="$t('muwa-backup-repository.s3Connection.providerLabel')"
+                            required
+                        />
+                        <sw-select-field
+                            v-if="isV6600 && !isV6700"
+                            v-model:value="connection.provider"
+                            :options="providerOptions"
+                            :disabled="!canEdit"
+                            :label="$t('muwa-backup-repository.s3Connection.providerLabel')"
+                            required
+                        />
+
+                        <sw-text-field
+                            v-model:value="connection.endpoint"
+                            :label="$t('muwa-backup-repository.s3Connection.endpointLabel')"
+                            :placeholder="$t('muwa-backup-repository.s3Connection.endpointPlaceholder')"
+                            :help-text="$t('muwa-backup-repository.s3Connection.endpointHint')"
+                            :disabled="!canEdit"
+                            maxlength="512"
+                            :required="isEndpointRequired"
+                        />
+
+                        <sw-container columns="1fr 1fr" gap="0px 30px">
+                            <sw-text-field
+                                v-model:value="connection.region"
+                                :label="$t('muwa-backup-repository.s3Connection.regionLabel')"
+                                :help-text="$t('muwa-backup-repository.s3Connection.regionHint')"
+                                :disabled="!canEdit"
+                                maxlength="64"
+                                :required="isRegionRequired"
+                            />
+                            <sw-text-field
+                                v-model:value="connection.accessKeyId"
+                                :label="$t('muwa-backup-repository.s3Connection.accessKeyIdLabel')"
+                                :disabled="!canEdit"
+                                maxlength="255"
+                                required
+                            />
+                        </sw-container>
+                    </sw-card>
+
+                    <sw-card
+                        position-identifier="muwaS3ConnectionSecret"
+                        :title="$t('muwa-backup-repository.s3Connection.secretCardTitle')"
+                        :is-loading="isLoading"
+                    >
+                        <sw-select-field
+                            v-if="isV6700"
+                            v-model="connection.secretSource"
+                            :options="secretSourceOptions"
+                            :disabled="!canEdit"
+                            :label="$t('muwa-backup-repository.s3Connection.secretSourceLabel')"
+                            required
+                        />
+                        <sw-select-field
+                            v-if="isV6600 && !isV6700"
+                            v-model:value="connection.secretSource"
+                            :options="secretSourceOptions"
+                            :disabled="!canEdit"
+                            :label="$t('muwa-backup-repository.s3Connection.secretSourceLabel')"
+                            required
+                        />
+
+                        <sw-password-field
+                            v-if="isEncryptedSource"
+                            v-model:value="secretAccessKey"
+                            :label="secretLabel"
+                            :placeholder="secretPlaceholder"
+                            :disabled="!canEdit"
+                            autocomplete="new-password"
+                            :required="isNew"
+                        />
+                        <sw-text-field
+                            v-else
+                            v-model:value="secretAccessKey"
+                            :label="secretLabel"
+                            :placeholder="secretPlaceholder"
+                            :disabled="!canEdit"
+                            :required="isNew"
+                        />
+
+                        {% block muwa_s3_connection_detail_secret_description %}
+                            <div
+                                class="muwa-s3-connection-detail-secret__description"
+                                v-html="$t('muwa-backup-repository.s3Connection.secretSourceHelpText')"
+                            ></div>
+                        {% endblock %}
+                    </sw-card>
+
+                    <sw-card
+                        position-identifier="muwaS3ConnectionTest"
+                        :title="$t('muwa-backup-repository.s3Connection.testButton')"
+                    >
+                        <sw-text-field
+                            v-model:value="testBucket"
+                            :label="$t('muwa-backup-repository.s3Connection.testBucketLabel')"
+                            :help-text="$t('muwa-backup-repository.s3Connection.testBucketHelpText')"
+                            :disabled="!acl.can('muwa_backup_repository.editor')"
+                            maxlength="255"
+                        />
+                    </sw-card>
+                </sw-card-view>
+            {% endblock %}
+        </template>
+    </sw-page>
+{% endblock %}

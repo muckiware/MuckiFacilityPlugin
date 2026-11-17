@@ -34,10 +34,14 @@ class BackupRepositoryChecks
     )
     {}
 
-    public function saveNewCheck(string $backupRepositoryId, string $checkStatus): void
+    /**
+     * @return string id of the written check entry
+     */
+    public function saveNewCheck(string $backupRepositoryId, string $checkStatus): string
     {
+        $id = Uuid::randomHex();
         $data = [
-            'id' => Uuid::randomHex(),
+            'id' => $id,
             'backupRepositoryId' => $backupRepositoryId,
             'checkStatus' => substr($checkStatus, 0, 254),
             'created_at' => new \DateTime()
@@ -45,6 +49,21 @@ class BackupRepositoryChecks
 
         $this->logger->debug('saveNewCheck '. print_r($data, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         $this->backupRepositoryChecks->create([$data], Context::createDefaultContext());
+
+        return $id;
+    }
+
+    public function getById(string $checkId): ?BackupRepositoryChecksEntity
+    {
+        if (!Uuid::isValid($checkId)) {
+            return null;
+        }
+
+        $check = $this->backupRepositoryChecks
+            ->search(new Criteria([$checkId]), Context::createDefaultContext())
+            ->get($checkId);
+
+        return $check instanceof BackupRepositoryChecksEntity ? $check : null;
     }
 
     public function getLatestChecksByRepositoryId(string $backupRepositoryId): ?BackupRepositoryChecksEntity

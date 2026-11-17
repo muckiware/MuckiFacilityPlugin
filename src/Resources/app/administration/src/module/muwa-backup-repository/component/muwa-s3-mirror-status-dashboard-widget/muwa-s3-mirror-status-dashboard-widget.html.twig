@@ -1,0 +1,69 @@
+{% block muwa_s3_mirror_status_dashboard_widget %}
+<sw-card
+    v-if="isVisible"
+    class="muwa-s3-mirror-status-dashboard-widget"
+    positionIdentifier="muwaS3MirrorStatusDashboardWidget"
+    :title="$t('muwa-backup-repository.s3Dashboard.title')"
+    :isLoading="isLoading"
+>
+    {% block muwa_s3_mirror_status_dashboard_widget_grid %}
+        <template v-if="statusItems.length" #grid>
+            <sw-data-grid
+                :showSelection="false"
+                :showActions="false"
+                :showSettings="false"
+                :dataSource="statusItems"
+                :columns="statusColumns"
+                :plain-appearance="true"
+            >
+                <template #column-name="{ item }">
+                    <router-link :to="{ name: 'muwa.backup.repository.detail', params: { id: item.id, tab: 'backupRepositoryStats' } }">
+                        {{ item.name }}
+                    </router-link>
+                </template>
+                <template #column-target="{ item }">
+                    <span class="muwa-s3-mirror-status-dashboard-widget__target" :title="item.connectionName || ''">
+                        {{ targetLabel(item) }}
+                    </span>
+                    <span v-if="item.connectionName" class="muwa-s3-mirror-status-dashboard-widget__connection">
+                        {{ item.connectionName }}
+                    </span>
+                </template>
+                <template #column-status="{ item }">
+                    <sw-label
+                        :variant="statusVariant(item)"
+                        appearance="pill"
+                        :title="statusTitle(item)"
+                    >
+                        {{ statusLabel(item) }}
+                    </sw-label>
+                </template>
+                <template #column-runAt="{ item }">
+                    {{ formatDateTime(item.runAt) }}
+                </template>
+                <template #column-lastSucceededAt="{ item }">
+                    {{ formatDateTime(item.lastSucceededAt) }}
+                </template>
+                <template #column-filesUploaded="{ item }">
+                    {{ formatCount(item.filesUploaded) }}
+                </template>
+                <template #column-filesDeleted="{ item }">
+                    {{ formatCount(item.filesDeleted) }}
+                </template>
+                <template #column-bytesUploaded="{ item }">
+                    {{ formatBytes(item.bytesUploaded) }}
+                </template>
+            </sw-data-grid>
+        </template>
+    {% endblock %}
+
+    {% block muwa_s3_mirror_status_dashboard_widget_empty_state %}
+        <sw-empty-state
+            v-if="!statusItems.length && !isLoading"
+            :absolute="false"
+            :title="$t('muwa-backup-repository.s3Dashboard.emptyTitle')"
+            :subline="$t('muwa-backup-repository.s3Dashboard.emptySubline')"
+        />
+    {% endblock %}
+</sw-card>
+{% endblock %}

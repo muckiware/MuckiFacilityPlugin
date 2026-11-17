@@ -16,6 +16,20 @@ div.muwa-backup-repository-detail-backup-paths__description {
   margin-top: 30px;
 }
 
+// A card with a #grid slot drops its content padding (mt-card--grid / sw-card--grid),
+// so text above the grid needs its own inset to line up with the card title.
+.muwa-backup-repository-mirror__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--scale-size-24, 24px);
+  border-bottom: 1px solid var(--color-border-secondary-default, #e0e6eb);
+
+  p {
+    margin: 0;
+  }
+}
+
 .muwa-backup-schedule__cron-description {
   box-sizing: border-box;
   margin: 0 0 20px;

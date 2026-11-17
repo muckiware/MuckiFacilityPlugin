@@ -12,6 +12,15 @@
                     {{ $t('muwa-backup-repository.databaseConnection.createButton') }}
                 </sw-button>
                 <sw-button
+                    v-else-if="tab === 's3ConnectionList'"
+                    variant="primary"
+                    position-identifier="muwa-s3-connection-create-button"
+                    :disabled="!acl.can('muwa_backup_repository.creator')"
+                    :routerLink="{ name: 'muwa.backup.repository.s3ConnectionCreate' }"
+                >
+                    {{ $t('muwa-backup-repository.s3Connection.createButton') }}
+                </sw-button>
+                <sw-button
                     v-else
                     variant="primary"
                     position-identifier="muwa-backup-repository-create-button"
@@ -47,12 +56,23 @@
                             >
                                 {{ $t('muwa-backup-repository.databaseConnection.tabLabel') }}
                             </sw-tabs-item>
+                            <sw-tabs-item
+                                key="s3ConnectionList"
+                                :active-tab="active"
+                                :route="{ name: 'muwa.backup.repository.index', params: { tab: 's3ConnectionList' } }"
+                            >
+                                {{ $t('muwa-backup-repository.s3Connection.tabLabel') }}
+                            </sw-tabs-item>
                         </template>
                     </sw-tabs>
                 {% endblock %}
 
                 <muwa-database-connection-list
                     v-if="tab === 'databaseConnectionList'"
+                />
+
+                <muwa-s3-connection-list
+                    v-if="tab === 's3ConnectionList'"
                 />
 
                 <sw-entity-listing

@@ -50,6 +50,7 @@ Plugin configuration under:<br>Settings -> Extensions -> My extensions -> MuckiF
 | Global backup settings -> Use own restic path           | Turn on/off own restic                                                                                          |
 | Global backup settings -> Own path to binary of restic                              | Enter the absolut path to binary file of restic. Example input: ```/var/www/html/bin/restic_0.17.3_linux_386``` |
 | Dashboard -> Show backup status on the dashboard        | Shows a card with the latest repository status (date, repository size, number of snapshots, check status) of every active backup repository on the administration dashboard. Off by default. Requires the `muwa_backup_repository.viewer` permission and `system_config:read`. |
+| Dashboard -> Show S3 mirror status on the dashboard     | Shows a separate card with the latest S3 mirror run of every active repository with an S3 mirror target: target (bucket/prefix, connection), status, last run, last successful run, uploaded/deleted files and data volume. The error/skip message is shown as tooltip of the status. Switched on and off independently of the backup status card, which no longer has an S3 column. Off by default. Same permissions as above. |
 
 ## Respoitory Configuration
 First you will need a repository configuration for the backup. The repository configuration is the base for the backup process. The repository configuration contains the backup source and the backup target. The backup source is the path to the folder or file which should be backuped. The backup target is the path to the repository where the backup data should be restored.<br>
@@ -224,6 +225,7 @@ start time by the polling and queue processing delay.
 | ```bin/console muckiware:repository:stats <backupRepositoryId>```            | Collects and persists the repository status (total size, file count, snapshots count, file system size) |
 | ```bin/console muckiware:backup:restore <backupRepositoryId> <snapshotId>``` | Restore data by backup repository id and snapshot id          |
 | ```bin/console muckiware:db:dump <Type of backup>```                         | Creates just a database dump by global plugin setups          |
+| ```bin/console muckiware:repository:upload <backupRepositoryId> [--force]``` | Mirrors a repository to its configured S3 target (see S3 mirror) |
 | ```bin/console muckiware:backup:encrypt-passwords [--dry-run]```             | Encrypts repository passwords that are still stored as plain text |
 | ```bin/console muckiware:backup:password-source <backupRepositoryId> <source> <value>``` | Sets the password source of a repository (`encrypted`, `env` or `file`) |
 
@@ -407,6 +409,71 @@ restic -r /srv/restic-repo restore 79766175 --target /tmp/restore-workdir
 ```
 Checkout the description of the restic command for more information. https://restic.readthedocs.io/en/stable/050_restore.html#
 
+## S3 mirror
+A repository can be mirrored to an S3 compatible bucket (AWS S3, MinIO, Ceph, other) as an off-site copy.
+The mirror copies the restic repository files as they are; the copy can be used with restic
+directly (`s3:<endpoint>/<bucket>/<prefix>`).
+
+### Setup
+1. Open the backup module and switch to the tab **S3 connections**. Create a connection: name,
+   provider, endpoint (not for AWS), region, access key id, secret source and secret access key.
+   Check it with **Check connection**.
+2. Open the backup configuration, tab **Configuration**, section **S3 mirror**: choose the
+   connection, the bucket and an optional prefix, then **Save mirror target**. Targets of different
+   repositories must not overlap. Without a connection nothing is mirrored.
+3. Run a backup. After a green backup check the mirror is queued as a separate message, so a
+   running message worker is required: `bin/console messenger:consume async`.
+
+The first mirror of a large repository may take several runs and hours. The history (status, files,
+data volume, message) is shown in the repository detail page, the latest state in the dashboard card
+"S3 transfer status" (switched on with `showS3MirrorDashboardWidget`).
+
+### Secret sources
+| Source      | Content                                                  | Restriction                                           |
+|:------------|:---------------------------------------------------------|:------------------------------------------------------|
+| `encrypted` | the secret access key, stored as ciphertext              | needs `MUWA_FACILITY_SECRET` (see above)              |
+| `env`       | name of an environment variable                          | the name must start with `MUWA_S3_`                   |
+| `file`      | path of a file containing the secret                     | the file must live under `<projectDir>/var/secrets/`  |
+
+The secret is never sent back to the administration.
+
+### Safeguards
+The mirror removes remote objects that restic deleted locally (forget, prune). It only touches keys
+of the restic layout (`data/`, `index/`, `keys/`, `snapshots/`), never deletes `config`, and aborts
+without remote changes when the local repository is locked by a running restic operation, when
+the remote `config` belongs to a different repository, or when local data is missing.
+
+- **Use a dedicated bucket or prefix for this repository only.** The mirror treats every key of the
+  restic layout below the prefix as its own and deletes what no longer exists locally.
+- **The first run into a target never deletes.** Deletes only happen when the remote `config`
+  existed (and matched the local one) at the start of the run; otherwise the run only uploads and
+  notes in its message that deletes were deferred.
+- **Check gate.** A mirror queued by a backup only uses the check of that backup run. If
+  `restic check` itself fails (non-zero exit), a red check entry (`check failed: ...`) is stored and
+  the mirror is skipped; it never falls back to an older green check. Only the CLI without check id
+  uses the newest stored check.
+- `http://` endpoints (MinIO/other) transfer request signatures and repository data unencrypted;
+  use them only on local/internal networks. Two connections with the same host, port and path count
+  as the same target regardless of `http`/`https`.
+- The dashboard card "S3 transfer status" shows status, date and counters of the newest mirror run
+  and the date of the last successful run. A succeeded run older than the newest check is shown as warning.
+- Reading the upload history needs `muwa_backup_repository_uploads:read`, which is part of the
+  role `muwa_backup_repository.viewer`.
+
+### CLI
+```shell
+bin/console muckiware:repository:upload <backupRepositoryId> [--force]
+```
+Runs the mirror synchronously (e.g. for a cronjob without worker); it refuses to run while a backup
+is running. `--force` mirrors even if the last repository check is not healthy.
+
+### Flow Builder events
+The events `mucki_facility.repository_upload.succeeded` (`RepositoryUploadSucceededEvent`) and
+`mucki_facility.repository_upload.failed` (`RepositoryUploadFailedEvent`) are available as Flow
+Builder triggers, e.g. to send a mail. Data: `backupRepositoryId`, `backupRepositoryName`, `status`,
+`bucket`, `prefix`, `s3ConnectionName`, `startedAt`, `finishedAt`, `filesUploaded`, `filesDeleted`,
+`bytesUploaded`, `message`.
+
 # Database cleanup
 This command offers a more effective option to clean up database tables as the origin Shopware function and free up more memory.
 ## Cart Cleanup
@@ -454,6 +521,14 @@ shown in the first column.
 | `mucki_facility.snapshot.after_delete`     | `AfterSnapshotDeletedEvent`     | After a single snapshot was removed from the repository.                                                                                                                                      | `getBackupRepositoryId(): string`<br>`getSnapshotId(): string`<br>`getOutput(): string` |
 | `mucki_facility.snapshots.after_delete`    | `AfterSnapshotsDeletedEvent`    | After a batch of snapshots was removed, for example via `bin/console muckiware:backup:snapshots <backupRepositoryId> --remove <snapshotIds>` (snapshot ids as comma separated list). A batch removal also fires `mucki_facility.snapshot.after_delete` for every single snapshot. | `getBackupRepository(): BackupRepositoryEntity`<br>`getSnapshotIds(): array<int, string>`<br>`getOutput(): string` |
 | `mucki_facility.snapshots.after_forget`    | `AfterSnapshotsForgottenEvent`  | After snapshots were removed by the keep-policy, for example via `bin/console muckiware:backup:forget <backupRepositoryId>`.                                                                   | `getBackupRepository(): BackupRepositoryEntity`<br>`getOutput(): string` |
+
+## Repository upload events (S3 mirror)
+Besides the DAL-free Symfony events these two are Flow Builder triggers (see S3 mirror).
+
+| Event name                                   | Event class                    | Fired when                          |
+|:---------------------------------------------|:-------------------------------|:------------------------------------|
+| `mucki_facility.repository_upload.succeeded` | `RepositoryUploadSucceededEvent` | An S3 mirror run finished successfully |
+| `mucki_facility.repository_upload.failed`    | `RepositoryUploadFailedEvent`    | An S3 mirror run failed or was aborted |
 
 ## Payload classes
 

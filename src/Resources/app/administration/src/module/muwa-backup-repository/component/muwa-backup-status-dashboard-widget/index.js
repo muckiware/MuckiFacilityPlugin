@@ -8,12 +8,14 @@ const CONFIG_DOMAIN = 'MuckiFacilityPlugin.config';
 const CONFIG_KEY_SHOW_WIDGET = `${CONFIG_DOMAIN}.showDashboardWidget`;
 
 // Last line of a successful `restic check`, see muckiware/restic integration tests.
+// Same rule as PHP `Core\CheckStatus::isHealthy()`: case-insensitive "contains".
 const CHECK_STATUS_SUCCESS = 'no errors were found';
 const CHECK_STATUS_ERROR_PATTERN = /error|fatal|fail/i;
 
 /**
  * Dashboard card with the latest repository status (`muwa_backup_repository_stats`) of every
  * active backup repository — the same data the "Repository status" tab of the detail page shows.
+ * The S3 mirror status has its own card, see `muwa-s3-mirror-status-dashboard-widget`.
  */
 Component.register('muwa-backup-status-dashboard-widget', {
 
@@ -131,11 +133,17 @@ Component.register('muwa-backup-status-dashboard-widget', {
             }
         },
 
+
+        isHealthyCheckStatus(checkStatus) {
+            return typeof checkStatus === 'string'
+                && checkStatus.toLowerCase().includes(CHECK_STATUS_SUCCESS);
+        },
+
         checkStatusVariant(item) {
             if (!item.checkStatus) {
                 return item.hasStats ? 'warning' : 'neutral';
             }
-            if (item.checkStatus === CHECK_STATUS_SUCCESS) {
+            if (this.isHealthyCheckStatus(item.checkStatus)) {
                 return 'success';
             }
             if (CHECK_STATUS_ERROR_PATTERN.test(item.checkStatus)) {
@@ -151,7 +159,7 @@ Component.register('muwa-backup-status-dashboard-widget', {
             if (!item.checkStatus) {
                 return this.$t('muwa-backup-repository.dashboard.noCheck');
             }
-            if (item.checkStatus === CHECK_STATUS_SUCCESS) {
+            if (this.isHealthyCheckStatus(item.checkStatus)) {
                 return this.$t('muwa-backup-repository.dashboard.checkOk');
             }
             return item.checkStatus;

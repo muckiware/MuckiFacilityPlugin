@@ -5,6 +5,7 @@ import './page/muwa-backup-repository-create';
 import './page/muwa-backup-repository-detail';
 import './acl';
 import './component/muwa-backup-status-dashboard-widget';
+import './component/muwa-s3-mirror-status-dashboard-widget';
 import './component/muwa-restic-binary-info';
 import './extension/sw-dashboard-index';
 
@@ -18,6 +19,9 @@ Shopware.Component.register('muwa-backup-repository-add-modal', () => import('./
 Shopware.Component.register('muwa-database-connection-select', () => import('./component/muwa-database-connection-select'));
 Shopware.Component.register('muwa-database-connection-list', () => import('./page/muwa-database-connection-list'));
 Shopware.Component.register('muwa-database-connection-detail', () => import('./page/muwa-database-connection-detail'));
+Shopware.Component.register('muwa-s3-connection-select', () => import('./component/muwa-s3-connection-select'));
+Shopware.Component.register('muwa-s3-connection-list', () => import('./page/muwa-s3-connection-list'));
+Shopware.Component.register('muwa-s3-connection-detail', () => import('./page/muwa-s3-connection-detail'));
 
 Shopware.Module.register('muwa-backup-repository', {
 
@@ -76,6 +80,22 @@ Shopware.Module.register('muwa-backup-repository', {
         databaseConnectionDetail: {
             component: 'muwa-database-connection-detail',
             path: 'database-connection/detail/:id',
+            meta: {
+                parentPath: 'muwa.backup.repository.index',
+                privilege: 'muwa_backup_repository.viewer'
+            }
+        },
+        s3ConnectionCreate: {
+            component: 'muwa-s3-connection-detail',
+            path: 's3-connection/create',
+            meta: {
+                parentPath: 'muwa.backup.repository.index',
+                privilege: 'muwa_backup_repository.creator'
+            }
+        },
+        s3ConnectionDetail: {
+            component: 'muwa-s3-connection-detail',
+            path: 's3-connection/detail/:id',
             meta: {
                 parentPath: 'muwa.backup.repository.index',
                 privilege: 'muwa_backup_repository.viewer'

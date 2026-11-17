@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.10.0]
+
+### Added
+- Dashboard widget "S3 transfer status": a separate card with the latest S3 mirror run of every
+  active repository with a mirror target (target, status, last run, last successful run,
+  uploaded/deleted files, data volume; message as tooltip). New plugin setting
+  `showS3MirrorDashboardWidget` (card "Dashboard", default off) switches it on independently of
+  `showDashboardWidget`.
+
+### Changed
+- Dashboard widget "Backup status": the S3 mirror column was removed, the S3 status is now only
+  shown in the new "S3 transfer status" card.
+
 ### [0.9.0]
 
 ### Added
@@ -20,6 +33,42 @@ All notable changes to this project will be documented in this file.
   snapshots with their state on this server (present, file, not found) and can adopt them into the
   backup paths. New route `POST /api/_action/muwa/backup/repository/path-suggestions` (privilege
   `muwa_backup_repository:update`).
+- S3 mirror: a repository can be mirrored to an S3 compatible bucket (AWS, MinIO, Ceph, other). After
+  a green backup check a separate message (`MirrorRepositoryMessage` / `MirrorRepositoryHandler`)
+  uploads new objects and removes objects that restic deleted locally; the handler never throws and
+  the backup itself is not affected. The first mirror of a large repository may take several runs
+  or hours, and a running message worker (`messenger:consume`) is required for the automatic mirror.
+- S3 connections: new tab **S3 connections** (`muwa_s3_connection`) with provider, endpoint, region,
+  access key id and secret access key. Secret sources: `encrypted`, `env` (name must start with
+  `MUWA_S3_`) and `file` (below `<projectDir>/var/secrets/`). The secret is never sent back.
+  Routes `POST /api/_action/muwa/s3-connection/save` and `.../s3-connection/test`.
+- Mirror target per repository (connection, bucket, prefix) via
+  `PUT /api/_action/muwa/backup/{backupRepositoryId}/mirror` (privilege
+  `muwa_backup_repository:update`, error codes `MUWA_INVALID_MIRROR_TARGET`,
+  `MUWA_MIRROR_TARGET_OVERLAP`). Targets of different repositories must not overlap.
+- Deletion safeguards: remote deletions only touch keys of the restic layout (`data/`, `index/`,
+  `keys/`, `snapshots/`); `config` is never deleted. A run aborts without remote changes on local
+  restic locks, a different remote `config` or missing local data.
+- Upload history (`muwa_backup_repository_uploads`) with a history table in the repository detail
+  page and a mirror column in the dashboard widget.
+- Flow Builder events `mucki_facility.repository_upload.succeeded` and
+  `mucki_facility.repository_upload.failed` (e.g. to send a mail).
+- CLI `bin/console muckiware:repository:upload <backupRepositoryId> [--force]` (`--force` mirrors
+  even if the last check is not healthy).
+- Requires `aws/aws-sdk-php ^3.369`.
+- Check gate: when `restic check` fails during a backup (non-zero exit), a red check entry
+  (`check failed: <sanitized message>`) is stored instead of nothing, so the dashboard no longer
+  shows the previous green check; the queued mirror carries this check id and is skipped. A
+  backup-triggered mirror without check id is skipped and never falls back to an older check.
+- The first mirror into a target (no remote `config` at the start of the run) only uploads and never
+  deletes; deletes are deferred to a later run.
+- Dashboard: the S3 cell shows status and date of the newest run, the tooltip the last successful
+  run; a succeeded run older than the newest check is shown as warning. The check-status rule matches
+  the PHP rule (case-insensitive "no errors were found").
+- ACL: the role `muwa_backup_repository.viewer` includes `muwa_backup_repository_uploads:read`.
+- S3 hardening: NUL bytes in the secret access key are rejected; non-string request values return
+  400 `MUWA_INVALID_S3_CONNECTION`; error messages are scrubbed to valid UTF-8; mirror targets
+  compare endpoints without scheme.
 
 ### Changed
 - Requires `muckiware/restic ^1.6` (was `^1.4`).

@@ -14,6 +14,7 @@ namespace MuckiFacilityPlugin\tests\Integration;
 use Shopware\Core\Framework\Uuid\Uuid;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use MuckiRestic\Entity\Result\ResultEntity;
@@ -148,7 +149,7 @@ class BackupRepositoryTest extends TestCase
             $servicesCliOutputMock,
             $this->createMock(RepositoryStats::class),
             $this->createMock(EventDispatcherInterface::class),
-            $this->createMock(BackupCommandExecutor::class)
+            $this->createMock(MessageBusInterface::class)
         );
 
         $servicesBackup->createBackup($backupRepositorySettings);

@@ -14,8 +14,10 @@ namespace MuckiFacilityPlugin\Services;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use MuckiFacilityPlugin\Core\CheckStatus;
 use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Events\AfterBackupCheckedEvent;
 use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
@@ -28,6 +30,7 @@ use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
 use MuckiFacilityPlugin\Backup\BackupInterface;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
+use MuckiFacilityPlugin\MessageQueue\Message\MirrorRepositoryMessage;
 use MuckiFacilityPlugin\Services\Content\BackupRepository;
 use MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks;
 use MuckiFacilityPlugin\Services\SettingsInterface as PluginSettings;
@@ -35,6 +38,7 @@ use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Services\ManageRepository as ManageService;
 use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 use MuckiFacilityPlugin\Services\RepositoryStats;
+use MuckiFacilityPlugin\Services\Mirror\ErrorSanitizer;
 use MuckiRestic\Entity\Result\ResultEntity;
 
 /**
@@ -54,6 +58,12 @@ class Backup
      * @var BackupInterface
      */
     protected BackupInterface $backup;
+    /**
+     * Sanitized error of the last failed checkBackup() call, null if it did not fail
+     */
+    protected ?string $checkFailure = null;
+    public const CHECK_FAILED_PREFIX = 'check failed: ';
+    public const CHECK_FAILED_MAX_LENGTH = 200;
 
     /**
      * @param LoggerInterface $logger
@@ -65,6 +75,8 @@ class Backup
      * @param ManageRepository $manageService
      * @param CliOutput $servicesCliOutput
      * @param RepositoryStats $repositoryStats
+     * @param EventDispatcherInterface $eventDispatcher
+     * @param MessageBusInterface $messageBus
      */
     public function __construct(
         protected LoggerInterface $logger,
@@ -76,7 +88,8 @@ class Backup
         protected ManageService $manageService,
         protected ServicesCliOutput $servicesCliOutput,
         protected RepositoryStats $repositoryStats,
-        protected EventDispatcherInterface $eventDispatcher
+        protected EventDispatcherInterface $eventDispatcher,
+        protected MessageBusInterface $messageBus
     )
     {
         $this->backupException = new \Exception();
@@ -159,7 +172,8 @@ class Backup
             $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
         }
 
-        $this->createCheckItem($createBackup);
+        $checkId = $this->createCheckItem($createBackup);
+        $this->dispatchMirror($createBackup->getBackupRepositoryId(), $checkId);
         $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
         $this->repositoryStats->collectAndSave($createBackup->getBackupRepositoryId());
 
@@ -167,6 +181,30 @@ class Backup
             new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
             AfterBackupCreatedEvent::NAME
         );
+    }
+
+    /**
+     * Queues the S3 mirror run when the repository has a mirror connection.
+     * Must never break the backup.
+     *
+     * @param string $backupRepositoryId
+     * @param string|null $checkId
+     * @return void
+     */
+    protected function dispatchMirror(string $backupRepositoryId, ?string $checkId): void
+    {
+        try {
+            $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);
+            if($backupRepository === null || empty($backupRepository->getMirrorS3ConnectionId())) {
+                return;
+            }
+            $this->messageBus->dispatch(new MirrorRepositoryMessage($backupRepositoryId, $checkId));
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Mirror could not be queued. BackupRepositoryId: '.$backupRepositoryId.', '.$e->getMessage(),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+        }
     }
 
     /**
@@ -249,6 +287,7 @@ class Backup
      */
     public function checkBackup(BackupRepositorySettings $createBackup): void
     {
+        $this->checkFailure = null;
         $createBackup = clone $createBackup;
         $createBackup->setBackupType(BackupTypes::FILES->value);
         try {
@@ -259,8 +298,35 @@ class Backup
             $this->setBackup($backupRunner);
 
         } catch (\Exception $e) {
+            $this->checkFailure = $this->buildCheckFailedStatus($e, $createBackup);
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
+    }
+
+    /**
+     * Status text stored as check result when `restic check` itself failed (e.g. non-zero exit).
+     * Never matches CheckStatus::isHealthy(), so the dashboard shows red and the mirror is skipped.
+     */
+    protected function buildCheckFailedStatus(\Exception $exception, BackupRepositorySettings $settings): string
+    {
+        $password = '';
+        try {
+            $password = $settings->getRepositoryPassword();
+        } catch (\Error) {
+            // password not initialized
+        }
+        $status = self::CHECK_FAILED_PREFIX . mb_substr(
+            ErrorSanitizer::sanitize($exception, $password),
+            0,
+            self::CHECK_FAILED_MAX_LENGTH
+        );
+
+        return CheckStatus::isHealthy($status) ? rtrim(self::CHECK_FAILED_PREFIX, ': ') : $status;
+    }
+
+    public function getCheckFailure(): ?string
+    {
+        return $this->checkFailure;
     }
 
     /**
@@ -311,9 +377,9 @@ class Backup
 
     /**
      * @param BackupRepositorySettings $createBackup
-     * @return void
+     * @return string|null id of the last saved check, null if none was saved
      */
-    public function createCheckItem(BackupRepositorySettings $createBackup): void
+    public function createCheckItem(BackupRepositorySettings $createBackup): ?string
     {
         if($this->servicesCliOutput->isCli()) {
             $this->servicesCliOutput->printCliOutputNewline('Check backup...');
@@ -321,15 +387,25 @@ class Backup
         $this->checkBackup($createBackup);
 
         $lastCheckResult = null;
+        $lastCheckId = null;
+        if($this->checkFailure !== null) {
+            //a failed check must replace the last (maybe green) check, otherwise the mirror gate and
+            //the dashboard would still see the old healthy result
+            $lastCheckResult = $this->checkFailure;
+            $lastCheckId = $this->backupRepositoryChecks->saveNewCheck(
+                $createBackup->getBackupRepositoryId(),
+                $lastCheckResult
+            );
+        }
         /** @var ResultEntity $result */
-        foreach ($this->getAllResults() as $result) {
+        foreach ($this->checkFailure === null ? $this->getAllResults() : [] as $result) {
 
             $checkResults = $this->pluginHelper->getCheckResults($result->getOutput());
             $checkResult = end($checkResults);
             if(!is_string($checkResult)) {
                 continue;
             }
-            $this->backupRepositoryChecks->saveNewCheck($createBackup->getBackupRepositoryId(), $checkResult);
+            $lastCheckId = $this->backupRepositoryChecks->saveNewCheck($createBackup->getBackupRepositoryId(), $checkResult);
             $lastCheckResult = $checkResult;
         }
 
@@ -342,6 +418,8 @@ class Backup
                 AfterBackupCheckedEvent::NAME
             );
         }
+
+        return $lastCheckId;
     }
 
     /**

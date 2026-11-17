@@ -41,6 +41,14 @@
             <helpText lang="de-DE">Zeigt den letzten Repository-Status aller aktiven Backup Repositories im Dashboard der Administration an.</helpText>
             <defaultValue>false</defaultValue>
         </input-field>
+        <input-field type="bool">
+            <name>showS3MirrorDashboardWidget</name>
+            <label>Show S3 mirror status on the dashboard</label>
+            <label lang="de-DE">S3-Übertragungsstatus im Dashboard anzeigen</label>
+            <helpText>Shows a separate card with the latest S3 mirror run (status, target, transferred files and data volume) of every active repository with an S3 mirror on the administration dashboard.</helpText>
+            <helpText lang="de-DE">Zeigt im Dashboard der Administration eine eigene Karte mit dem letzten S3-Spiegelungslauf (Status, Ziel, übertragene Dateien und Datenmenge) aller aktiven Repositories mit S3-Spiegelung an.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
     </card>
     <card>
         <title>Cleanup settings</title>

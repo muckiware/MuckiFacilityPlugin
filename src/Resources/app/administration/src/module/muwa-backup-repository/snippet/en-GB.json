@@ -195,6 +195,16 @@
       "emptyTitle": "No active backup repositories",
       "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories."
     },
+    "s3Dashboard": {
+      "title": "S3 transfer status",
+      "targetLabel": "Target",
+      "lastRunLabel": "Last run",
+      "lastSucceededLabel": "Last succeeded",
+      "emptyTitle": "No repositories with S3 mirror",
+      "emptySubline": "Set a mirror target in the backup configuration, tab Configuration, section S3 mirror.",
+      "pending": "Pending",
+      "outdated": "the last backup run has not been mirrored yet"
+    },
     "resticInfo": {
       "loading": "Checking restic …",
       "current": "restic in use: {path}, version {version}",
@@ -211,7 +221,9 @@
       "restoreSucceeded": "Restore of snapshot “{snapshot}” from “{name}” completed successfully.",
       "restoreFailed": "Restore of snapshot “{snapshot}” from “{name}” failed: {error}",
       "takeoverCheckSucceeded": "Repository “{name}” taken over and checked: {status}",
-      "takeoverCheckFailed": "Check of taken-over repository “{name}” failed: {error}"
+      "takeoverCheckFailed": "Check of taken-over repository “{name}” failed: {error}",
+      "mirrorFailed": "S3 mirror of “{name}” failed: {message}",
+      "mirrorSkipped": "S3 mirror of “{name}” was skipped: {message}"
     },
     "schedule": {
       "title": "Automatic backup",
@@ -325,6 +337,80 @@
         "error": "The suggestions could not be loaded.",
         "truncated": "Only the first 200 paths are shown."
       }
+    },
+    "s3Connection": {
+      "tabLabel": "S3 connections",
+      "createButton": "Add connection",
+      "cardTitle": "S3 connection",
+      "secretCardTitle": "Credentials",
+      "nameLabel": "Name",
+      "providerLabel": "Provider",
+      "endpointLabel": "Endpoint",
+      "endpointPlaceholder": "https://s3.example.com",
+      "regionLabel": "Region",
+      "accessKeyIdLabel": "Access key ID",
+      "providers": {
+        "aws": "Amazon S3",
+        "minio": "MinIO",
+        "ceph": "Ceph",
+        "other": "Other S3-compatible"
+      },
+      "secretSourceLabel": "Secret access key source",
+      "secretSources": {
+        "encrypted": "Stored encrypted",
+        "env": "Environment variable",
+        "file": "File"
+      },
+      "secretValueLabels": {
+        "encrypted": "Secret access key",
+        "env": "Name of the environment variable",
+        "file": "Path to the file containing the secret access key"
+      },
+      "secretKeepPlaceholder": "Leave empty = unchanged",
+      "secretSourceHelpText": "<b>Stored encrypted:</b> the secret access key is stored encrypted in the database.<br><b>Environment variable:</b> name of a variable starting with <code>MUWA_S3_</code> (e.g. <code>MUWA_S3_BACKUP_SECRET</code>).<br><b>File:</b> path to a file inside <code>&lt;project dir&gt;/var/secrets/</code>.<br>The secret access key is never returned to the administration. It must be entered again when endpoint, region, access key ID or source change.",
+      "regionHint": "Required for Amazon S3.",
+      "endpointHint": "Required for every provider except Amazon S3. Use http:// only for local/internal endpoints (e.g. MinIO on the same network): request signatures and repository data are then transferred unencrypted.",
+      "testBucketLabel": "Bucket for the test (optional)",
+      "testBucketHelpText": "If given, access to this bucket is checked as well.",
+      "testButton": "Test connection",
+      "testSuccessTitle": "Connection successful",
+      "testSuccessMessage": "The S3 service can be reached with these settings.",
+      "testErrorTitle": "Connection failed",
+      "saveButton": "Save",
+      "saveSuccess": "The S3 connection has been saved.",
+      "saveError": "The S3 connection could not be saved",
+      "deleteSuccess": "The S3 connection has been deleted.",
+      "deleteInUse": "The connection is still used by these backup configurations and cannot be deleted: {names}",
+      "emptyState": "No S3 connections available.",
+      "noMirroring": "No mirroring",
+      "selectLabel": "S3 connection for mirroring",
+      "selectHelpText": "Target the restic repository is mirrored to after each backup. Without a selection nothing is mirrored."
+    },
+    "mirror": {
+      "cardTitle": "S3 mirror",
+      "saveButton": "Save mirror target",
+      "saveSuccess": "The mirror target has been saved.",
+      "saveError": "The mirror target could not be saved",
+      "bucketLabel": "Bucket",
+      "prefixLabel": "Prefix (optional)",
+      "prefixHelpText": "Folder inside the bucket. Every backup configuration needs its own, non-overlapping target. Use a dedicated bucket or prefix for this repository only: the mirror deletes files there that no longer exist locally. The first run into a new target never deletes.",
+      "historyTitle": "S3 mirror: history",
+      "historyEmpty": "No mirror run yet.",
+      "lastSucceeded": "Last successfully mirrored on {date}",
+      "firstRunNotice": "First mirror run is in progress or pending — may take several hours for large repositories",
+      "status": {
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "skipped": "Skipped"
+      },
+      "columns": {
+        "time": "Time",
+        "status": "Status",
+        "filesUploaded": "Uploaded",
+        "filesDeleted": "Deleted",
+        "bytesUploaded": "Data volume",
+        "message": "Message"
+      }
     }
   },
   "sw-privileges": {
@@ -339,6 +425,14 @@
         "restore": "Restore a snapshot (overwrites files on the server)",
         "delete_snapshots": "Delete snapshots from the repository (irreversible)"
       }
+    }
+  },
+  "sw-flow": {
+    "triggers": {
+      "muckiFacility": "Mucki Facility",
+      "repositoryUpload": "Repository upload (S3)",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
     }
   }
 }

@@ -37,7 +37,10 @@
             <file>tests/Administration/BatchFileUploadAdministrationTest.php</file>
             <file>tests/Administration/RestoreDirectoryTreeAdministrationTest.php</file>
             <file>tests/Administration/DatabaseConnectionAdministrationTest.php</file>
+            <file>tests/Administration/S3ConnectionAdministrationTest.php</file>
+            <file>tests/Administration/RepositoryMirrorAdministrationTest.php</file>
             <file>tests/Administration/RepositoryTakeoverAdministrationTest.php</file>
+            <file>tests/Administration/S3MirrorDashboardWidgetAdministrationTest.php</file>
             <file>tests/Services/Crypto/SecretCipherTest.php</file>
             <file>tests/Services/Content/RepositoryPasswordResolverTest.php</file>
             <file>tests/Services/Content/DatabasePasswordResolverTest.php</file>
@@ -47,9 +50,29 @@
             <file>tests/Services/SettingsInterfaceAliasTest.php</file>
             <file>tests/Core/Content/BackupRepositoryDefinitionTest.php</file>
             <file>tests/Core/Content/DatabaseConnectionDefinitionTest.php</file>
+            <file>tests/Core/Content/S3ConnectionDefinitionTest.php</file>
+            <file>tests/Core/Content/BackupRepositoryUploadsDefinitionTest.php</file>
             <file>tests/Core/Content/BackupRepositorySnapshotsDefinitionTest.php</file>
             <file>tests/Services/Content/BackupFileSnapshotsRepositoryTest.php</file>
             <file>tests/Core/ConfigPathTest.php</file>
+            <file>tests/Core/S3ProvidersTest.php</file>
+            <file>tests/Core/CheckStatusTest.php</file>
+            <file>tests/Services/Content/S3SecretResolverTest.php</file>
+            <file>tests/Services/Content/S3ConnectionRepositoryTest.php</file>
+            <file>tests/Services/Mirror/S3ClientFactoryTest.php</file>
+            <file>tests/Services/Mirror/ErrorSanitizerTest.php</file>
+            <file>tests/Services/Mirror/MirrorKeyRulesTest.php</file>
+            <file>tests/Services/Mirror/MirrorPlannerTest.php</file>
+            <file>tests/Events/RepositoryUploadEventTest.php</file>
+            <file>tests/Subscriber/RepositoryUploadBusinessEventSubscriberTest.php</file>
+            <file>tests/Services/Mirror/LocalRepositoryScannerTest.php</file>
+            <file>tests/Controller/S3ConnectionControllerTest.php</file>
+            <file>tests/Controller/BackupRepositoryMirrorControllerTest.php</file>
+            <file>tests/Services/Mirror/MirrorTargetValidatorTest.php</file>
+            <file>tests/Services/Content/BackupRepositoryChecksTest.php</file>
+            <file>tests/Services/Content/BackupRepositoryUploadsTest.php</file>
+            <file>tests/Services/RepositoryMirrorTest.php</file>
+            <file>tests/Commands/RepositoryUploadTest.php</file>
             <file>tests/Core/Database/DbIdentifierTest.php</file>
             <file>tests/Database/TableRunner/CleanupRunnerTest.php</file>
             <file>tests/Database/TableRunner/TempTableNamingTest.php</file>
@@ -58,6 +81,7 @@
             <file>tests/Services/AdminNotificationTest.php</file>
             <file>tests/MessageQueue/Handler/RestoreSnapshotHandlerTest.php</file>
             <file>tests/MessageQueue/Handler/TakeoverRepositoryCheckHandlerTest.php</file>
+            <file>tests/MessageQueue/Handler/MirrorRepositoryHandlerTest.php</file>
             <file>tests/MuckiFacilityPluginUninstallTest.php</file>
             <directory>tests/Schedule</directory>
         </testsuite>

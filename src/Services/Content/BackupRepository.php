@@ -17,6 +17,7 @@ use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\NotFilter;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
@@ -216,6 +217,58 @@ class BackupRepository
         );
 
         return true;
+    }
+
+    public function exists(string $backupRepositoryId): bool
+    {
+        if (!Uuid::isValid($backupRepositoryId)) {
+            return false;
+        }
+
+        return $this->backupRepository->search(new Criteria([$backupRepositoryId]), Context::createDefaultContext())->first() !== null;
+    }
+
+    /**
+     * Schreibt das Spiegel-Ziel (S3-Verbindung, Bucket, Prefix) im System-Scope; die Felder sind WriteProtected.
+     * Alle drei Werte null = Spiegelung aus.
+     *
+     * @param array{mirrorS3ConnectionId: ?string, mirrorS3Bucket: ?string, mirrorS3Prefix: ?string} $payload
+     */
+    public function updateMirrorTarget(string $backupRepositoryId, array $payload): bool
+    {
+        if ($this->backupRepository->search(new Criteria([$backupRepositoryId]), Context::createDefaultContext())->first() === null) {
+            return false;
+        }
+
+        $payload['id'] = $backupRepositoryId;
+        Context::createDefaultContext()->scope(
+            Context::SYSTEM_SCOPE,
+            function (Context $systemScopedContext) use ($payload): void {
+                $this->backupRepository->update([$payload], $systemScopedContext);
+            }
+        );
+
+        return true;
+    }
+
+    /**
+     * Alle Repositories mit konfigurierter Spiegelung ausser dem uebergebenen (Ueberlappungspruefung).
+     *
+     * @return list<BackupRepositoryEntity>
+     */
+    public function findMirrorConfigured(string $excludeRepositoryId): array
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new NotFilter(NotFilter::CONNECTION_AND, [new EqualsFilter('mirrorS3ConnectionId', null)]));
+
+        $result = [];
+        foreach ($this->backupRepository->search($criteria, Context::createDefaultContext()) as $repository) {
+            if ($repository instanceof BackupRepositoryEntity && $repository->getId() !== $excludeRepositoryId) {
+                $result[] = $repository;
+            }
+        }
+
+        return $result;
     }
 
     /**
