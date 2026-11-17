@@ -21,6 +21,8 @@ use MuckiFacilityPlugin\Entity\ForgetTypes;
 use MuckiFacilityPlugin\Entity\BackupPathEntity;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleEntity;
 use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionEntity;
+use MuckiFacilityPlugin\Core\Content\S3Connection\S3ConnectionEntity;
+use MuckiFacilityPlugin\Core\Content\BackupRepository\Uploads\BackupRepositoryUploadsCollection;
 
 class BackupRepositoryEntity extends Entity
 {
@@ -481,6 +483,37 @@ class BackupRepositoryEntity extends Entity
     {
         $this->databaseConnection = $databaseConnection;
     }
+
+    protected ?string $mirrorS3ConnectionId = null;
+
+    protected ?string $mirrorS3Bucket = null;
+
+    protected ?string $mirrorS3Prefix = null;
+
+    protected ?S3ConnectionEntity $mirrorS3Connection = null;
+
+    protected ?BackupRepositoryUploadsCollection $uploads = null;
+
+    public function getMirrorS3ConnectionId(): ?string { return $this->mirrorS3ConnectionId; }
+    public function setMirrorS3ConnectionId(?string $mirrorS3ConnectionId): void
+    {
+        $this->mirrorS3ConnectionId = $mirrorS3ConnectionId;
+    }
+
+    public function getMirrorS3Bucket(): ?string { return $this->mirrorS3Bucket; }
+    public function setMirrorS3Bucket(?string $mirrorS3Bucket): void { $this->mirrorS3Bucket = $mirrorS3Bucket; }
+
+    public function getMirrorS3Prefix(): ?string { return $this->mirrorS3Prefix; }
+    public function setMirrorS3Prefix(?string $mirrorS3Prefix): void { $this->mirrorS3Prefix = $mirrorS3Prefix; }
+
+    public function getMirrorS3Connection(): ?S3ConnectionEntity { return $this->mirrorS3Connection; }
+    public function setMirrorS3Connection(?S3ConnectionEntity $mirrorS3Connection): void
+    {
+        $this->mirrorS3Connection = $mirrorS3Connection;
+    }
+
+    public function getUploads(): ?BackupRepositoryUploadsCollection { return $this->uploads; }
+    public function setUploads(?BackupRepositoryUploadsCollection $uploads): void { $this->uploads = $uploads; }
 
     protected ?BackupScheduleEntity $schedule = null;
 

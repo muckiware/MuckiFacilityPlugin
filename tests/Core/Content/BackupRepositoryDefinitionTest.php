@@ -149,6 +149,34 @@ class BackupRepositoryDefinitionTest extends TestCase
         self::assertFalse($field->is(Required::class), 'NULL means the standard connection');
     }
 
+    public function testMirrorFieldsAreWriteProtectedToSystemScope(): void
+    {
+        foreach (['mirrorS3ConnectionId', 'mirrorS3Bucket', 'mirrorS3Prefix'] as $propertyName) {
+            $writeProtected = $this->getField($propertyName)->getFlag(WriteProtected::class);
+
+            self::assertInstanceOf(WriteProtected::class, $writeProtected, $propertyName);
+            self::assertTrue($writeProtected->isAllowed(Context::SYSTEM_SCOPE), $propertyName);
+            self::assertFalse($writeProtected->isAllowed(Context::CRUD_API_SCOPE), $propertyName);
+        }
+    }
+
+    public function testMirrorConnectionIsOptionalForeignKey(): void
+    {
+        $field = $this->getField('mirrorS3ConnectionId');
+
+        self::assertInstanceOf(FkField::class, $field);
+        self::assertFalse($field->is(Required::class), 'NULL means no mirroring');
+    }
+
+    public function testUploadsAreCascadeDeleted(): void
+    {
+        self::assertTrue($this->getField('uploads')->is(\Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\CascadeDelete::class));
+        self::assertInstanceOf(
+            \Shopware\Core\Framework\DataAbstractionLayer\Field\ManyToOneAssociationField::class,
+            $this->getField('mirrorS3Connection')
+        );
+    }
+
     /**
      * Eine noch nicht kompilierte FieldCollection ist numerisch indiziert — get() greift
      * deshalb nicht auf den Property-Namen zu.

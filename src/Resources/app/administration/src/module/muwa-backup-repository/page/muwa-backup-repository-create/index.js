@@ -39,6 +39,12 @@ Component.register('muwa-backup-repository-create', {
             processSuccess: false,
             httpClient: null,
             requestInitRepository: '/_action/muwa/backup/repository/init',
+            requestMirror: '/_action/muwa/backup',
+            mirrorForm: {
+                s3ConnectionId: null,
+                bucket: '',
+                prefix: '',
+            },
             requestBatchUpload: '/_action/muwa/filesystem/batch-file'
         };
     },
@@ -235,7 +241,10 @@ Component.register('muwa-backup-repository-create', {
                     title: this.$t('muwa-backup-repository.create.success-title'),
                     message: this.$t('muwa-backup-repository.create.success-message')
                 });
-                this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
+
+                return this.saveMirrorTarget().then(() => {
+                    this.$router.push({ name: 'muwa.backup.repository.detail', params: { id: this.backupRepository.id } });
+                });
 
             }).catch((exception) => {
 
@@ -244,6 +253,33 @@ Component.register('muwa-backup-repository-create', {
                 this.isLoadingInit = false;
                 this.createNotificationError({
                     title: this.$t('muwa-backup-repository.create.error-message'),
+                    message: this.getErrorMessage(exception)
+                });
+            });
+        },
+
+        /**
+         * Setzt das S3-Spiegelziel des gerade angelegten Repositorys. Ein Fehler wird nur
+         * angezeigt, das angelegte Repository bleibt bestehen (Ziel laesst sich auf der
+         * Detail-Seite nachtragen).
+         */
+        saveMirrorTarget() {
+
+            if (!this.mirrorForm.s3ConnectionId) {
+                return Promise.resolve();
+            }
+
+            return this.httpClient.put(
+                `${this.requestMirror}/${this.backupRepository.id}/mirror`,
+                {
+                    s3ConnectionId: this.mirrorForm.s3ConnectionId,
+                    bucket: this.mirrorForm.bucket,
+                    prefix: this.mirrorForm.prefix,
+                },
+                { headers: this.getApiHeader() }
+            ).catch((exception) => {
+                this.createNotificationError({
+                    title: this.$t('muwa-backup-repository.mirror.saveError'),
                     message: this.getErrorMessage(exception)
                 });
             });

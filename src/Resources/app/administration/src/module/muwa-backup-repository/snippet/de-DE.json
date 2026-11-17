@@ -193,7 +193,12 @@
       "noCheck": "Kein Check",
       "checkOk": "OK",
       "emptyTitle": "Keine aktiven Backup Repositories",
-      "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an."
+      "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an.",
+      "mirrorStatusLabel": "S3-Spiegelung",
+      "mirrorPending": "Ausstehend",
+      "mirrorLastSucceeded": "Zuletzt erfolgreich gespiegelt: {date}",
+      "mirrorNeverSucceeded": "Noch keine erfolgreiche Spiegelung",
+      "mirrorOutdated": "der letzte Backup-Lauf wurde noch nicht gespiegelt"
     },
     "resticInfo": {
       "loading": "restic wird geprüft …",
@@ -211,7 +216,9 @@
       "restoreSucceeded": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ wurde erfolgreich abgeschlossen.",
       "restoreFailed": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ ist fehlgeschlagen: {error}",
       "takeoverCheckSucceeded": "Repository „{name}“ übernommen und geprüft: {status}",
-      "takeoverCheckFailed": "Prüfung des übernommenen Repositorys „{name}“ fehlgeschlagen: {error}"
+      "takeoverCheckFailed": "Prüfung des übernommenen Repositorys „{name}“ fehlgeschlagen: {error}",
+      "mirrorFailed": "S3-Spiegelung von „{name}“ fehlgeschlagen: {message}",
+      "mirrorSkipped": "S3-Spiegelung von „{name}“ übersprungen: {message}"
     },
     "schedule": {
       "title": "Automatische Sicherung",
@@ -325,6 +332,80 @@
         "error": "Die Vorschläge konnten nicht geladen werden.",
         "truncated": "Es werden nur die ersten 200 Pfade angezeigt."
       }
+    },
+    "s3Connection": {
+      "tabLabel": "S3-Verbindungen",
+      "createButton": "Verbindung hinzufügen",
+      "cardTitle": "S3-Verbindung",
+      "secretCardTitle": "Zugangsdaten",
+      "nameLabel": "Name",
+      "providerLabel": "Anbieter",
+      "endpointLabel": "Endpoint",
+      "endpointPlaceholder": "https://s3.example.com",
+      "regionLabel": "Region",
+      "accessKeyIdLabel": "Access Key ID",
+      "providers": {
+        "aws": "Amazon S3",
+        "minio": "MinIO",
+        "ceph": "Ceph",
+        "other": "Andere S3-kompatible"
+      },
+      "secretSourceLabel": "Quelle des Secret Access Key",
+      "secretSources": {
+        "encrypted": "Verschlüsselt gespeichert",
+        "env": "Umgebungsvariable",
+        "file": "Datei"
+      },
+      "secretValueLabels": {
+        "encrypted": "Secret Access Key",
+        "env": "Name der Umgebungsvariable",
+        "file": "Pfad zur Datei mit dem Secret Access Key"
+      },
+      "secretKeepPlaceholder": "Leer lassen = unverändert",
+      "secretSourceHelpText": "<b>Verschlüsselt gespeichert:</b> der Secret Access Key wird verschlüsselt in der Datenbank abgelegt.<br><b>Umgebungsvariable:</b> Name einer Variable, die mit <code>MUWA_S3_</code> beginnt (z. B. <code>MUWA_S3_BACKUP_SECRET</code>).<br><b>Datei:</b> Pfad zu einer Datei innerhalb von <code>&lt;Projektverzeichnis&gt;/var/secrets/</code>.<br>Der Secret Access Key wird nie an die Administration zurückgegeben. Bei Änderung von Endpoint, Region, Access Key ID oder der Quelle muss er neu eingegeben werden.",
+      "regionHint": "Pflichtfeld bei Amazon S3.",
+      "endpointHint": "Pflichtfeld für alle Anbieter außer Amazon S3. http:// nur für lokale/interne Endpoints (z. B. MinIO im selben Netz) verwenden: Zugangsdaten-Signatur und Repository-Daten werden dann unverschlüsselt übertragen.",
+      "testBucketLabel": "Bucket für den Test (optional)",
+      "testBucketHelpText": "Wenn angegeben, wird zusätzlich der Zugriff auf diesen Bucket geprüft.",
+      "testButton": "Verbindung prüfen",
+      "testSuccessTitle": "Verbindung erfolgreich",
+      "testSuccessMessage": "Der S3-Dienst ist mit diesen Angaben erreichbar.",
+      "testErrorTitle": "Verbindung fehlgeschlagen",
+      "saveButton": "Speichern",
+      "saveSuccess": "Die S3-Verbindung wurde gespeichert.",
+      "saveError": "Die S3-Verbindung konnte nicht gespeichert werden",
+      "deleteSuccess": "Die S3-Verbindung wurde gelöscht.",
+      "deleteInUse": "Die Verbindung wird noch von diesen Backup-Konfigurationen verwendet und kann nicht gelöscht werden: {names}",
+      "emptyState": "Keine S3-Verbindungen vorhanden.",
+      "noMirroring": "Keine Spiegelung",
+      "selectLabel": "S3-Verbindung für die Spiegelung",
+      "selectHelpText": "Ziel, in das das restic-Repository nach jedem Backup gespiegelt wird. Ohne Auswahl findet keine Spiegelung statt."
+    },
+    "mirror": {
+      "cardTitle": "S3-Spiegelung",
+      "saveButton": "Spiegelziel speichern",
+      "saveSuccess": "Das Spiegelziel wurde gespeichert.",
+      "saveError": "Das Spiegelziel konnte nicht gespeichert werden",
+      "bucketLabel": "Bucket",
+      "prefixLabel": "Präfix (optional)",
+      "prefixHelpText": "Ordner innerhalb des Buckets. Jede Backup-Konfiguration braucht ein eigenes, sich nicht überschneidendes Ziel. Einen eigenen Bucket bzw. Präfix nur für dieses Repository verwenden: die Spiegelung löscht dort Dateien, die lokal nicht mehr existieren. Der erste Lauf in ein neues Ziel löscht nie.",
+      "historyTitle": "S3-Spiegelung: Verlauf",
+      "historyEmpty": "Noch keine Spiegelung durchgeführt.",
+      "lastSucceeded": "Zuletzt erfolgreich gespiegelt am {date}",
+      "firstRunNotice": "Erste Spiegelung läuft bzw. steht aus — kann bei großen Repositories mehrere Stunden dauern",
+      "status": {
+        "succeeded": "Erfolgreich",
+        "failed": "Fehlgeschlagen",
+        "skipped": "Übersprungen"
+      },
+      "columns": {
+        "time": "Zeitpunkt",
+        "status": "Status",
+        "filesUploaded": "Hochgeladen",
+        "filesDeleted": "Gelöscht",
+        "bytesUploaded": "Datenmenge",
+        "message": "Meldung"
+      }
     }
   },
   "sw-privileges": {
@@ -339,6 +420,14 @@
         "restore": "Snapshot wiederherstellen (überschreibt Dateien auf dem Server)",
         "delete_snapshots": "Snapshots aus dem Repository löschen (unwiderruflich)"
       }
+    }
+  },
+  "sw-flow": {
+    "triggers": {
+      "muckiFacility": "Mucki Facility",
+      "repositoryUpload": "Repository-Upload (S3)",
+      "succeeded": "Erfolgreich",
+      "failed": "Fehlgeschlagen"
     }
   }
 }

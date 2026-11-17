@@ -19,6 +19,13 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service id="MuckiFacilityPlugin\Controller\S3ConnectionController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\S3ConnectionRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Mirror\S3ClientFactory"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service id="MuckiFacilityPlugin\Controller\InitBackupRepositoryController" public="true">
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\DatabaseConnectionRepository"/>
@@ -49,6 +56,13 @@
         </service>
         <service id="MuckiFacilityPlugin\Controller\BackupRepositoryHooksController" public="true">
             <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="MuckiFacilityPlugin\Controller\BackupRepositoryMirrorController" public="true">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Mirror\MirrorTargetValidator"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
@@ -91,6 +105,13 @@
 
         <service id="MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition">
             <tag name="shopware.entity.definition" entity="muwa_database_connection" />
+        </service>
+
+        <service id="MuckiFacilityPlugin\Core\Content\S3Connection\S3ConnectionDefinition">
+            <tag name="shopware.entity.definition" entity="muwa_s3_connection" />
+        </service>
+        <service id="MuckiFacilityPlugin\Core\Content\BackupRepository\Uploads\BackupRepositoryUploadsDefinition">
+            <tag name="shopware.entity.definition" entity="muwa_backup_repository_uploads" />
         </service>
 
         <service id="MuckiFacilityPlugin\Backup\BackupRunnerFactory">
@@ -201,6 +222,15 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service class="MuckiFacilityPlugin\Commands\RepositoryUpload" id="muwa.command.repository.upload" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryMirror"/>
+            <argument type="service" id="lock.factory"/>
+            <tag name="console.command"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
         <service class="MuckiFacilityPlugin\Commands\RepositoryStats" id="muwa.command.repository.stats" public="true">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\Settings"/>
@@ -225,6 +255,38 @@
         <service id="MuckiFacilityPlugin\Services\Content\DatabasePasswordResolver">
             <argument type="service" id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
             <argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Content\S3SecretResolver">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Crypto\SecretCipher"/>
+            <argument type="service" id="Symfony\Component\HttpKernel\KernelInterface"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Content\S3ConnectionRepository">
+            <argument type="service" id="muwa_s3_connection.repository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\S3SecretResolver"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Mirror\S3ClientFactory"/>
+        <service id="MuckiFacilityPlugin\Services\Mirror\MirrorTargetValidator">
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\S3ConnectionRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\Mirror\MirrorPlanner"/>
+        <service id="MuckiFacilityPlugin\Services\Mirror\LocalRepositoryScanner"/>
+        <service id="MuckiFacilityPlugin\Services\Content\BackupRepositoryUploads" public="true">
+            <argument type="service" id="muwa_backup_repository_uploads.repository"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Services\RepositoryMirror" public="true">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepositoryChecks"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\BackupRepositoryUploads"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Content\S3ConnectionRepository"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Mirror\S3ClientFactory"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Mirror\LocalRepositoryScanner"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Mirror\MirrorPlanner"/>
+            <argument type="service" id="lock.factory"/>
+            <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\AdminNotification"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\Mirror\MirrorTargetValidator"/>
         </service>
         <service id="MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper">
             <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
@@ -271,6 +333,7 @@
             <argument type="service" id="MuckiFacilityPlugin\Services\CliOutput"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
             <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="messenger.default_bus"/>
         </service>
         <service id="MuckiFacilityPlugin\Services\BatchFileUploader">
             <argument type="service" id="kernel"/>
@@ -278,6 +341,10 @@
         <service id="MuckiFacilityPlugin\Services\BackupCommandExecutor">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="kernel"/>
+        </service>
+        <service id="MuckiFacilityPlugin\Subscriber\RepositoryUploadBusinessEventSubscriber">
+            <argument type="service" id="Shopware\Core\Framework\Event\BusinessEventCollector"/>
+            <tag name="kernel.event_subscriber"/>
         </service>
         <service id="MuckiFacilityPlugin\Subscriber\BackupCommandSubscriber">
             <argument type="service" id="MuckiFacilityPlugin\Services\BackupCommandExecutor"/>
@@ -364,6 +431,11 @@
         <service id="MuckiFacilityPlugin\MessageQueue\Handler\UpdateRepositoryStatsHandler">
             <argument type="service" id="Psr\Log\LoggerInterface"/>
             <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryStats"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+        <service id="MuckiFacilityPlugin\MessageQueue\Handler\MirrorRepositoryHandler">
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\RepositoryMirror"/>
             <tag name="messenger.message_handler"/>
         </service>
         <service id="MuckiFacilityPlugin\MessageQueue\Handler\TakeoverRepositoryCheckHandler">

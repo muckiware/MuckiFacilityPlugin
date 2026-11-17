@@ -20,12 +20,12 @@ Bug fixt, der auch andere Nutzer des Plugins betrifft, bumpt Version und `CHANGE
 
 | | |
 |---|---|
-| Composer-Paket | `muckiware/facility-plugin`, Version `v0.10.0` |
+| Composer-Paket | `muckiware/facility-plugin`, Version `v0.9.0` |
 | Plugin-Klasse | `MuckiFacilityPlugin\MuckiFacilityPlugin` |
 | Shopware im Projekt | `shopware/core` **v6.7.14.0** (Arbeitsprojekt `sw67`; das Repo liegt ggf. in mehreren Shops) |
-| Von Plugin unterstuetzt | Shopware 6.6.x + 6.7.x, PHP 8.2–8.4, restic >= 0.15 |
+| Von Plugin unterstuetzt | Shopware 6.6.x + 6.7.x, PHP 8.3–8.5, restic >= 0.15 |
 | CI-Matrix | PHP 8.2, MySQL 8.0, Shopware v6.6.9.0 (`.github/workflows/main.yml`) |
-| Runtime-Deps | `muckiware/restic ^1.6`, `spatie/db-dumper ^3.7`, `gabrielelana/byte-units ^0.5` |
+| Runtime-Deps | `muckiware/restic ^1.6`, `spatie/db-dumper ^3.7`, `gabrielelana/byte-units ^0.5`, `aws/aws-sdk-php ^3.369` |
 | Git-Stand | Branch `main` (tracked `origin/main`), letzter Commit `8077d42` |
 
 Es gibt **keine** Storefront-Integration (Controller/Templates/JS) — nur API-Routes, Admin-Modul
@@ -51,6 +51,29 @@ ein Cronjob auch ohne laufenden Messenger-Worker funktioniert.
 
 Zwei Factory-Patterns tragen die ganze Fachlogik — bei neuen Backup- oder Cleanup-Typen sind
 immer drei Stellen zu aendern: Enum + Factory + Runner.
+
+### S3-Spiegelung
+`Services\RepositoryMirror::mirror($repositoryId, $triggerSource, $checkId, $force)` spiegelt das lokale
+restic-Repository in einen S3-Bucket (Hilfsklassen in `Services\Mirror\`: `MirrorPlanner`,
+`LocalRepositoryScanner`, `MirrorKeyRules`, `MirrorTargetValidator`, `S3ClientFactory`, `ErrorSanitizer`).
+Trigger: `Services\Backup::createBackup()` dispatcht nach dem Check-Item (`dispatchMirror()`) die
+`MirrorRepositoryMessage`, nur wenn `mirror_s3_connection_id` gesetzt ist; ein Fehler beim Dispatch
+bricht das Backup nie ab. Zweiter Weg: CLI `muckiware:repository:upload` (synchron). Das erste Spiegeln
+eines grossen Repositories braucht evtl. mehrere Laeufe/Stunden und einen laufenden Messenger-Worker.
+Ohne gesunden letzten Check wird uebersprungen (ausser `--force`). **Check-Gate:** Trigger `backup`
+(`RepositoryMirror::TRIGGER_BACKUP`) ohne Check-Id wird immer uebersprungen, nie Fallback auf einen
+aelteren (gruenen) Check; nur CLI ohne Check-Id nimmt den neuesten Check. Wirft `restic check` beim
+Backup (`Services\Backup::checkBackup()`), speichert `createCheckItem()` einen roten Check
+(`check failed: <sanitized>`, nie `CheckStatus::isHealthy()`) und gibt dessen Id an die Mirror-Message. Jeder Lauf schreibt einen Eintrag in
+`muwa_backup_repository_uploads` und dispatcht `RepositoryUploadSucceededEvent` / `RepositoryUploadFailedEvent`
+(Flow-Builder-Trigger `mucki_facility.repository_upload.succeeded|failed`).
+
+**Loeschschutz.** `RepositoryMirror` ist die einzige Stelle, die remote loescht. Es werden nur Keys des
+restic-Layouts (`data/`, `index/`, `keys/`, `snapshots/`, `MirrorKeyRules::isManaged()`) geloescht, `config`
+nie. Abbruch ohne Remote-Aenderung bei lokalen restic-Locks (vor Upload und vor der Delete-Phase), bei
+abweichender Remote-`config` und bei fehlenden lokalen Daten. Geloescht wird nur, wenn die Remote-`config`
+zu Beginn des Laufs existierte (und passte) — der erste Lauf in ein Ziel laedt nur hoch. Diese
+Schutzmechanismen nie abschwaechen.
 
 ### Backup-Pfad
 `BackupTypes`-Enum (`src/Core/BackupTypes.php`) → `BackupRunnerFactory` → Runner:
@@ -197,6 +220,9 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 | `muwa_backup_repository_snapshots` | gespiegelte restic-Snapshot-Liste (snapshotId, shortId, paths, hostname, size) | n:1 Repository |
 | `muwa_backup_repository_stats` | Historie der Repository-Statistik je Backup-Lauf (Rohwerte in Bytes/Anzahl) | n:1 Repository |
 | `muwa_database_connection` | Eigene Datenbankverbindung fuer das DB-Backup (`name`, `type`, `host`, `port`, `database_name`, `username`, `password`, `password_source`, `custom_fields`), Migration `Migration1794470400` | 1:n Backup-Repositories |
+| `muwa_s3_connection` | S3-Verbindung (`name`, `provider` aws/minio/ceph/other, `endpoint`, `region`, `access_key_id`, `secret_access_key`, `secret_source`, `custom_fields`), Migration `Migration1794830400` | 1:n Backup-Repositories (`ON DELETE RESTRICT`) |
+| `muwa_backup_repository_uploads` | Historie der Spiegel-Laeufe (`status`, `trigger_source`, `bucket`, `prefix`, `s3_connection_name`, Zeiten, `files_uploaded/deleted/unchanged`, `bytes_uploaded`, `message`) | n:1 Repository (`ON DELETE CASCADE`) |
+| `muwa_backup_repository.mirror_s3_connection_id` / `mirror_s3_bucket` / `mirror_s3_prefix` | Spiegelziel je Repository, NULL = keine Spiegelung | n:1 S3-Verbindung |
 
 `repository_password` traegt `removeFlag(ApiAware::class)` — das Passwort darf nie ueber die
 Admin-API rausgehen. Bei Aenderungen an der Definition darauf achten. Gleiches gilt fuer `password` /
@@ -205,6 +231,12 @@ Admin-API rausgehen. Bei Aenderungen an der Definition darauf achten. Gleiches g
 `WriteProtected(SYSTEM_SCOPE)` und werden nur ueber `Services\Content\DatabaseConnectionRepository`
 im System-Scope geschrieben — sonst koennte ein Nutzer mit `update`-Recht die Verbindung per
 generischer Entity-API auf einen fremden Host umbiegen und bekaeme dort das gespeicherte Passwort.
+
+Alle Felder von `muwa_s3_connection` sowie die drei `mirror_s3_*`-Spalten sind `WriteProtected(SYSTEM_SCOPE)`:
+Geschrieben wird nur ueber `S3ConnectionController::save` bzw. `BackupRepositoryMirrorController::update`.
+Grund: Die Spiegelung loescht remote; sonst koennte ein Nutzer mit `update`-Recht per Entity-API das Ziel auf einen
+fremden Bucket umbiegen und die gespeicherten Zugangsdaten dorthin schicken (analog `muwa_database_connection`).
+`secret_access_key` / `secret_source` sind nie `ApiAware`.
 
 Plain-PHP-Structs (kein DAL) in `src/Entity/`: `BackupRepositorySettings` (das zentrale DTO, wird
 von `CreateBackupMessage` geerbt), `BackupPathEntity`, `ForgetTypes`, `RepositoryInitInputs`,
@@ -230,9 +262,15 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `GET /api/_action/muwa/restore/download` | `RestoreDirectoryController::download` | Browser-Download, **`auth_required: false`**, abgesichert nur ueber das Token |
 | `POST /api/_action/muwa/database-connection/save` | `DatabaseConnectionController::save` | Datenbankverbindungen-Tab, ACL `muwa_database_connection:update`, Neuanlage zusaetzlich `muwa_database_connection:create` (im Controller geprueft) |
 | `POST /api/_action/muwa/database-connection/test` | `DatabaseConnectionController::testConnection` | Button "Verbindung pruefen", ACL `muwa_database_connection:update`; ungueltige Felder 400 `MUWA_INVALID_DATABASE_CONNECTION`; Passwortprobleme (fehlt, Zeilenumbruch, Ziel geaendert ohne Passwort) und Verbindungsfehler HTTP 200 mit `success=false` |
+| `POST /api/_action/muwa/s3-connection/save` | `S3ConnectionController::save` | S3-Verbindungen-Tab, ACL `muwa_s3_connection:update` (Neuanlage zusaetzlich `:create`, im Controller geprueft); ungueltige Felder 400 `MUWA_INVALID_S3_CONNECTION`, fehlendes Recht `MUWA_MISSING_PRIVILEGE` |
+| `POST /api/_action/muwa/s3-connection/test` | `S3ConnectionController::testConnection` | Button "Verbindung pruefen", ACL `muwa_s3_connection:update`; Verbindungsfehler HTTP 200 mit `success=false` |
+| `PUT /api/_action/muwa/backup/{backupRepositoryId}/mirror` | `BackupRepositoryMirrorController::update` | Detail-Seite, Abschnitt S3-Spiegelung, ACL `muwa_backup_repository:update`; 400 `MUWA_INVALID_ID`, `MUWA_INVALID_MIRROR_TARGET`, `MUWA_MIRROR_TARGET_OVERLAP` (Ueberschneidung mit Ziel eines anderen Repositories), 404 unbekanntes Repository, 204 bei Erfolg; einziger Schreibweg der `mirror_s3_*`-Felder |
 | `GET /api/_action/muwa/restic/info` | `ResticController::getInfo` | Plugin-Konfiguration, Komponente `muwa-restic-binary-info`, ACL `system_config:read` |
 | `POST /api/_action/muwa/backup/repository/takeover` | `TakeoverBackupRepositoryController::takeover` | Modal `muwa-backup-repository-add-modal` (Liste, "Repository hinzufuegen"), ACL `muwa_backup_repository:create`; Fehler 400 `{errors:[{code,detail,meta}]}` mit `MUWA_TAKEOVER_*` (u.a. `MUWA_TAKEOVER_INVALID_INPUT` fuer ungueltige Id; `MUWA_TAKEOVER_SAVE_FAILED` bei DB-Fehlern; `MUWA_TAKEOVER_ACCESS_FAILED` traegt die restic-Ausgabe in `meta.detail`); `MUWA_INVALID_ID` kommt nur von path-suggestions |
 | `POST /api/_action/muwa/backup/repository/path-suggestions` | `TakeoverBackupRepositoryController::pathSuggestions` | Detail-Seite, Tab Konfiguration (Pfad-Vorschlaege), ACL `muwa_backup_repository:update` |
+
+Die Rolle `muwa_backup_repository.viewer` enthaelt auch `muwa_backup_repository_uploads:read` (Upload-Historie,
+Dashboard-Spalte S3) und `muwa_s3_connection:read`.
 
 Die Rollen fuer `muwa_database_connection:*` (read/update/create/delete) haengen in den bestehenden
 Rollen von `muwa_backup_repository`, es gibt keine eigene Rollengruppe.
@@ -271,6 +309,7 @@ Die beiden `filesystem`-Routes antworten bei ungueltiger Eingabe mit 400 `MUWA_I
 | `muckiware:repository:stats` | `Commands\RepositoryStats` | `backupRepositoryId` |
 | `muckiware:backup:forget` | `Commands\ManageForget` | `backupRepositoryId` |
 | `muckiware:backup:restore` | `Commands\RestoreSnapshot` | `backupRepositoryId`, `snapshotId` |
+| `muckiware:repository:upload` | `Commands\RepositoryUpload` | `backupRepositoryId`, Option `--force` (spiegeln trotz ungesundem letzten Check); synchron, bricht ab solange ein Backup laeuft (Lock `mucki-facility.backup`) |
 | `muckiware:db:dump` | `Commands\Dump` | `backupType` (BackupTypes-Enum) |
 | `muckiware:table:cleanup` | `Commands\DbTableCleanup` | `tableName` (`cart`, `log_entry`) |
 
@@ -282,7 +321,7 @@ Alle Commands sind in `services.xml` mit `console.command` registriert, nicht pe
 `CreateBackupMessage` und `RestoreSnapshotMessage` erben beide `BackupRepositorySettings` und
 implementieren `AsyncMessageInterface`. Handler: `CreateBackupHandler`, `RestoreSnapshotHandler`
 (beide `#[AsMessageHandler]` **und** zusaetzlich per `messenger.message_handler`-Tag in
-`services.xml` — doppelte Registrierung, siehe Auffaelligkeiten).
+`services.xml` — doppelte Registrierung).
 
 Passwoerter werden **nicht** in die Message serialisiert: der Handler laedt das Repository frisch
 und setzt das Passwort erst dann (`setRepositoryPassword()`). Dieses Muster beibehalten.
@@ -290,8 +329,13 @@ und setzt das Passwort erst dann (`setRepositoryPassword()`). Dieses Muster beib
 `UpdateRepositoryStatsMessage` / `UpdateRepositoryStatsHandler` sind der dritte Trigger fuer
 `Services\RepositoryStats::collectAndSave()`, dispatcht von `ManageController::removeSnapshots()`.
 Die Message erbt **nicht** von `BackupRepositorySettings` — sie traegt nur die
-`backupRepositoryId` — und ist damit von der doppelten `CreateBackupMessage`-Typisierung
-(Auffaelligkeit 1) nicht betroffen.
+`backupRepositoryId` —.
+
+`MirrorRepositoryMessage` / `MirrorRepositoryHandler` (`#[AsMessageHandler]`, ebenfalls Handler-Tag in
+`services.xml`) fuehren die S3-Spiegelung aus. Die Message traegt nur Repository-Id und Check-Id, nie Secrets.
+Der Handler wirft nie (Fehler werden geloggt), damit der Messenger nicht redelivert. Parallelitaet verhindert
+der Symfony-Lock `mucki-facility.mirror.<repositoryId>` (`RepositoryMirror::LOCK_PREFIX`, TTL 3600 s, wird
+waehrend des Laufs refreshed); ist er belegt, wird still uebersprungen.
 
 `TakeoverRepositoryCheckMessage` / `TakeoverRepositoryCheckHandler` werden nach einer Repository-
 Uebernahme (`Services\RepositoryTakeover`) dispatcht: `restic check` (ohne `--read-data`,
@@ -327,7 +371,9 @@ den neuesten `muwa_backup_repository_stats`-Eintrag (Association mit `setLimit(1
 Dashboard. Eingehaengt per `Component.override('sw-dashboard-index')` in den Block
 `sw_dashboard_index_content_info_grid` (in 6.6 und 6.7 identisch). Das Widget blendet sich selbst
 aus, wenn `showDashboardWidget` nicht gesetzt ist oder die ACL-Rolle
-`muwa_backup_repository.viewer` fehlt. Check-Status-Faerbung: `no errors were found` → success,
+`muwa_backup_repository.viewer` fehlt. Spalte S3: Status + Datum des neuesten Uploads, Tooltip = letzter
+Erfolg (eine kleine Suche je gespiegeltem Repository, max. 25), Warnung wenn der neueste Upload aelter als der
+neueste Check ist. Check-Status-Faerbung: enthaelt (case-insensitive) `no errors were found` → success,
 `error|fatal|fail` → danger, sonst info. Achtung: `system:config:set` ohne `--json` speichert den
 String `"true"` — das Widget akzeptiert beides.
 
@@ -389,11 +435,8 @@ Upstream-Bugs, sie gehoeren in einen Issue/PR gegen `muckiware/facility-plugin`.
 
 **Funktionale Bugs**
 
-1. `RestoreSnapshotController::process()` dispatcht `CreateBackupMessage` statt
-   `RestoreSnapshotMessage`. Da `CreateBackupHandler` und `RestoreSnapshotHandler` beide auf
-   `CreateBackupMessage` typisiert sind, laufen bei **jedem** Backup und **jedem** Restore ueber
-   die Admin-Oberflaeche beide Handler. `RestoreSnapshotMessage` wird nirgends verwendet
-   (`grep` bestaetigt: nur die Klassendefinition).
+1. ~~`RestoreSnapshotController::process()` dispatcht `CreateBackupMessage` statt `RestoreSnapshotMessage`~~ —
+   **behoben**: der Controller dispatcht `RestoreSnapshotMessage`, jeder Handler laeuft nur noch fuer seine Message.
 2. `Settings::getLastValidDateForLogEntry()` ruft `getNumberOfValidDaysInCart()` auf, ignoriert
    also `numberOfValidDaysInLogEntry` komplett.
 
@@ -507,6 +550,13 @@ muckiware/facility-plugin 6.8` laufen lassen — dort fallen die `sw-*`-Wrapper 
 - Repository-Passwoerter nie loggen, nie in Messages serialisieren, nie `ApiAware` machen. Gleiches
   fuer Datenbank-Passwoerter: nie in Logs, Exception-Meldungen, API-Antworten oder Prozess-Argumenten.
   Einschraenkungen fuer `env` (`MUWA_DB_`) und `file` (`var/secrets/`) nicht aufweichen.
+- S3-Secrets (`secret_access_key`): nie loggen, nie in Exceptions, API-Antworten, Messages, Historie oder
+  Event-Daten (`ErrorSanitizer` nutzen). Einschraenkungen fuer `env` (`MUWA_S3_`) und `file` (`var/secrets/`)
+  nicht aufweichen; `plain` gibt es nicht.
+- S3-Loeschschutz (siehe Architektur) nie abschwaechen. `RepositoryMirror` ist die einzige Stelle, die
+  remote loescht; keine zweite Loesch-Stelle anlegen. Neue Mirror-Felder `WriteProtected(SYSTEM_SCOPE)` halten.
+- Bekannte Falle: der erste Admin-Build nach dem Hinzufuegen von Entities kann
+  `bin/console cache:clear -e prod --no-warmup` brauchen.
 - Neuer Datenbanktyp = Subscriber auf `ResolveDatabaseConnectionEvent` + `DatabaseDumperInterface`,
   nicht die Runner anfassen. Die Table-Cleanup-Runner bleiben auf der Systemverbindung.
 - Cleanup-Code nur gegen eine Wegwerf-Datenbank testen. Der Tabellentausch selbst ist seit dem

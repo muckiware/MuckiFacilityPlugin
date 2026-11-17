@@ -1,0 +1,40 @@
+{% block muwa_s3_connection_list %}
+    <div class="muwa-s3-connection-list">
+        <sw-entity-listing
+            v-if="s3Connections && s3Connections.total > 0"
+            :is-loading="isLoading"
+            :items="s3Connections"
+            :repository="repository"
+            :columns="columns"
+            :show-actions="true"
+            :show-selection="false"
+            :show-settings="false"
+            :allow-inline-edit="false"
+            detail-route="muwa.backup.repository.s3ConnectionDetail"
+            identifier="muwa-s3-connection-list"
+        >
+            <template #column-provider="{ item }">
+                {{ getProviderLabel(item.provider) }}
+            </template>
+
+            {% block muwa_s3_connection_list_grid_columns_actions %}
+                <template #delete-action="{ item }">
+                    <sw-context-menu-item
+                        variant="danger"
+                        :disabled="!acl.can('muwa_backup_repository.deleter')"
+                        @click="onDelete(item)"
+                    >
+                        {{ $t('global.default.delete') }}
+                    </sw-context-menu-item>
+                </template>
+            {% endblock %}
+        </sw-entity-listing>
+
+        <sw-empty-state
+            v-else-if="s3Connections && !isLoading"
+            :title="$t('muwa-backup-repository.s3Connection.emptyState')"
+            :absolute="false"
+            icon="regular-cloud"
+        />
+    </div>
+{% endblock %}

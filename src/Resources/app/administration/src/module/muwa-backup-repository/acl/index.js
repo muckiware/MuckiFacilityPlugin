@@ -13,7 +13,9 @@ Shopware.Service('privileges').addPrivilegeMappingEntry({
                 'muwa_backup_repository_checks:read',
                 'muwa_backup_repository_snapshots:read',
                 'muwa_backup_repository_stats:read',
+                'muwa_backup_repository_uploads:read',
                 'muwa_database_connection:read',
+                'muwa_s3_connection:read',
             ],
             dependencies: [],
         },
@@ -27,6 +29,7 @@ Shopware.Service('privileges').addPrivilegeMappingEntry({
                 'muwa_backup_repository_stats:create',
                 'muwa_backup_repository_stats:delete',
                 'muwa_database_connection:update',
+                'muwa_s3_connection:update',
             ],
             dependencies: [
                 'muwa_backup_repository.viewer',
@@ -36,6 +39,7 @@ Shopware.Service('privileges').addPrivilegeMappingEntry({
             privileges: [
                 'muwa_backup_repository:create',
                 'muwa_database_connection:create',
+                'muwa_s3_connection:create',
             ],
             dependencies: [
                 'muwa_backup_repository.viewer',
@@ -46,6 +50,7 @@ Shopware.Service('privileges').addPrivilegeMappingEntry({
             privileges: [
                 'muwa_backup_repository:delete',
                 'muwa_database_connection:delete',
+                'muwa_s3_connection:delete',
             ],
             dependencies: [
                 'muwa_backup_repository.viewer',

@@ -1,0 +1,21 @@
+{% block muwa_s3_connection_select %}
+    <div class="muwa-s3-connection-select">
+        {# From 6.7 on sw-select-field renders mt-select, which binds via modelValue. #}
+        <sw-select-field
+            v-if="isV6700"
+            v-model="selectedValue"
+            :options="connectionOptions"
+            :disabled="disabled"
+            :label="$t('muwa-backup-repository.s3Connection.selectLabel')"
+            :help-text="$t('muwa-backup-repository.s3Connection.selectHelpText')"
+        />
+        <sw-select-field
+            v-if="isV6600 && !isV6700"
+            v-model:value="selectedValue"
+            :options="connectionOptions"
+            :disabled="disabled"
+            :label="$t('muwa-backup-repository.s3Connection.selectLabel')"
+            :help-text="$t('muwa-backup-repository.s3Connection.selectHelpText')"
+        />
+    </div>
+{% endblock %}

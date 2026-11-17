@@ -37,8 +37,10 @@ use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupRepository\Uploads\BackupRepositoryUploadsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
 use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition;
+use MuckiFacilityPlugin\Core\Content\S3Connection\S3ConnectionDefinition;
 
 class BackupRepositoryDefinition extends EntityDefinition
 {
@@ -97,6 +99,30 @@ class BackupRepositoryDefinition extends EntityDefinition
                 'id',
                 false
             )),
+
+            // S3 mirror target. Only writable through the dedicated mirror route (system scope):
+            // the mirror deletes remotely, so a freely writable bucket/prefix would let anyone with
+            // update rights point the stored credentials at a foreign bucket.
+            (new FkField('mirror_s3_connection_id', 'mirrorS3ConnectionId', S3ConnectionDefinition::class))
+                ->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new StringField('mirror_s3_bucket', 'mirrorS3Bucket'))
+                ->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            (new StringField('mirror_s3_prefix', 'mirrorS3Prefix', 1024))
+                ->addFlags(new AllowEmptyString(), new WriteProtected(Context::SYSTEM_SCOPE)),
+
+            (new ManyToOneAssociationField(
+                'mirrorS3Connection',
+                'mirror_s3_connection_id',
+                S3ConnectionDefinition::class,
+                'id',
+                false
+            )),
+
+            (new OneToManyAssociationField(
+                'uploads',
+                BackupRepositoryUploadsDefinition::class,
+                'backup_repository_id'
+            ))->addFlags(new CascadeDelete()),
 
             (new OneToManyAssociationField(
                 'backupRepositoryChecks',

@@ -254,6 +254,42 @@
                     </sw-card>
 
                     <sw-card
+                        positionIdentifier="muwaBackupRepositoryMirror"
+                        v-if="backupRepository && tab === 'backupRepositoryConfig'"
+                        :title="$tc('muwa-backup-repository.mirror.cardTitle')"
+                    >
+                        <muwa-s3-connection-select
+                            v-model:value="mirrorForm.s3ConnectionId"
+                            :disabled="!acl.can('muwa_backup_repository.editor')"
+                        />
+                        <template v-if="mirrorForm.s3ConnectionId">
+                            <sw-text-field
+                                v-model:value="mirrorForm.bucket"
+                                :label="$tc('muwa-backup-repository.mirror.bucketLabel')"
+                                maxlength="255"
+                                required
+                                :disabled="!acl.can('muwa_backup_repository.editor')"
+                            />
+                            <sw-text-field
+                                v-model:value="mirrorForm.prefix"
+                                :label="$tc('muwa-backup-repository.mirror.prefixLabel')"
+                                :help-text="$tc('muwa-backup-repository.mirror.prefixHelpText')"
+                                maxlength="1024"
+                                :disabled="!acl.can('muwa_backup_repository.editor')"
+                            />
+                        </template>
+                        <sw-button-process
+                            v-if="acl.can('muwa_backup_repository.editor')"
+                            :isLoading="isMirrorSaving"
+                            :processSuccess="false"
+                            variant="primary"
+                            @click="onMirrorSave"
+                        >
+                            {{ $tc('muwa-backup-repository.mirror.saveButton') }}
+                        </sw-button-process>
+                    </sw-card>
+
+                    <sw-card
                         positionIdentifier="muwaBackupRepositoryCommands"
                         v-if="backupRepository && tab === 'backupRepositoryConfig' && acl.can('muwa_backup_repository:execute_commands')"
                         :title="$tc('muwa-backup-repository.commands.title')"
@@ -720,6 +756,56 @@
                                 :title="$tc('muwa-backup-repository.detail.statsHistoryEmptyTitle')"
                             />
                         {% endblock %}
+                    </sw-card>
+
+                    <sw-card
+                        positionIdentifier="muwaBackupRepositoryUploadHistory"
+                        v-if="backupRepository && tab === 'backupRepositoryStats' && (isMirrorConfigured || backupRepositoryUploads.length)"
+                        :title="$tc('muwa-backup-repository.mirror.historyTitle')"
+                        :isLoading="isUploadsLoading"
+                        :large="true"
+                    >
+                        <div v-if="lastSucceededUpload || showFirstRunNotice" class="muwa-backup-repository-mirror__summary">
+                            <p v-if="lastSucceededUpload">
+                                {{ $t('muwa-backup-repository.mirror.lastSucceeded', { date: dateFilter(lastSucceededUpload.finishedAt || lastSucceededUpload.createdAt, { hour: '2-digit', minute: '2-digit' }) }) }}
+                            </p>
+                            <p v-if="showFirstRunNotice" class="muwa-backup-repository-mirror__notice">
+                                {{ $t('muwa-backup-repository.mirror.firstRunNotice') }}
+                            </p>
+                        </div>
+                        <template v-if="backupRepositoryUploads.length" #grid>
+                            <sw-data-grid
+                                :showSelection="false"
+                                :showActions="false"
+                                :showSettings="false"
+                                :dataSource="backupRepositoryUploads"
+                                :columns="uploadsColumns"
+                                :plain-appearance="true"
+                            >
+                                <template #column-createdAt="{ item }">
+                                    {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit' }) }}
+                                </template>
+                                <template #column-status="{ item }">
+                                    <sw-label :variant="mirrorStatusVariant(item.status)" appearance="pill">
+                                        {{ $t('muwa-backup-repository.mirror.status.' + item.status) }}
+                                    </sw-label>
+                                </template>
+                                <template #column-filesUploaded="{ item }">
+                                    {{ formatCount(item.filesUploaded) }}
+                                </template>
+                                <template #column-filesDeleted="{ item }">
+                                    {{ formatCount(item.filesDeleted) }}
+                                </template>
+                                <template #column-bytesUploaded="{ item }">
+                                    {{ formatBytes(item.bytesUploaded) }}
+                                </template>
+                            </sw-data-grid>
+                        </template>
+                        <sw-empty-state
+                            v-if="!backupRepositoryUploads.length && !isUploadsLoading"
+                            :absolute="false"
+                            :title="$tc('muwa-backup-repository.mirror.historyEmpty')"
+                        />
                     </sw-card>
 
                     {# Tab Snapshots #}

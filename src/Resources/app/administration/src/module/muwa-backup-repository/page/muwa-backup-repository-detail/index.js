@@ -100,7 +100,20 @@ Component.register('muwa-backup-repository-detail', {
             pathSuggestionsError: null,
             pathSuggestionsTruncated: false,
             pathSuggestionsRequested: false,
-            requestPathSuggestions: '/_action/muwa/backup/repository/path-suggestions'
+            requestPathSuggestions: '/_action/muwa/backup/repository/path-suggestions',
+            // The mirror target is WriteProtected on the DAL side and saved through its own route.
+            // The form edits this local copy, never the entity fields, so the generic
+            // repository.save() changeset can not contain mirrorS3* fields.
+            mirrorForm: {
+                s3ConnectionId: null,
+                bucket: '',
+                prefix: '',
+            },
+            isMirrorSaving: false,
+            requestMirror: '/_action/muwa/backup',
+            backupRepositoryUploads: [],
+            lastSucceededUpload: null,
+            isUploadsLoading: false,
         };
     },
 
@@ -144,6 +157,29 @@ Component.register('muwa-backup-repository-detail', {
 
         backupRepositorySnapshotsRepository() {
             return this.repositoryFactory.create('muwa_backup_repository_snapshots');
+        },
+
+        backupRepositoryUploadsRepository() {
+            return this.repositoryFactory.create('muwa_backup_repository_uploads');
+        },
+
+        isMirrorConfigured() {
+            return Boolean(this.backupRepository.mirrorS3ConnectionId);
+        },
+
+        showFirstRunNotice() {
+            return this.isMirrorConfigured && !this.isUploadsLoading && this.lastSucceededUpload === null;
+        },
+
+        uploadsColumns() {
+            return [
+                { property: 'createdAt', label: 'muwa-backup-repository.mirror.columns.time', allowResize: true, primary: true },
+                { property: 'status', label: 'muwa-backup-repository.mirror.columns.status', allowResize: true },
+                { property: 'filesUploaded', label: 'muwa-backup-repository.mirror.columns.filesUploaded', allowResize: true, align: 'right' },
+                { property: 'filesDeleted', label: 'muwa-backup-repository.mirror.columns.filesDeleted', allowResize: true, align: 'right' },
+                { property: 'bytesUploaded', label: 'muwa-backup-repository.mirror.columns.bytesUploaded', allowResize: true, align: 'right' },
+                { property: 'message', label: 'muwa-backup-repository.mirror.columns.message', allowResize: true },
+            ];
         },
 
         backupRepositoryStatsRepository() {
@@ -556,6 +592,7 @@ Component.register('muwa-backup-repository-detail', {
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
             this.fetchBackupRepositoryStats();
+            this.fetchUploads();
         },
 
         getBackupRepository() {
@@ -563,6 +600,7 @@ Component.register('muwa-backup-repository-detail', {
             this.repository.get(this.$route.params.id, Shopware.Context.api, this.criteria).then((entity) => {
 
                 this.backupRepository = entity;
+                this.syncMirrorForm();
                 if (entity.schedule) { this.schedule = entity.schedule; }
                 this.maybeLoadPathSuggestions();
                 this.isLoading = false;
@@ -674,6 +712,7 @@ Component.register('muwa-backup-repository-detail', {
             this.fetchBackupRepositoryChecks();
             this.fetchBackupRepositorySnapshots();
             this.fetchBackupRepositoryStats();
+            this.fetchUploads();
             this.$refs.restoreDirectoryTree?.refresh();
         },
 
@@ -756,6 +795,72 @@ Component.register('muwa-backup-repository-detail', {
                 hookConfiguration,
                 { headers: this.getApiHeader() },
             );
+        },
+
+        syncMirrorForm() {
+            this.mirrorForm = {
+                s3ConnectionId: this.backupRepository.mirrorS3ConnectionId ?? null,
+                bucket: this.backupRepository.mirrorS3Bucket ?? '',
+                prefix: this.backupRepository.mirrorS3Prefix ?? '',
+            };
+        },
+
+        onMirrorSave() {
+            this.isMirrorSaving = true;
+            const noMirror = this.mirrorForm.s3ConnectionId === null;
+            const payload = {
+                s3ConnectionId: this.mirrorForm.s3ConnectionId,
+                bucket: noMirror ? null : this.mirrorForm.bucket,
+                prefix: noMirror ? null : this.mirrorForm.prefix,
+            };
+
+            this.httpClient.put(
+                `${this.requestMirror}/${this.backupRepository.id}/mirror`,
+                payload,
+                { headers: this.getApiHeader() },
+            ).then(() => {
+                this.isMirrorSaving = false;
+                this.createNotificationSuccess({ message: this.$t('muwa-backup-repository.mirror.saveSuccess') });
+                this.getBackupRepository();
+                this.fetchUploads();
+            }).catch((exception) => {
+                this.isMirrorSaving = false;
+                this.createNotificationError({
+                    title: this.$t('muwa-backup-repository.mirror.saveError'),
+                    message: exception.response?.data?.errors?.[0]?.detail || exception.message,
+                });
+            });
+        },
+
+        fetchUploads() {
+            const criteria = new Criteria(1, 10);
+            criteria.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
+            criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
+            criteria.setLimit(10);
+
+            const lastSucceeded = new Criteria(1, 1);
+            lastSucceeded.addFilter(Criteria.equals('backupRepositoryId', this.$route.params.id));
+            lastSucceeded.addFilter(Criteria.equals('status', 'succeeded'));
+            lastSucceeded.addSorting(Criteria.sort('createdAt', 'DESC'));
+            lastSucceeded.setLimit(1);
+
+            this.isUploadsLoading = true;
+            return Promise.all([
+                this.backupRepositoryUploadsRepository.search(criteria, Context.api),
+                this.backupRepositoryUploadsRepository.search(lastSucceeded, Context.api),
+            ]).then(([uploads, succeeded]) => {
+                this.backupRepositoryUploads = uploads;
+                this.lastSucceededUpload = succeeded.first?.() ?? succeeded[0] ?? null;
+            }).catch(() => {
+                this.backupRepositoryUploads = [];
+                this.lastSucceededUpload = null;
+            }).finally(() => {
+                this.isUploadsLoading = false;
+            });
+        },
+
+        mirrorStatusVariant(status) {
+            return { succeeded: 'success', failed: 'danger' }[status] ?? 'info';
         },
 
         onScheduleSave() {

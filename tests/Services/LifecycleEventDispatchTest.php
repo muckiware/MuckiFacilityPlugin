@@ -29,6 +29,7 @@ use MuckiRestic\Entity\Result\ResultEntity;
 use MuckiRestic\Library\Manage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -70,7 +71,8 @@ class LifecycleEventDispatchTest extends TestCase
             $this->createMock(ManageRepository::class),
             $this->createMock(CliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $dispatcher
+            $dispatcher,
+            $this->createMock(MessageBusInterface::class)
         );
 
         $service->createBackup($settings, false);
@@ -121,7 +123,8 @@ class LifecycleEventDispatchTest extends TestCase
             $this->createMock(ManageRepository::class),
             $this->createMock(CliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $dispatcher
+            $dispatcher,
+            $this->createMock(MessageBusInterface::class)
         );
 
         $service->createDump($settings);
@@ -161,8 +164,10 @@ class LifecycleEventDispatchTest extends TestCase
         $checks->expects(static::once())
             ->method('saveNewCheck')
             ->with($repositoryId, 'no errors were found')
-            ->willReturnCallback(static function () use (&$sequence): void {
+            ->willReturnCallback(static function () use (&$sequence): string {
                 $sequence[] = 'saved';
+
+                return 'cccccccccccccccccccccccccccccccc';
             });
 
         $dispatcher = new EventDispatcher();
@@ -182,7 +187,8 @@ class LifecycleEventDispatchTest extends TestCase
             $this->createMock(ManageRepository::class),
             $this->createMock(CliOutput::class),
             $this->createMock(RepositoryStats::class),
-            $dispatcher
+            $dispatcher,
+            $this->createMock(MessageBusInterface::class)
         );
 
         $service->createCheckItem($settings);

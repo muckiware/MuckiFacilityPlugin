@@ -11,12 +11,14 @@ use Symfony\Component\Routing\Attribute\Route;
 
 use MuckiFacilityPlugin\Controller\BackupController;
 use MuckiFacilityPlugin\Controller\BackupRepositoryHooksController;
+use MuckiFacilityPlugin\Controller\BackupRepositoryMirrorController;
 use MuckiFacilityPlugin\Controller\BatchFileController;
 use MuckiFacilityPlugin\Controller\DatabaseConnectionController;
 use MuckiFacilityPlugin\Controller\FilesystemController;
 use MuckiFacilityPlugin\Controller\InitBackupRepositoryController;
 use MuckiFacilityPlugin\Controller\ManageController;
 use MuckiFacilityPlugin\Controller\ResticController;
+use MuckiFacilityPlugin\Controller\S3ConnectionController;
 use MuckiFacilityPlugin\Controller\RestoreDirectoryController;
 use MuckiFacilityPlugin\Controller\RestoreSnapshotController;
 use MuckiFacilityPlugin\Controller\ScheduleController;
@@ -107,6 +109,11 @@ class RouteAclTest extends TestCase
                 'update',
                 ['muwa_backup_repository:execute_commands'],
             ],
+            'backup repository mirror' => [
+                BackupRepositoryMirrorController::class,
+                'update',
+                ['muwa_backup_repository:update'],
+            ],
             'filesystem directories' => [
                 FilesystemController::class,
                 'listDirectories',
@@ -131,6 +138,16 @@ class RouteAclTest extends TestCase
                 DatabaseConnectionController::class,
                 'testConnection',
                 ['muwa_database_connection:update'],
+            ],
+            'S3 connection save' => [
+                S3ConnectionController::class,
+                'save',
+                ['muwa_s3_connection:update'],
+            ],
+            'S3 connection test' => [
+                S3ConnectionController::class,
+                'testConnection',
+                ['muwa_s3_connection:update'],
             ],
             'restic info' => [
                 ResticController::class,

@@ -185,6 +185,27 @@
                     </sw-card>
 
                     <sw-card
+                        positionIdentifier="muwaBackupRepositoryMirror"
+                        :title="$tc('muwa-backup-repository.mirror.cardTitle')"
+                    >
+                        <muwa-s3-connection-select v-model:value="mirrorForm.s3ConnectionId" />
+                        <template v-if="mirrorForm.s3ConnectionId">
+                            <sw-text-field
+                                v-model:value="mirrorForm.bucket"
+                                :label="$tc('muwa-backup-repository.mirror.bucketLabel')"
+                                maxlength="255"
+                                required
+                            />
+                            <sw-text-field
+                                v-model:value="mirrorForm.prefix"
+                                :label="$tc('muwa-backup-repository.mirror.prefixLabel')"
+                                :help-text="$tc('muwa-backup-repository.mirror.prefixHelpText')"
+                                maxlength="1024"
+                            />
+                        </template>
+                    </sw-card>
+
+                    <sw-card
                         positionIdentifier="muwaBackupRepositoryCommands"
                         v-if="backupRepository && acl.can('muwa_backup_repository:execute_commands')"
                         :title="$tc('muwa-backup-repository.commands.title')"

@@ -13,6 +13,8 @@ use MuckiFacilityPlugin\Core\Content\BackupRepository\BackupRepositoryDefinition
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Checks\BackupRepositoryChecksDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Snapshots\BackupRepositorySnapshotsDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupRepository\Stats\BackupRepositoryStatsDefinition;
+use MuckiFacilityPlugin\Core\Content\BackupRepository\Uploads\BackupRepositoryUploadsDefinition;
+use MuckiFacilityPlugin\Core\Content\S3Connection\S3ConnectionDefinition;
 use MuckiFacilityPlugin\Core\Content\BackupSchedule\BackupScheduleDefinition;
 use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionDefinition;
 use MuckiFacilityPlugin\Migration\Migration1794744000;
@@ -47,16 +49,18 @@ class MuckiFacilityPluginUninstallTest extends TestCase
         $dropPluginTables->setAccessible(true);
         $dropPluginTables->invoke($plugin);
 
-        self::assertCount(7, $executedStatements);
+        self::assertCount(9, $executedStatements);
 
         $expectedOrder = [
             Migration1794744000::TABLE,
             BackupScheduleDefinition::ENTITY_NAME,
+            BackupRepositoryUploadsDefinition::ENTITY_NAME,
             BackupRepositoryStatsDefinition::ENTITY_NAME,
             BackupRepositorySnapshotsDefinition::ENTITY_NAME,
             BackupRepositoryChecksDefinition::ENTITY_NAME,
             BackupRepositoryDefinition::ENTITY_NAME,
             DatabaseConnectionDefinition::ENTITY_NAME,
+            S3ConnectionDefinition::ENTITY_NAME,
         ];
 
         foreach ($expectedOrder as $index => $tableName) {
@@ -69,9 +73,9 @@ class MuckiFacilityPluginUninstallTest extends TestCase
         }
 
         self::assertStringContainsString(
-            '`'.DatabaseConnectionDefinition::ENTITY_NAME.'`',
+            '`'.S3ConnectionDefinition::ENTITY_NAME.'`',
             $executedStatements[array_key_last($executedStatements)],
-            'muwa_database_connection must be dropped last — muwa_backup_repository has a foreign key on it'
+            'muwa_s3_connection must be dropped last — muwa_backup_repository has a foreign key on it'
         );
     }
 
@@ -106,5 +110,34 @@ class MuckiFacilityPluginUninstallTest extends TestCase
         $conn = $find('muwa_database_connection');
         self::assertGreaterThanOrEqual(0, $repo);
         self::assertGreaterThan($repo, $conn);
+    }
+
+    public function testUploadsAreDroppedBeforeRepositoryAndS3ConnectionAfter(): void
+    {
+        $dropped = [];
+        $connection = $this->createMock(Connection::class);
+        $connection->method('executeStatement')
+            ->willReturnCallback(function (string $sql) use (&$dropped): int {
+                preg_match('/`([^`]+)`/', $sql, $m);
+                $dropped[] = $m[1];
+                return 0;
+            });
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->with(Connection::class)->willReturn($connection);
+
+        $plugin = new MuckiFacilityPlugin(true, __DIR__);
+        $plugin->setContainer($container);
+        $dropPluginTables = new \ReflectionMethod(MuckiFacilityPlugin::class, 'dropPluginTables');
+        $dropPluginTables->setAccessible(true);
+        $dropPluginTables->invoke($plugin);
+
+        self::assertLessThan(
+            array_search('muwa_backup_repository', $dropped, true),
+            array_search('muwa_backup_repository_uploads', $dropped, true)
+        );
+        self::assertLessThan(
+            array_search('muwa_s3_connection', $dropped, true),
+            array_search('muwa_backup_repository', $dropped, true)
+        );
     }
 }
