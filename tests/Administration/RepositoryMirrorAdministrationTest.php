@@ -101,6 +101,7 @@ final class RepositoryMirrorAdministrationTest extends TestCase
             'page/muwa-backup-repository-detail/muwa-backup-repository-detail.html.twig',
             'page/muwa-backup-repository-create/muwa-backup-repository-create.html.twig',
             'component/muwa-backup-status-dashboard-widget/muwa-backup-status-dashboard-widget.html.twig',
+            'component/muwa-s3-mirror-status-dashboard-widget/muwa-s3-mirror-status-dashboard-widget.html.twig',
         ] as $file) {
             // a <template #slot v-if> is no v-if node: a v-else(-if) right after it fails at runtime
             self::assertDoesNotMatchRegularExpression(
@@ -127,24 +128,15 @@ final class RepositoryMirrorAdministrationTest extends TestCase
         self::assertStringContainsString("this.\$router.push({ name: 'muwa.backup.repository.detail'", $script);
     }
 
-    public function testDashboardWidgetShowsMirrorStatusColumnConditionally(): void
+    public function testBackupStatusWidgetHasNoMirrorColumn(): void
     {
         $script = $this->read('component/muwa-backup-status-dashboard-widget/index.js');
         $template = $this->read('component/muwa-backup-status-dashboard-widget/muwa-backup-status-dashboard-widget.html.twig');
 
-        self::assertStringContainsString("criteria.getAssociation('uploads')", $script);
-        self::assertStringContainsString('.setLimit(1)', $script);
-        self::assertStringContainsString('mirrorS3ConnectionId', $script);
-        self::assertStringContainsString("property: 'mirrorStatus'", $script);
-        self::assertStringContainsString('hasMirror', $script);
-        self::assertStringContainsString('#column-mirrorStatus', $template);
-        self::assertStringContainsString('mirrorStatusVariant(item)', $template);
-        self::assertStringContainsString("succeeded: 'success'", $script);
-        self::assertStringContainsString("failed: 'danger'", $script);
-
-        $columns = strpos($script, 'statusColumns() {');
-        self::assertNotFalse($columns);
-        self::assertStringContainsString('showMirrorColumn', substr($script, $columns, 1500));
+        // the S3 status lives in its own card (muwa-s3-mirror-status-dashboard-widget)
+        self::assertStringNotContainsString("criteria.getAssociation('uploads')", $script);
+        self::assertStringNotContainsString("property: 'mirrorStatus'", $script);
+        self::assertStringNotContainsString('#column-mirrorStatus', $template);
     }
 
     public function testViewerRoleCanReadUploadHistoryAndS3Connections(): void
@@ -167,20 +159,6 @@ final class RepositoryMirrorAdministrationTest extends TestCase
             self::assertStringContainsString("'" . $privilege . "'", $viewer, $privilege);
         }
         self::assertSame(1, substr_count($acl, "'muwa_backup_repository_uploads:read'"));
-    }
-
-    public function testDashboardMirrorCellShowsDateAndLastSuccessTooltip(): void
-    {
-        $script = $this->read('component/muwa-backup-status-dashboard-widget/index.js');
-
-        self::assertStringContainsString('fetchLastSucceededUploads', $script);
-        self::assertStringContainsString("this.repositoryFactory.create('muwa_backup_repository_uploads')", $script);
-        self::assertStringContainsString("Criteria.equals('status', 'succeeded')", $script);
-        self::assertStringContainsString("criteria.getAssociation('backupRepositoryChecks')", $script);
-        self::assertStringContainsString('this.formatDateTime(item.mirrorAt)', $script);
-        self::assertStringContainsString('muwa-backup-repository.dashboard.mirrorLastSucceeded', $script);
-        self::assertStringContainsString('isMirrorOutdated(item)', $script);
-        self::assertStringContainsString("return 'warning';", $script);
     }
 
     public function testDashboardHealthyRuleMatchesPhpCheckStatus(): void
@@ -219,7 +197,7 @@ final class RepositoryMirrorAdministrationTest extends TestCase
             $this->flattenKeys($de['muwa-backup-repository']['dashboard']),
             $this->flattenKeys($en['muwa-backup-repository']['dashboard'])
         );
-        self::assertArrayHasKey('mirrorStatusLabel', $de['muwa-backup-repository']['dashboard']);
+        self::assertArrayNotHasKey('mirrorStatusLabel', $de['muwa-backup-repository']['dashboard']);
     }
 
     /**

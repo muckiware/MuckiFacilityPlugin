@@ -193,12 +193,17 @@
       "noCheck": "No check",
       "checkOk": "OK",
       "emptyTitle": "No active backup repositories",
-      "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories.",
-      "mirrorStatusLabel": "S3 mirror",
-      "mirrorPending": "Pending",
-      "mirrorLastSucceeded": "Last successfully mirrored: {date}",
-      "mirrorNeverSucceeded": "No successful mirror run yet",
-      "mirrorOutdated": "the last backup run has not been mirrored yet"
+      "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories."
+    },
+    "s3Dashboard": {
+      "title": "S3 transfer status",
+      "targetLabel": "Target",
+      "lastRunLabel": "Last run",
+      "lastSucceededLabel": "Last succeeded",
+      "emptyTitle": "No repositories with S3 mirror",
+      "emptySubline": "Set a mirror target in the backup configuration, tab Configuration, section S3 mirror.",
+      "pending": "Pending",
+      "outdated": "the last backup run has not been mirrored yet"
     },
     "resticInfo": {
       "loading": "Checking restic …",

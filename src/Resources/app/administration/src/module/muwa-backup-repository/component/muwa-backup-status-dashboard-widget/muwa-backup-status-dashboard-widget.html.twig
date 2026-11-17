@@ -39,16 +39,6 @@
                         {{ checkStatusLabel(item) }}
                     </sw-label>
                 </template>
-                <template #column-mirrorStatus="{ item }">
-                    <sw-label
-                        v-if="item.hasMirror"
-                        :variant="mirrorStatusVariant(item)"
-                        appearance="pill"
-                        :title="mirrorStatusTitle(item)"
-                    >
-                        {{ mirrorStatusLabel(item) }}
-                    </sw-label>
-                </template>
             </sw-data-grid>
         </template>
     {% endblock %}

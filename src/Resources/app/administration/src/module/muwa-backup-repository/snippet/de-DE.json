@@ -193,12 +193,17 @@
       "noCheck": "Kein Check",
       "checkOk": "OK",
       "emptyTitle": "Keine aktiven Backup Repositories",
-      "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an.",
-      "mirrorStatusLabel": "S3-Spiegelung",
-      "mirrorPending": "Ausstehend",
-      "mirrorLastSucceeded": "Zuletzt erfolgreich gespiegelt: {date}",
-      "mirrorNeverSucceeded": "Noch keine erfolgreiche Spiegelung",
-      "mirrorOutdated": "der letzte Backup-Lauf wurde noch nicht gespiegelt"
+      "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an."
+    },
+    "s3Dashboard": {
+      "title": "S3-Übertragungsstatus",
+      "targetLabel": "Ziel",
+      "lastRunLabel": "Letzter Lauf",
+      "lastSucceededLabel": "Zuletzt erfolgreich",
+      "emptyTitle": "Keine Repositories mit S3-Spiegelung",
+      "emptySubline": "Lege in der Backup-Konfiguration im Tab Konfiguration unter S3-Spiegelung ein Spiegelziel fest.",
+      "pending": "Ausstehend",
+      "outdated": "der letzte Backup-Lauf wurde noch nicht gespiegelt"
     },
     "resticInfo": {
       "loading": "restic wird geprüft …",

@@ -270,7 +270,7 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `POST /api/_action/muwa/backup/repository/path-suggestions` | `TakeoverBackupRepositoryController::pathSuggestions` | Detail-Seite, Tab Konfiguration (Pfad-Vorschlaege), ACL `muwa_backup_repository:update` |
 
 Die Rolle `muwa_backup_repository.viewer` enthaelt auch `muwa_backup_repository_uploads:read` (Upload-Historie,
-Dashboard-Spalte S3) und `muwa_s3_connection:read`.
+S3-Dashboard-Widget) und `muwa_s3_connection:read`.
 
 Die Rollen fuer `muwa_database_connection:*` (read/update/create/delete) haengen in den bestehenden
 Rollen von `muwa_backup_repository`, es gibt keine eigene Rollengruppe.
@@ -348,10 +348,11 @@ Handler wirft nie (Fehler werden als Benachrichtigung gemeldet); auch er hat Han
 
 `src/Resources/config/config.xml` definiert:
 `active`, `activeDbBackup`, `compressDbBackup`, `useOwnResticPath`, `ownPathResticBinary`,
-`numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`, `showDashboardWidget`.
+`numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`, `showDashboardWidget`,
+`showS3MirrorDashboardWidget`.
 
-`showDashboardWidget` wird nur von der Administration gelesen (`systemConfigApiService`), nicht
-von PHP — deshalb gibt es dafuer keinen `ConfigPath`-Eintrag.
+`showDashboardWidget` und `showS3MirrorDashboardWidget` werden nur von der Administration gelesen
+(`systemConfigApiService`), nicht von PHP — deshalb gibt es dafuer keinen `ConfigPath`-Eintrag.
 
 Zugriff ausschliesslich ueber `Services\Settings` + `Core\ConfigPath`-Enum. `Settings` liest
 zusaetzlich `DATABASE_URL` via `EnvironmentHelper` und loest den Dump-Pfad auf — der haengt aber
@@ -371,11 +372,18 @@ den neuesten `muwa_backup_repository_stats`-Eintrag (Association mit `setLimit(1
 Dashboard. Eingehaengt per `Component.override('sw-dashboard-index')` in den Block
 `sw_dashboard_index_content_info_grid` (in 6.6 und 6.7 identisch). Das Widget blendet sich selbst
 aus, wenn `showDashboardWidget` nicht gesetzt ist oder die ACL-Rolle
-`muwa_backup_repository.viewer` fehlt. Spalte S3: Status + Datum des neuesten Uploads, Tooltip = letzter
-Erfolg (eine kleine Suche je gespiegeltem Repository, max. 25), Warnung wenn der neueste Upload aelter als der
-neueste Check ist. Check-Status-Faerbung: enthaelt (case-insensitive) `no errors were found` → success,
+`muwa_backup_repository.viewer` fehlt. Eine S3-Spalte hat es seit 0.10.0 nicht mehr (siehe S3-Dashboard-Widget).
+Check-Status-Faerbung: enthaelt (case-insensitive) `no errors were found` → success,
 `error|fatal|fail` → danger, sonst info. Achtung: `system:config:set` ohne `--json` speichert den
 String `"true"` — das Widget akzeptiert beides.
+
+**S3-Dashboard-Widget.** `component/muwa-s3-mirror-status-dashboard-widget` ist eine eigene Karte
+"S3-Übertragungsstatus" direkt unter dem Backup-Status-Widget (gleicher Override-Block), geschaltet
+ueber `showS3MirrorDashboardWidget` (unabhaengig von `showDashboardWidget`), gleiche ACL-Regel. Laedt nur
+aktive Repositories mit `mirrorS3ConnectionId` (max. 25) samt `mirrorS3Connection`, neuestem Upload und
+neuestem Check; letzter Erfolg wieder per kleiner Suche je Repository. Spalten: Ziel, Status (Tooltip =
+`message` + Veraltet-Hinweis, wenn der neueste Upload aelter als der neueste Check ist), letzter Lauf, letzter
+Erfolg, Dateien hoch/geloescht, Datenmenge. Tests: `S3MirrorDashboardWidgetAdministrationTest`.
 
 **Ordner-Browser.** `component/muwa-backup-repository-path-field` haengt unter dem Textfeld ein
 Dropdown (teleported, `position: fixed`) zur Ordnerauswahl und ruft die `filesystem`-Routes auf.

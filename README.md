@@ -50,6 +50,7 @@ Plugin configuration under:<br>Settings -> Extensions -> My extensions -> MuckiF
 | Global backup settings -> Use own restic path           | Turn on/off own restic                                                                                          |
 | Global backup settings -> Own path to binary of restic                              | Enter the absolut path to binary file of restic. Example input: ```/var/www/html/bin/restic_0.17.3_linux_386``` |
 | Dashboard -> Show backup status on the dashboard        | Shows a card with the latest repository status (date, repository size, number of snapshots, check status) of every active backup repository on the administration dashboard. Off by default. Requires the `muwa_backup_repository.viewer` permission and `system_config:read`. |
+| Dashboard -> Show S3 mirror status on the dashboard     | Shows a separate card with the latest S3 mirror run of every active repository with an S3 mirror target: target (bucket/prefix, connection), status, last run, last successful run, uploaded/deleted files and data volume. The error/skip message is shown as tooltip of the status. Switched on and off independently of the backup status card, which no longer has an S3 column. Off by default. Same permissions as above. |
 
 ## Respoitory Configuration
 First you will need a repository configuration for the backup. The repository configuration is the base for the backup process. The repository configuration contains the backup source and the backup target. The backup source is the path to the folder or file which should be backuped. The backup target is the path to the repository where the backup data should be restored.<br>
@@ -424,7 +425,8 @@ directly (`s3:<endpoint>/<bucket>/<prefix>`).
    running message worker is required: `bin/console messenger:consume async`.
 
 The first mirror of a large repository may take several runs and hours. The history (status, files,
-data volume, message) is shown in the repository detail page, the latest state also in the dashboard widget.
+data volume, message) is shown in the repository detail page, the latest state in the dashboard card
+"S3 transfer status" (switched on with `showS3MirrorDashboardWidget`).
 
 ### Secret sources
 | Source      | Content                                                  | Restriction                                           |
@@ -453,8 +455,8 @@ the remote `config` belongs to a different repository, or when local data is mis
 - `http://` endpoints (MinIO/other) transfer request signatures and repository data unencrypted;
   use them only on local/internal networks. Two connections with the same host, port and path count
   as the same target regardless of `http`/`https`.
-- The dashboard cell shows the status and date of the newest mirror run; its tooltip shows the date
-  of the last successful run. A succeeded run older than the newest check is shown as warning.
+- The dashboard card "S3 transfer status" shows status, date and counters of the newest mirror run
+  and the date of the last successful run. A succeeded run older than the newest check is shown as warning.
 - Reading the upload history needs `muwa_backup_repository_uploads:read`, which is part of the
   role `muwa_backup_repository.viewer`.
 

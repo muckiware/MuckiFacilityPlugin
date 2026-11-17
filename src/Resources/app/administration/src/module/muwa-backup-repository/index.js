@@ -5,6 +5,7 @@ import './page/muwa-backup-repository-create';
 import './page/muwa-backup-repository-detail';
 import './acl';
 import './component/muwa-backup-status-dashboard-widget';
+import './component/muwa-s3-mirror-status-dashboard-widget';
 import './component/muwa-restic-binary-info';
 import './extension/sw-dashboard-index';
 

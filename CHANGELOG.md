@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.10.0]
+
+### Added
+- Dashboard widget "S3 transfer status": a separate card with the latest S3 mirror run of every
+  active repository with a mirror target (target, status, last run, last successful run,
+  uploaded/deleted files, data volume; message as tooltip). New plugin setting
+  `showS3MirrorDashboardWidget` (card "Dashboard", default off) switches it on independently of
+  `showDashboardWidget`.
+
+### Changed
+- Dashboard widget "Backup status": the S3 mirror column was removed, the S3 status is now only
+  shown in the new "S3 transfer status" card.
+
 ### [0.9.0]
 
 ### Added
