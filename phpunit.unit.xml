@@ -42,6 +42,7 @@
             <file>tests/Administration/RepositoryTakeoverAdministrationTest.php</file>
             <file>tests/Administration/S3MirrorDashboardWidgetAdministrationTest.php</file>
             <file>tests/Administration/BackupDurationAdministrationTest.php</file>
+            <file>tests/Administration/NextScheduledBackupAdministrationTest.php</file>
             <file>tests/Services/Crypto/SecretCipherTest.php</file>
             <file>tests/Services/Content/RepositoryPasswordResolverTest.php</file>
             <file>tests/Services/Content/DatabasePasswordResolverTest.php</file>

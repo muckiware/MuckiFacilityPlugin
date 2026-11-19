@@ -24,6 +24,9 @@
                 <template #column-lastBackupAt="{ item }">
                     {{ item.lastBackupAt ? dateFilter(item.lastBackupAt, { hour: '2-digit', minute: '2-digit' }) : $t('muwa-backup-repository.detail.statsNoValue') }}
                 </template>
+                <template #column-nextScheduledBackup="{ item }">
+                    {{ formatNextScheduledBackup(item) }}
+                </template>
                 <template #column-totalSize="{ item }">
                     {{ formatBytes(item.totalSize) }}
                 </template>

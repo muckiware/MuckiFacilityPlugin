@@ -56,6 +56,11 @@ ohne (Lauf vorher abgebrochen) wird ein neuer Eintrag mit dem aktuellen Stand an
 leeren Werten. Wirft nie. Die Administration skaliert die Sekunden im gemeinsamen Helper
 `module/muwa-backup-repository/helper/format-duration.js` auf Sek./Min./Std. (Snippets
 `detail.durationSeconds|Minutes|Hours` mit `{value}`), genutzt von Detail-Seite und Dashboard-Widget.
+`helper/format-schedule-date.js` formatiert im Detail-Tab Zeitplan die Termine in der Zeitzone des
+Zeitplans. `getNextScheduledRun()` liefert `nextExecutionTime` nur bei aktivem Zeitplan, sonst `null` —
+genutzt fuer die Spalte "Nächste Sicherung" in Repository-Liste und Dashboard-Widget. Dort bewusst im
+selben Format und in derselben Zeitzone (des Admin-Users) wie "Letzter Backup-Lauf", per
+`dateFilter(value, { hour: '2-digit', minute: '2-digit' })`.
 
 Zwei Factory-Patterns tragen die ganze Fachlogik — bei neuen Backup- oder Cleanup-Typen sind
 immer drei Stellen zu aendern: Enum + Factory + Runner.

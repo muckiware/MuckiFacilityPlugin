@@ -9,6 +9,9 @@ All notable changes to this project will be documented in this file.
   timezone and updated while typing. Invalid expressions or timezones are flagged directly. New API
   route `POST /api/_action/muwa/backup/schedule/preview` (ACL `muwa_backup_repository:read`) uses the
   same `ScheduleCalculator` as the scheduler.
+- Repository list and dashboard widget "Backup status": new column "Next backup" with the next
+  scheduled run in the same format and timezone as "Last backup run", or "No active schedule" if the
+  schedule is switched off.
 
 ### Changed
 - Schedule tab: "Next execution" is displayed as a localized date in the schedule's timezone instead

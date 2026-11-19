@@ -155,6 +155,11 @@
                             {{ getLatestStats(item)?.createdAt ? dateFilter(getLatestStats(item).createdAt, { hour: '2-digit', minute: '2-digit' }) : $t('muwa-backup-repository.detail.statsNoValue') }}
                         </template>
                     {% endblock %}
+                    {% block muwa_backup_repository_list_grid_columns_next_scheduled_backup %}
+                        <template #column-nextScheduledBackup="{ item }">
+                            {{ formatNextScheduledBackup(item) }}
+                        </template>
+                    {% endblock %}
                     {% block muwa_backup_repository_list_grid_columns_actions %}
                         <template #delete-action="{ item }">
                             <sw-context-menu-item @click="onDelete(item.id)" variant="danger">

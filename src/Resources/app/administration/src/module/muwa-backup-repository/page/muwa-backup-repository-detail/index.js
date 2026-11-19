@@ -1,6 +1,7 @@
 import template from './muwa-backup-repository-detail.html.twig';
 import './muwa-backup-repository-detail.scss';
 import formatDuration from '../../helper/format-duration';
+import formatScheduleDate from '../../helper/format-schedule-date';
 
 const { Component, Context, Mixin } = Shopware;
 const { Criteria } = Shopware.Data;
@@ -921,13 +922,8 @@ Component.register('muwa-backup-repository-detail', {
                 });
         },
 
-        // Shown in the schedule's own timezone, because that is the timezone the cron expression is written in.
         formatScheduleDate(value) {
-            if (!value) {
-                return '';
-            }
-            const timeZone = this.schedule.timezone || 'UTC';
-            return `${Shopware.Utils.format.date(value, { weekday: 'short', timeZone })} (${timeZone})`;
+            return formatScheduleDate(value, this.schedule.timezone);
         },
 
         onScheduleSave() {

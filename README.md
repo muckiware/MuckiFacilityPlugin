@@ -49,7 +49,7 @@ Plugin configuration under:<br>Settings -> Extensions -> My extensions -> MuckiF
 | Global backup settings -> Compress database backup file | Turn on/off compressen for db dump, for cli command ```bin/console muckiware:db:dump <Type of backup>```        |
 | Global backup settings -> Use own restic path           | Turn on/off own restic                                                                                          |
 | Global backup settings -> Own path to binary of restic                              | Enter the absolut path to binary file of restic. Example input: ```/var/www/html/bin/restic_0.17.3_linux_386``` |
-| Dashboard -> Show backup status on the dashboard        | Shows a card with the latest repository status (date, repository size, number of snapshots, check status) of every active backup repository on the administration dashboard. Off by default. Requires the `muwa_backup_repository.viewer` permission and `system_config:read`. |
+| Dashboard -> Show backup status on the dashboard        | Shows a card with the latest repository status (date, next scheduled backup, repository size, number of snapshots, backup duration, check status) of every active backup repository on the administration dashboard. Off by default. Requires the `muwa_backup_repository.viewer` permission and `system_config:read`. |
 | Dashboard -> Show S3 mirror status on the dashboard     | Shows a separate card with the latest S3 mirror run of every active repository with an S3 mirror target: target (bucket/prefix, connection), status, last run, last successful run, uploaded/deleted files and data volume. The error/skip message is shown as tooltip of the status. Switched on and off independently of the backup status card, which no longer has an S3 column. Off by default. Same permissions as above. |
 
 ## Respoitory Configuration
@@ -197,7 +197,7 @@ available:
 | Upcoming runs        | Live preview of the next 5 runs of the entered cron expression, shown in the selected timezone and updated while typing. An invalid cron expression or timezone is flagged directly. |
 | Status               | Current state of the schedule: `inactive`, `scheduled`, `queued`, `running`, `success`, `failed` or `skipped`. |
 | Last execution       | Time of the latest completed execution. |
-| Next execution       | Time at which the next backup is due, shown in the selected timezone. |
+| Next execution       | Time at which the next backup is due, shown in the selected timezone. The same value is shown in the column __Next backup__ of the repository list and of the dashboard card "Backup status", there in the same format and timezone as __Last backup run__ (or "No active schedule" if the schedule is switched off). |
 | Last error           | Error message from the latest failed or skipped execution. |
 
 Cron expressions and timezones are validated when the schedule is saved. Runtime timestamps are
