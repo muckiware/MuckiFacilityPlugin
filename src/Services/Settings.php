@@ -20,6 +20,7 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Core\ConfigPath;
 use MuckiFacilityPlugin\Core\DumpPathRejection;
+use MuckiFacilityPlugin\Core\MysqlDumpOption;
 
 class Settings implements SettingsInterface
 {
@@ -63,6 +64,30 @@ class Settings implements SettingsInterface
     public function isCompressDbBackupEnabled(): bool
     {
         return $this->config->getBool(ConfigPath::CONFIG_PATH_COMPRESS_DB_BACKUP->value);
+    }
+
+    /**
+     * One bool setting per option. A never saved setting counts as its default, so
+     * --no-tablespaces stays active until it is switched off explicitly.
+     *
+     * @return array<int, MysqlDumpOption>
+     */
+    public function getDefaultConnectionDumpOptions(): array
+    {
+        return array_values(array_filter(
+            MysqlDumpOption::cases(),
+            fn (MysqlDumpOption $option): bool => $this->isDumpOptionEnabled($option)
+        ));
+    }
+
+    protected function isDumpOptionEnabled(MysqlDumpOption $option): bool
+    {
+        $value = $this->config->get(ConfigPath::CONFIG_PATH_MYSQLDUMP_OPTION_PREFIX->value.ucfirst($option->value));
+        if($value === null) {
+            return in_array($option, MysqlDumpOption::DEFAULTS, true);
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     public function getDateTimeStringFormat(): string

@@ -296,6 +296,40 @@
       "selectHelpText": "Datenbank, von der der Dump erstellt wird. Die Standardverbindung ist die Datenbank dieses Shops.",
       "types": {
         "mysql": "MySQL / MariaDB"
+      },
+      "dumpOptions": {
+        "cardTitle": "mysqldump-Optionen",
+        "description": "Zusätzliche Optionen für den Datenbank-Dump dieser Verbindung. Es sind nur diese Optionen wählbar. Kennt das installierte mysqldump eine Option nicht, schlägt der Dump fehl.",
+        "options": {
+          "noTablespaces": {
+            "label": "--no-tablespaces",
+            "helpText": "Tablespace-Informationen weglassen. Ab MySQL 8.0.21 nötig, wenn der Benutzer kein PROCESS-Recht hat."
+          },
+          "routines": {
+            "label": "--routines",
+            "helpText": "Stored Procedures und Functions mit sichern."
+          },
+          "events": {
+            "label": "--events",
+            "helpText": "Geplante Events des Event-Schedulers mit sichern."
+          },
+          "setGtidPurgedOff": {
+            "label": "--set-gtid-purged=OFF",
+            "helpText": "Für Server mit GTID-Replikation (z. B. AWS RDS, Google Cloud SQL): der Dump lässt sich ohne SUPER-Recht einspielen. Vom MariaDB-mysqldump nicht unterstützt."
+          },
+          "columnStatisticsOff": {
+            "label": "--column-statistics=0",
+            "helpText": "Nötig, wenn mysqldump 8 einen MariaDB- oder MySQL-5.7-Server sichert. Vom MariaDB-mysqldump nicht unterstützt."
+          },
+          "defaultCharacterSetUtf8mb4": {
+            "label": "--default-character-set=utf8mb4",
+            "helpText": "utf8mb4 als Zeichensatz der Dump-Verbindung erzwingen."
+          },
+          "hexBlob": {
+            "label": "--hex-blob",
+            "helpText": "Binäre Spalten (BLOB, BINARY) hexadezimal exportieren."
+          }
+        }
       }
     },
     "takeover": {

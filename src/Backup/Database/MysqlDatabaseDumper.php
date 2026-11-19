@@ -20,6 +20,7 @@ use Spatie\DbDumper\Exceptions\DumpFailed;
 
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Core\Database\DbIdentifier;
+use MuckiFacilityPlugin\Core\MysqlDumpOption;
 use MuckiFacilityPlugin\Entity\ResolvedDatabaseConnection;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 
@@ -37,6 +38,12 @@ use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
  */
 class MysqlDatabaseDumper implements DatabaseDumperInterface
 {
+    /**
+     * Key in ResolvedDatabaseConnection::getExtra(): list of MysqlDumpOption values. Missing key
+     * (connection resolved by another subscriber) = MysqlDumpOption::DEFAULTS.
+     */
+    public const EXTRA_DUMP_OPTIONS = 'dumpOptions';
+
     protected const MASK = '***';
     protected const PARTIAL_FILE_PREFIX = '.muwa-dump-';
     protected const PARTIAL_FILE_SUFFIX = '.partial';
@@ -75,8 +82,9 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
             $mysqlDumper = $this->createDumper();
             $this->configureDumper($mysqlDumper, $connection);
             $mysqlDumper->useSingleTransaction();
-            // MySQL >= 8.0.21 requires the PROCESS privilege for tablespace info, which backup users often lack.
-            $mysqlDumper->addExtraOption('--no-tablespaces');
+            foreach ($this->getDumpOptions($connection) as $option) {
+                $mysqlDumper->addExtraOption($option->getArgument());
+            }
 
             if ($tables !== []) {
                 $mysqlDumper->includeTables($tables);
@@ -100,6 +108,21 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
             }
             throw $this->createException('Dump failed:' . $e->getMessage(), $connection);
         }
+    }
+
+    /**
+     * Only allowlisted options: spatie puts extra options unescaped into the shell command line.
+     *
+     * @return array<int, MysqlDumpOption>
+     */
+    protected function getDumpOptions(ResolvedDatabaseConnection $connection): array
+    {
+        $extra = $connection->getExtra();
+        if (!array_key_exists(self::EXTRA_DUMP_OPTIONS, $extra) || !is_array($extra[self::EXTRA_DUMP_OPTIONS])) {
+            return MysqlDumpOption::DEFAULTS;
+        }
+
+        return MysqlDumpOption::fromValues($extra[self::EXTRA_DUMP_OPTIONS]);
     }
 
     protected function createDumper(): MySql

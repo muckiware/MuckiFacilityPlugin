@@ -157,6 +157,29 @@
                             ></div>
                         {% endblock %}
                     </sw-card>
+
+                    {% block muwa_database_connection_detail_dump_options %}
+                        <sw-card
+                            v-if="isMysqlType"
+                            position-identifier="muwaDatabaseConnectionDumpOptions"
+                            :title="$t('muwa-backup-repository.databaseConnection.dumpOptions.cardTitle')"
+                            :is-loading="isLoading"
+                        >
+                            <p class="muwa-database-connection-detail-dump-options__description">
+                                {{ $t('muwa-backup-repository.databaseConnection.dumpOptions.description') }}
+                            </p>
+
+                            <sw-checkbox-field
+                                v-for="option in dumpOptionList"
+                                :key="option"
+                                :value="isDumpOptionActive(option)"
+                                :label="$t(`muwa-backup-repository.databaseConnection.dumpOptions.options.${option}.label`)"
+                                :help-text="$t(`muwa-backup-repository.databaseConnection.dumpOptions.options.${option}.helpText`)"
+                                :disabled="!canEdit"
+                                @update:value="onToggleDumpOption(option, $event)"
+                            />
+                        </sw-card>
+                    {% endblock %}
                 </sw-card-view>
             {% endblock %}
         </template>

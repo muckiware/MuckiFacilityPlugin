@@ -39,6 +39,11 @@ class DatabaseConnectionEntity extends Entity
      */
     protected string $passwordSource;
 
+    /**
+     * @var array<int, string>|null values of MuckiFacilityPlugin\Core\MysqlDumpOption, null = defaults
+     */
+    protected ?array $dumpOptions = null;
+
     protected ?BackupRepositoryCollection $backupRepositories = null;
 
     public function getName(): string { return $this->name; }
@@ -64,6 +69,15 @@ class DatabaseConnectionEntity extends Entity
 
     public function getPasswordSource(): string { return $this->passwordSource; }
     public function setPasswordSource(string $passwordSource): void { $this->passwordSource = $passwordSource; }
+
+    /**
+     * @return array<int, string>|null
+     */
+    public function getDumpOptions(): ?array { return $this->dumpOptions; }
+    /**
+     * @param array<int, string>|null $dumpOptions
+     */
+    public function setDumpOptions(?array $dumpOptions): void { $this->dumpOptions = $dumpOptions; }
 
     public function getBackupRepositories(): ?BackupRepositoryCollection { return $this->backupRepositories; }
     public function setBackupRepositories(?BackupRepositoryCollection $backupRepositories): void

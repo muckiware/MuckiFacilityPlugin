@@ -216,6 +216,61 @@ class MysqlDatabaseDumperTest extends TestCase
         $dumper->dump($this->createDefaultConnection(), $this->workDir . '/dump.sql');
     }
 
+    public function testConfiguredDumpOptionsReplaceTheDefaults(): void
+    {
+        $spatieDumper = $this->createSpatieMock();
+        $arguments = [];
+        $spatieDumper->method('addExtraOption')->willReturnCallback(
+            function (string $argument) use (&$arguments, $spatieDumper): MySql {
+                $arguments[] = $argument;
+                return $spatieDumper;
+            }
+        );
+
+        $connection = new ResolvedDatabaseConnection(
+            'mysql', 'db.example.org', 3307, 'shop', 'backup', self::PASSWORD,
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => ['events', 'routines', 'setGtidPurgedOff']]
+        );
+        $this->createDumperWithSpatie($spatieDumper)->dump($connection, $this->workDir . '/shop.sql');
+
+        static::assertSame(['--routines', '--events', '--set-gtid-purged=OFF'], $arguments);
+    }
+
+    public function testEmptyDumpOptionsAddNoExtraOption(): void
+    {
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->expects(static::never())->method('addExtraOption');
+
+        $connection = new ResolvedDatabaseConnection(
+            'mysql', 'db.example.org', 3307, 'shop', 'backup', self::PASSWORD,
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => []]
+        );
+        $this->createDumperWithSpatie($spatieDumper)->dump($connection, $this->workDir . '/shop.sql');
+    }
+
+    /**
+     * Rows or third-party subscribers may carry arbitrary values; only allowlisted arguments may
+     * reach the shell command line.
+     */
+    public function testUnknownDumpOptionsNeverReachMysqldump(): void
+    {
+        $dumpDir = $this->workDir . '/dump';
+        mkdir($dumpDir);
+
+        $connection = new ResolvedDatabaseConnection(
+            'mysql', 'db.example.org', 3307, 'shop', 'backup', self::PASSWORD,
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => ['hexBlob', '--routines; touch pwned', 'routines']]
+        );
+        $dumper = $this->createDumperWithSpatie(MySql::create()->setDumpBinaryPath($this->createArgumentEchoMysqldump()));
+        $dumper->dump($connection, $dumpDir . '/shop.sql');
+
+        $arguments = (string) file_get_contents($dumpDir . '/shop.sql');
+        static::assertStringContainsString(' --routines --hex-blob ', ' ' . trim($arguments) . ' ');
+        static::assertStringNotContainsString('--no-tablespaces', $arguments);
+        static::assertStringNotContainsString('touch', $arguments);
+        static::assertSame(['shop.sql'], array_values(array_diff(scandir($dumpDir) ?: [], ['.', '..'])));
+    }
+
     public function testFailedDumpRemovesPartialFileAndCreatesNoDumpFile(): void
     {
         $spatieDumper = $this->createSpatieMock();
@@ -312,6 +367,21 @@ class MysqlDatabaseDumperTest extends TestCase
             mkdir($binDir);
         }
         file_put_contents($binDir . '/mysqldump', "#!/bin/sh\necho '-- fake dump'\nexit " . $exitCode . "\n");
+        chmod($binDir . '/mysqldump', 0755);
+
+        return $binDir;
+    }
+
+    /**
+     * Fake mysqldump that writes its own arguments as dump content.
+     */
+    private function createArgumentEchoMysqldump(): string
+    {
+        $binDir = $this->workDir . '/bin';
+        if (!is_dir($binDir)) {
+            mkdir($binDir);
+        }
+        file_put_contents($binDir . '/mysqldump', "#!/bin/sh\necho \"$@\"\n");
         chmod($binDir . '/mysqldump', 0755);
 
         return $binDir;

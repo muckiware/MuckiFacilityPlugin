@@ -55,6 +55,7 @@
             <file>tests/Core/Content/BackupRepositorySnapshotsDefinitionTest.php</file>
             <file>tests/Services/Content/BackupFileSnapshotsRepositoryTest.php</file>
             <file>tests/Core/ConfigPathTest.php</file>
+            <file>tests/Core/MysqlDumpOptionTest.php</file>
             <file>tests/Core/S3ProvidersTest.php</file>
             <file>tests/Core/CheckStatusTest.php</file>
             <file>tests/Services/Content/S3SecretResolverTest.php</file>

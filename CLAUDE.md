@@ -176,6 +176,17 @@ auf `dumpToFile()` stellen. `runDump()` nutzt spatie-Interna (`guardAgainstIncom
 Zusaetzlich lehnt `Settings::getOwnDumpPathRejection()` Steuerzeichen, `$`, Backtick, `"` und `\` ab
 (`DumpPathRejection::INVALID_CHARACTERS`).
 
+**mysqldump-Optionen.** Nur aus der Allowlist `Core\MysqlDumpOption` (Enum mit festem Argument je
+Fall) — **nie Freitext**, spatie setzt Optionen ungeschuetzt in den Shell-String. Quelle: eigene
+Verbindung `muwa_database_connection.dump_options` (ListField, `WriteProtected(SYSTEM_SCOPE)`, NULL =
+`MysqlDumpOption::DEFAULTS` = nur `--no-tablespaces`), Standardverbindung je ein Bool
+`mysqldump<Value>` in `config.xml` (`Settings::getDefaultConnectionDumpOptions()`, nie gespeichert =
+Default). Der Subscriber legt sie als `extra['dumpOptions']` (`MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS`)
+in die `ResolvedDatabaseConnection`, der Dumper filtert erneut ueber `fromValues()`; fehlt der Key
+(fremder Subscriber), gelten die Defaults. Neue Option = Enum-Fall + `config.xml`-Bool + `DUMP_OPTIONS`
+in `muwa-database-connection-detail/index.js` + Snippets; `MysqlDumpOptionTest` prueft die
+Gleichlaeufigkeit von Enum, `config.xml` und Administration.
+
 **Fehlersemantik.** Standardverbindung (`database_connection_id` NULL): exakt wie vor dem Feature, der
 Dump-Fehler wird nur geloggt und das Backup laeuft weiter. Eigene Verbindung: jeder Fehler (Verbindung
 nicht gefunden, Passwort nicht aufloesbar, kein Subscriber/Dumper, Dump fehlgeschlagen) wirft
@@ -229,7 +240,7 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 | `muwa_backup_repository_checks` | Ergebnis von `restic check` je Backup-Lauf | n:1 Repository |
 | `muwa_backup_repository_snapshots` | gespiegelte restic-Snapshot-Liste (snapshotId, shortId, paths, hostname, size) | n:1 Repository |
 | `muwa_backup_repository_stats` | Historie der Repository-Statistik je Backup-Lauf (Rohwerte in Bytes/Anzahl) | n:1 Repository |
-| `muwa_database_connection` | Eigene Datenbankverbindung fuer das DB-Backup (`name`, `type`, `host`, `port`, `database_name`, `username`, `password`, `password_source`, `custom_fields`), Migration `Migration1794470400` | 1:n Backup-Repositories |
+| `muwa_database_connection` | Eigene Datenbankverbindung fuer das DB-Backup (`name`, `type`, `host`, `port`, `database_name`, `username`, `password`, `password_source`, `dump_options`, `custom_fields`), Migrationen `Migration1794470400`, `Migration1794916800` (`dump_options`) | 1:n Backup-Repositories |
 | `muwa_s3_connection` | S3-Verbindung (`name`, `provider` aws/minio/ceph/other, `endpoint`, `region`, `access_key_id`, `secret_access_key`, `secret_source`, `custom_fields`), Migration `Migration1794830400` | 1:n Backup-Repositories (`ON DELETE RESTRICT`) |
 | `muwa_backup_repository_uploads` | Historie der Spiegel-Laeufe (`status`, `trigger_source`, `bucket`, `prefix`, `s3_connection_name`, Zeiten, `files_uploaded/deleted/unchanged`, `bytes_uploaded`, `message`) | n:1 Repository (`ON DELETE CASCADE`) |
 | `muwa_backup_repository.mirror_s3_connection_id` / `mirror_s3_bucket` / `mirror_s3_prefix` | Spiegelziel je Repository, NULL = keine Spiegelung | n:1 S3-Verbindung |
@@ -237,7 +248,7 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 `repository_password` traegt `removeFlag(ApiAware::class)` — das Passwort darf nie ueber die
 Admin-API rausgehen. Bei Aenderungen an der Definition darauf achten. Gleiches gilt fuer `password` /
 `password_source` von `muwa_database_connection`. Dort sind **alle** Felder (`name`, `type`, `host`,
-`port`, `database_name`, `username`, `password`, `password_source`, `custom_fields`)
+`port`, `database_name`, `username`, `password`, `password_source`, `dump_options`, `custom_fields`)
 `WriteProtected(SYSTEM_SCOPE)` und werden nur ueber `Services\Content\DatabaseConnectionRepository`
 im System-Scope geschrieben — sonst koennte ein Nutzer mit `update`-Recht die Verbindung per
 generischer Entity-API auf einen fremden Host umbiegen und bekaeme dort das gespeicherte Passwort.
@@ -357,7 +368,8 @@ Handler wirft nie (Fehler werden als Benachrichtigung gemeldet); auch er hat Han
 ## Konfiguration
 
 `src/Resources/config/config.xml` definiert:
-`active`, `activeDbBackup`, `compressDbBackup`, `useOwnResticPath`, `ownPathResticBinary`,
+`active`, `activeDbBackup`, `compressDbBackup`, `mysqldump<Option>` (je ein Bool pro
+`Core\MysqlDumpOption`, nur Standardverbindung), `useOwnResticPath`, `ownPathResticBinary`,
 `numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`, `showDashboardWidget`,
 `showS3MirrorDashboardWidget`.
 

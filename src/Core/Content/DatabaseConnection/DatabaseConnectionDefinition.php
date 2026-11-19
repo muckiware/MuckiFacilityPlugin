@@ -22,6 +22,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\RestrictDelete;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\WriteProtected;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IdField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IntField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\ListField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\OneToManyAssociationField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\UpdatedAtField;
@@ -69,6 +70,8 @@ class DatabaseConnectionDefinition extends EntityDefinition
                 ->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
             (new StringField('password_source', 'passwordSource', 16))
                 ->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
+            // values of MuckiFacilityPlugin\Core\MysqlDumpOption, NULL = MysqlDumpOption::DEFAULTS
+            (new ListField('dump_options', 'dumpOptions'))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
             (new CustomFields())->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
 
             (new OneToManyAssociationField(

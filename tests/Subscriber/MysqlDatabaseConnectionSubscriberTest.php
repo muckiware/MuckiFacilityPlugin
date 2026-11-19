@@ -18,6 +18,7 @@ use Shopware\Core\Framework\Context;
 use MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper;
 use MuckiFacilityPlugin\Backup\Database\DatabaseDumperInterface;
 use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionEntity;
+use MuckiFacilityPlugin\Core\MysqlDumpOption;
 use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Entity\ResolvedDatabaseConnection;
 use MuckiFacilityPlugin\Events\ResolveDatabaseConnectionEvent;
@@ -74,6 +75,10 @@ class MysqlDatabaseConnectionSubscriberTest extends TestCase
         static::assertSame('shopware', $connection->getDatabaseName());
         static::assertSame('root', $connection->getUsername());
         static::assertSame('r@ot', $connection->getPassword());
+        static::assertSame(
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => ['noTablespaces', 'routines']],
+            $connection->getExtra()
+        );
     }
 
     public function testOwnConnectionResolvesPasswordAndDefaultPort(): void
@@ -108,6 +113,37 @@ class MysqlDatabaseConnectionSubscriberTest extends TestCase
         $this->createSubscriber($passwordResolver)->onResolveDatabaseConnection($event);
 
         static::assertSame(3307, $event->getResolvedConnection()?->getPort());
+    }
+
+    public function testOwnConnectionWithoutStoredDumpOptionsUsesDefaults(): void
+    {
+        $passwordResolver = $this->createMock(DatabasePasswordResolver::class);
+        $passwordResolver->method('resolve')->willReturn('s3cret');
+
+        $event = new ResolveDatabaseConnectionEvent('mysql', $this->createEntity('mysql', null), null, Context::createDefaultContext());
+        $this->createSubscriber($passwordResolver)->onResolveDatabaseConnection($event);
+
+        static::assertSame(
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => ['noTablespaces']],
+            $event->getResolvedConnection()?->getExtra()
+        );
+    }
+
+    public function testOwnConnectionPassesStoredDumpOptionsWithoutUnknownValues(): void
+    {
+        $passwordResolver = $this->createMock(DatabasePasswordResolver::class);
+        $passwordResolver->method('resolve')->willReturn('s3cret');
+
+        $entity = $this->createEntity('mysql', null);
+        $entity->setDumpOptions(['hexBlob', 'removedInAFutureVersion', 'columnStatisticsOff']);
+
+        $event = new ResolveDatabaseConnectionEvent('mysql', $entity, null, Context::createDefaultContext());
+        $this->createSubscriber($passwordResolver)->onResolveDatabaseConnection($event);
+
+        static::assertSame(
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => ['columnStatisticsOff', 'hexBlob']],
+            $event->getResolvedConnection()?->getExtra()
+        );
     }
 
     public function testUnresolvablePasswordThrowsWithConnectionName(): void
@@ -188,6 +224,8 @@ class MysqlDatabaseConnectionSubscriberTest extends TestCase
     ): MysqlDatabaseConnectionSubscriber {
         $settings = $this->createMock(SettingsInterface::class);
         $settings->method('getDatabaseUrl')->willReturn(self::DATABASE_URL);
+        $settings->method('getDefaultConnectionDumpOptions')
+            ->willReturn([MysqlDumpOption::NO_TABLESPACES, MysqlDumpOption::ROUTINES]);
 
         return new MysqlDatabaseConnectionSubscriber(
             $settings,

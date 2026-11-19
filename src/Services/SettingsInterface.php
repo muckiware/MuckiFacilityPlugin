@@ -18,6 +18,12 @@ interface SettingsInterface
 {
     public function isEnabled(): bool;
     public function isCompressDbBackupEnabled(): bool;
+    /**
+     * mysqldump options for the default connection (DATABASE_URL).
+     *
+     * @return array<int, \MuckiFacilityPlugin\Core\MysqlDumpOption>
+     */
+    public function getDefaultConnectionDumpOptions(): array;
     public function getDatabaseUrl(): string;
     public function getBackupPath(bool $useSubFolder=false, ?string $ownDumpPath=null, ?string $repositoryPath=null, ?string $restorePath=null): string;
     public function getOwnDumpPathRejection(?string $ownDumpPath, ?string $repositoryPath=null, ?string $restorePath=null): ?DumpPathRejection;

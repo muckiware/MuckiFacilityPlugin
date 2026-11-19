@@ -10,6 +10,12 @@ All notable changes to this project will be documented in this file.
   uploaded/deleted files, data volume; message as tooltip). New plugin setting
   `showS3MirrorDashboardWidget` (card "Dashboard", default off) switches it on independently of
   `showDashboardWidget`.
+- Selectable mysqldump options from a fixed allowlist: `--no-tablespaces` (default on), `--routines`,
+  `--events`, `--set-gtid-purged=OFF`, `--column-statistics=0`, `--default-character-set=utf8mb4` and
+  `--hex-blob`. Per database connection in the new card "mysqldump options" (new column
+  `muwa_database_connection.dump_options`, migration `Migration1794916800`, NULL = defaults), for the
+  default connection (`DATABASE_URL`) in the new plugin settings card "mysqldump options". There is no
+  free text input, because spatie/db-dumper puts the options into a shell command line.
 
 ### Security
 - Database dump: the configured dump path no longer reaches the shell. spatie/db-dumper put the
@@ -24,8 +30,9 @@ All notable changes to this project will be documented in this file.
   name after mysqldump succeeded, the partial file is removed otherwise.
 
 ### Changed
-- Database dump: mysqldump now runs with `--no-tablespaces`, so backup users without the global
-  `PROCESS` privilege (MySQL >= 8.0.21) no longer fail with "Access denied; you need the PROCESS privilege".
+- Database dump: mysqldump now runs with `--no-tablespaces` by default, so backup users without the
+  global `PROCESS` privilege (MySQL >= 8.0.21) no longer fail with "Access denied; you need the PROCESS
+  privilege". It can be switched off per connection or in the plugin settings.
 - Dashboard widget "Backup status": the S3 mirror column was removed, the S3 status is now only
   shown in the new "S3 transfer status" card.
 

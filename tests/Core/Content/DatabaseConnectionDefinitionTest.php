@@ -60,7 +60,7 @@ class DatabaseConnectionDefinitionTest extends TestCase
      */
     public function testAllConnectionFieldsAreWriteProtectedToSystemScope(): void
     {
-        foreach (['name', 'type', 'host', 'port', 'databaseName', 'username', 'customFields'] as $propertyName) {
+        foreach (['name', 'type', 'host', 'port', 'databaseName', 'username', 'dumpOptions', 'customFields'] as $propertyName) {
             $writeProtected = $this->getField($propertyName)->getFlag(WriteProtected::class);
 
             self::assertInstanceOf(WriteProtected::class, $writeProtected, $propertyName);

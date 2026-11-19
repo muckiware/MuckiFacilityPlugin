@@ -296,6 +296,40 @@
       "selectHelpText": "Database the dump is created from. The default connection is the database of this shop.",
       "types": {
         "mysql": "MySQL / MariaDB"
+      },
+      "dumpOptions": {
+        "cardTitle": "mysqldump options",
+        "description": "Additional options for the database dump of this connection. Only these options are selectable. An option the installed mysqldump does not know makes the dump fail.",
+        "options": {
+          "noTablespaces": {
+            "label": "--no-tablespaces",
+            "helpText": "Skip tablespace information. Required for MySQL 8.0.21 and newer when the user has no PROCESS privilege."
+          },
+          "routines": {
+            "label": "--routines",
+            "helpText": "Also dump stored procedures and functions."
+          },
+          "events": {
+            "label": "--events",
+            "helpText": "Also dump scheduled events of the event scheduler."
+          },
+          "setGtidPurgedOff": {
+            "label": "--set-gtid-purged=OFF",
+            "helpText": "For servers with GTID replication (e.g. AWS RDS, Google Cloud SQL): the dump can be restored without SUPER privilege. Not supported by the MariaDB mysqldump."
+          },
+          "columnStatisticsOff": {
+            "label": "--column-statistics=0",
+            "helpText": "Needed when mysqldump 8 dumps a MariaDB or MySQL 5.7 server. Not supported by the MariaDB mysqldump."
+          },
+          "defaultCharacterSetUtf8mb4": {
+            "label": "--default-character-set=utf8mb4",
+            "helpText": "Force utf8mb4 as connection character set of the dump."
+          },
+          "hexBlob": {
+            "label": "--hex-blob",
+            "helpText": "Export binary columns (BLOB, BINARY) hexadecimal."
+          }
+        }
       }
     },
     "takeover": {

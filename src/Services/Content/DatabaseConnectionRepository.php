@@ -18,6 +18,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionEntity;
 use MuckiFacilityPlugin\Core\Database\DbIdentifier;
+use MuckiFacilityPlugin\Core\MysqlDumpOption;
 use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Exception\InvalidDatabaseConnectionException;
 use MuckiFacilityPlugin\Exception\UnresolvableDatabasePasswordException;
@@ -82,6 +83,9 @@ class DatabaseConnectionRepository
 
         $payload = $this->validateFields($input);
         $payload['id'] = $id;
+        if (array_key_exists('dumpOptions', $input)) {
+            $payload['dumpOptions'] = $this->extractDumpOptions($input['dumpOptions']);
+        }
 
         $password = (string) ($input['password'] ?? '');
         $source = $this->extractSource($input);
@@ -257,6 +261,29 @@ class DatabaseConnectionRepository
         }
 
         return false;
+    }
+
+    /**
+     * Only allowlisted options are storable, see MysqlDumpOption. null keeps the defaults.
+     *
+     * @return array<int, string>|null
+     *
+     * @throws InvalidDatabaseConnectionException
+     */
+    protected function extractDumpOptions(mixed $dumpOptions): ?array
+    {
+        if ($dumpOptions === null) {
+            return null;
+        }
+        if (!is_array($dumpOptions)) {
+            throw new InvalidDatabaseConnectionException('Field "dumpOptions" must be a list');
+        }
+
+        try {
+            return MysqlDumpOption::toValues(MysqlDumpOption::fromInput($dumpOptions));
+        } catch (\InvalidArgumentException $e) {
+            throw new InvalidDatabaseConnectionException($e->getMessage(), 0, $e);
+        }
     }
 
     /**
