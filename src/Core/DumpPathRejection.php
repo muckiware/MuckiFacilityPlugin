@@ -19,4 +19,5 @@ enum DumpPathRejection: string
     case OVERLAPS_REPOSITORY_OR_RESTORE_PATH = 'overlapsRepositoryOrRestorePath';
     case BLOCKED_PATH = 'blockedPath';
     case OVERLAPS_DUMP_PATH = 'overlapsDumpPath';
+    case INVALID_CHARACTERS = 'invalidCharacters';
 }

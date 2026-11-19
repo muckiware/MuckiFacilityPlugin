@@ -11,7 +11,21 @@ All notable changes to this project will be documented in this file.
   `showS3MirrorDashboardWidget` (card "Dashboard", default off) switches it on independently of
   `showDashboardWidget`.
 
+### Security
+- Database dump: the configured dump path no longer reaches the shell. spatie/db-dumper put the
+  output file into the mysqldump command line and only escaped `\` and `"`, so `$(...)` or backticks
+  in a dump path were executed on the next backup. mysqldump now writes a generated file name in the
+  dump directory. Dump paths with control characters, `$`, backticks, `"` or `\` are additionally
+  rejected (fallback to the default path, warning in the administration).
+
+### Fixed
+- Database dump: a failed or aborted mysqldump no longer leaves a half dump file that ends up in the
+  backup. The dump is written to a hidden `.muwa-dump-*.partial` file and only renamed to its final
+  name after mysqldump succeeded, the partial file is removed otherwise.
+
 ### Changed
+- Database dump: mysqldump now runs with `--no-tablespaces`, so backup users without the global
+  `PROCESS` privilege (MySQL >= 8.0.21) no longer fail with "Access denied; you need the PROCESS privilege".
 - Dashboard widget "Backup status": the S3 mirror column was removed, the S3 status is now only
   shown in the new "S3 transfer status" card.
 

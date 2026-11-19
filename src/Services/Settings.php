@@ -24,6 +24,11 @@ use MuckiFacilityPlugin\Core\DumpPathRejection;
 class Settings implements SettingsInterface
 {
     /**
+     * Control characters and characters a shell still interprets inside double quotes.
+     */
+    private const INVALID_DUMP_PATH_CHARACTERS = '/[\x00-\x1F\x7F$`"\\\\]/';
+
+    /**
      * Absolute system directories a database dump must never be written to and cleaned out of.
      *
      * @var array<int, string>
@@ -173,6 +178,9 @@ class Settings implements SettingsInterface
                 'Own database dump path must not be a system directory or a sensitive project directory, using default path instead: '.$resolvedDumpPath,
             DumpPathRejection::OVERLAPS_DUMP_PATH =>
                 'Path must not overlap with the database dump path: '.$resolvedDumpPath,
+            // the value itself is not logged, it may contain control characters
+            DumpPathRejection::INVALID_CHARACTERS =>
+                'Own database dump path contains control or shell characters ($ ` " \\), using default path instead',
         };
     }
 
@@ -202,6 +210,12 @@ class Settings implements SettingsInterface
         $ownDumpPath = trim((string) $ownDumpPath);
         if($ownDumpPath === '') {
             return null;
+        }
+
+        // Defence in depth: the dumper keeps the dump path out of the mysqldump shell command, these
+        // characters would be interpreted there inside double quotes.
+        if(preg_match(self::INVALID_DUMP_PATH_CHARACTERS, $ownDumpPath) === 1) {
+            return DumpPathRejection::INVALID_CHARACTERS;
         }
 
         $protectedPaths = [];

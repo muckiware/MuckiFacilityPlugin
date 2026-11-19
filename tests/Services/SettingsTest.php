@@ -357,6 +357,11 @@ class SettingsTest extends TestCase
             'system dir' => ['/etc/backup', null, DumpPathRejection::BLOCKED_PATH],
             'sensitive project dir' => ['vendor/x', null, DumpPathRejection::BLOCKED_PATH],
             'overlap' => ['/mnt/repo/dump', '/mnt/repo', DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH],
+            'command substitution' => ['/mnt/backup/$(id)', null, DumpPathRejection::INVALID_CHARACTERS],
+            'backtick' => ['/mnt/backup/`id`', null, DumpPathRejection::INVALID_CHARACTERS],
+            'double quote' => ['/mnt/backup/a"b', null, DumpPathRejection::INVALID_CHARACTERS],
+            'backslash' => ['/mnt/backup/a\\b', null, DumpPathRejection::INVALID_CHARACTERS],
+            'newline' => ["/mnt/backup/a\nb", null, DumpPathRejection::INVALID_CHARACTERS],
         ];
     }
 

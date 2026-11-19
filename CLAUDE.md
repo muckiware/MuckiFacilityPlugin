@@ -166,6 +166,16 @@ fuer die Standardverbindung genutzt. Eingebauter Handler ist `Subscriber\MysqlDa
 Verbindung und/oder Dumper ersetzen. Typ der Standardverbindung kommt aus dem Schema von `DATABASE_URL`
 (unbekanntes Schema = eigener Typ, ohne Subscriber => Fehler; ohne Schema `mysql`).
 
+**Dump-Datei und Shell.** spatie baut mysqldump als Shell-String und setzt die Ausgabedatei nur in
+doppelte Anfuehrungszeichen (escaped nur `\` und `"`) — `$(...)`/Backticks im Pfad wuerden ausgefuehrt.
+`MysqlDatabaseDumper::runDump()` ersetzt deshalb `MySql::dumpToFile()`: mysqldump bekommt nur einen
+generierten Namen `.muwa-dump-<hex>.partial` und laeuft mit dem Dump-Ordner als cwd, erst nach Erfolg
+wird per `rename()` auf den Zielnamen umbenannt, sonst wird die Partial-Datei geloescht. Nie zurueck
+auf `dumpToFile()` stellen. `runDump()` nutzt spatie-Interna (`guardAgainstIncompleteCredentials`,
+`setTempFileHandle`, `getProcess`, `checkIfDumpWasSuccessFul`) — bei spatie-Updates pruefen.
+Zusaetzlich lehnt `Settings::getOwnDumpPathRejection()` Steuerzeichen, `$`, Backtick, `"` und `\` ab
+(`DumpPathRejection::INVALID_CHARACTERS`).
+
 **Fehlersemantik.** Standardverbindung (`database_connection_id` NULL): exakt wie vor dem Feature, der
 Dump-Fehler wird nur geloggt und das Backup laeuft weiter. Eigene Verbindung: jeder Fehler (Verbindung
 nicht gefunden, Passwort nicht aufloesbar, kein Subscriber/Dumper, Dump fehlgeschlagen) wirft
