@@ -57,6 +57,18 @@ class BackupExecution
                 throw $exception;
             }
 
+            $dumpFailure = $this->backup->getDumpFailure();
+            if ($dumpFailure !== null) {
+                // the backup went on without (complete) database, never report that as plain success
+                $this->notify(
+                    'warning',
+                    'muwa-backup-repository.notification.backupDumpFailed',
+                    ['name' => $settings->getName(), 'error' => $dumpFailure],
+                    $context
+                );
+                return;
+            }
+
             $this->notify(
                 'info',
                 'muwa-backup-repository.notification.backupSucceeded',

@@ -44,10 +44,23 @@ CLI (muckiware:*) ────────────────────�
 ```
 
 `Services\RepositoryStats::collectAndSave()` wird dreifach getriggert: synchron am Ende von
-`Services\Backup::createBackup()`, asynchron ueber `UpdateRepositoryStatsMessage` /
+`Services\Backup::createBackup()` (dort als `collectAndSaveForBackup()`, liefert die Id des Eintrags), asynchron ueber `UpdateRepositoryStatsMessage` /
 `UpdateRepositoryStatsHandler` (dispatcht von `ManageController::removeSnapshots()`), und
 synchron ueber den CLI-Command `muckiware:repository:stats` — letzterer bewusst synchron, damit
 ein Cronjob auch ohne laufenden Messenger-Worker funktioniert.
+
+**Backup-Laufzeit.** `createBackup()` misst per `hrtime()` vom Anfang (vor `BeforeBackupCreatedEvent`,
+also inkl. Pre-Command) bis nach `AfterBackupCreatedEvent` (Post-Command) und schreibt im `finally`
+ueber `RepositoryStats::saveBackupDuration()`: mit Stats-Id wird der Eintrag des Laufs aktualisiert,
+ohne (Lauf vorher abgebrochen) wird ein neuer Eintrag mit dem aktuellen Stand angelegt, notfalls mit
+leeren Werten. Wirft nie. Die Administration skaliert die Sekunden im gemeinsamen Helper
+`module/muwa-backup-repository/helper/format-duration.js` auf Sek./Min./Std. (Snippets
+`detail.durationSeconds|Minutes|Hours` mit `{value}`), genutzt von Detail-Seite und Dashboard-Widget.
+`helper/format-schedule-date.js` formatiert im Detail-Tab Zeitplan die Termine in der Zeitzone des
+Zeitplans. `getNextScheduledRun()` liefert `nextExecutionTime` nur bei aktivem Zeitplan, sonst `null` —
+genutzt fuer die Spalte "Nächste Sicherung" in Repository-Liste und Dashboard-Widget. Dort bewusst im
+selben Format und in derselben Zeitzone (des Admin-Users) wie "Letzter Backup-Lauf", per
+`dateFilter(value, { hour: '2-digit', minute: '2-digit' })`.
 
 Zwei Factory-Patterns tragen die ganze Fachlogik — bei neuen Backup- oder Cleanup-Typen sind
 immer drei Stellen zu aendern: Enum + Factory + Runner.
@@ -124,7 +137,9 @@ Default) ueberschneidet. `RestoreDirectoryBrowser` nutzt sie und prueft den real
 Das ist kein Schoenheitsthema: der Dump-Ordner wird vor **und** nach jedem DB-Backup per
 `Helper::deleteDirectory()` rekursiv geloescht. Diese Methode folgt keinen Symlinks mehr (weder
 als Top-Level-Pfad noch beim Durchlaufen), gibt `bool` zurueck statt `void`, und beide Aufrufer
-in `runDatabaseBackup()` loggen einen Fehler, wenn sie `false` zurueckbekommt.
+in `runDatabaseBackup()` loggen einen Fehler, wenn sie `false` zurueckbekommt. Das Loeschen danach
+steht im `finally`: auch ein abgebrochener Lauf darf keinen Klartext-Dump liegen lassen. Ausnahme ist
+`muckiware:db:dump` (`createDump()`), dessen Zweck gerade die Dump-Datei ist.
 
 **Falle: `backupPaths` wird mitten im Lauf ueberschrieben.** `runDatabaseBackup()` setzt
 `$createBackup->setBackupPaths([<Dump-Ordner>])` und den Typ auf `files`, damit derselbe
@@ -166,8 +181,41 @@ fuer die Standardverbindung genutzt. Eingebauter Handler ist `Subscriber\MysqlDa
 Verbindung und/oder Dumper ersetzen. Typ der Standardverbindung kommt aus dem Schema von `DATABASE_URL`
 (unbekanntes Schema = eigener Typ, ohne Subscriber => Fehler; ohne Schema `mysql`).
 
-**Fehlersemantik.** Standardverbindung (`database_connection_id` NULL): exakt wie vor dem Feature, der
-Dump-Fehler wird nur geloggt und das Backup laeuft weiter. Eigene Verbindung: jeder Fehler (Verbindung
+**Dump-Datei und Shell.** spatie baut mysqldump als Shell-String und setzt die Ausgabedatei nur in
+doppelte Anfuehrungszeichen (escaped nur `\` und `"`) — `$(...)`/Backticks im Pfad wuerden ausgefuehrt.
+`MysqlDatabaseDumper::runDump()` ersetzt deshalb `MySql::dumpToFile()`: mysqldump bekommt nur einen
+generierten Namen `.muwa-dump-<hex>.partial` und laeuft mit dem Dump-Ordner als cwd, erst nach Erfolg
+wird per `rename()` auf den Zielnamen umbenannt, sonst wird die Partial-Datei geloescht. Nie zurueck
+auf `dumpToFile()` stellen. `runDump()` nutzt spatie-Interna (`guardAgainstIncompleteCredentials`,
+`setTempFileHandle`, `getProcess`, `checkIfDumpWasSuccessFul`) — bei spatie-Updates pruefen.
+Zusaetzlich lehnt `Settings::getOwnDumpPathRejection()` Steuerzeichen, `$`, Backtick, `"` und `\` ab
+(`DumpPathRejection::INVALID_CHARACTERS`).
+
+**mysqldump-Optionen.** Nur aus der Allowlist `Core\MysqlDumpOption` (Enum mit festem Argument je
+Fall) — **nie Freitext**, spatie setzt Optionen ungeschuetzt in den Shell-String. Quelle: eigene
+Verbindung `muwa_database_connection.dump_options` (ListField, `WriteProtected(SYSTEM_SCOPE)`, NULL =
+`MysqlDumpOption::DEFAULTS` = nur `--no-tablespaces`), Standardverbindung je ein Bool
+`mysqldump<Value>` in `config.xml` (`Settings::getDefaultConnectionDumpOptions()`, nie gespeichert =
+Default). Der Subscriber legt sie als `extra['dumpOptions']` (`MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS`)
+in die `ResolvedDatabaseConnection`, der Dumper filtert erneut ueber `fromValues()`; fehlt der Key
+(fremder Subscriber), gelten die Defaults. Neue Option = Enum-Fall + `config.xml`-Bool + `DUMP_OPTIONS`
+in `muwa-database-connection-detail/index.js` + Snippets; `MysqlDumpOptionTest` prueft die
+Gleichlaeufigkeit von Enum, `config.xml` und Administration.
+
+**Fehlersemantik.** Standardverbindung (`database_connection_id` NULL): das Backup laeuft weiter, der
+Fehler wird aber sichtbar gemacht. Die Runner sammeln ihn (`DumpFailureAwareInterface::getDumpFailures()`),
+`Services\Backup::handleDumpFailures()` loest `DatabaseDumpFailedEvent` (Flow-Builder-Trigger
+`mucki_facility.database_dump.failed`, statt `AfterDatabaseDumpCreatedEvent`) aus, und
+`createCheckItem()` speichert **nach** dem restic-Check einen zusaetzlichen roten Check
+`database dump failed: …` mit `createdAt` +1 ms (sonst koennte der gruene gleich alt sein und der
+neueste bleiben). Die Mirror-Message bekommt bewusst die Id des **restic**-Checks — das Repository ist
+intakt, die Spiegelung laeuft. `Backup::getDumpFailure()` liefert den Status; `BackupExecution` meldet
+dann `backupDumpFailed` (warning) statt `backupSucceeded`. Mit `failOnDumpError` bricht der Lauf wie bei
+eigenen Verbindungen ab. Eine leere Tabellenliste (`CompleteFilesRunner`) zaehlt als Dump-Fehler —
+`Core\Database\Database::getListOfAllTables()` schluckt DB-Fehler und liefert dann `[]`. mysqldump
+laeuft mit Timeout (`dbDumpTimeout`, Minuten, Default `Defaults::DB_DUMP_TIMEOUT_MINUTES` = 240), weil
+ein haengender Dump sonst den globalen Lock `mucki-facility.backup` (TTL `null`) fuer immer haelt;
+`ProcessTimedOutException` wird im Dumper zum normalen Dump-Fehler. Eigene Verbindung: jeder Fehler (Verbindung
 nicht gefunden, Passwort nicht aufloesbar, kein Subscriber/Dumper, Dump fehlgeschlagen) wirft
 `DatabaseBackupFailedException` mit Verbindungsnamen und bricht den ganzen `createBackup()`-Lauf ab; es
 gibt **keinen** Fallback auf `DATABASE_URL` und keinen leeren Dump im restic-Repository.
@@ -218,8 +266,8 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 | `muwa_backup_repository` | Repository-Konfiguration (Pfad, Passwort, Hostname, Restore-Pfad, `db_dump_path`, `backup_paths` als JsonField, forget-Policy, `database_connection_id` NULL = Standardverbindung) | 1:n Checks, 1:n Snapshots, n:1 Datenbankverbindung (`ON DELETE RESTRICT`) |
 | `muwa_backup_repository_checks` | Ergebnis von `restic check` je Backup-Lauf | n:1 Repository |
 | `muwa_backup_repository_snapshots` | gespiegelte restic-Snapshot-Liste (snapshotId, shortId, paths, hostname, size) | n:1 Repository |
-| `muwa_backup_repository_stats` | Historie der Repository-Statistik je Backup-Lauf (Rohwerte in Bytes/Anzahl) | n:1 Repository |
-| `muwa_database_connection` | Eigene Datenbankverbindung fuer das DB-Backup (`name`, `type`, `host`, `port`, `database_name`, `username`, `password`, `password_source`, `custom_fields`), Migration `Migration1794470400` | 1:n Backup-Repositories |
+| `muwa_backup_repository_stats` | Historie der Repository-Statistik je Backup-Lauf (Rohwerte in Bytes/Anzahl), `backup_duration` = Laufzeit des Backup-Laufs in Sekunden (`Migration1795093023`, NULL bei Stats ausserhalb eines Laufs) | n:1 Repository |
+| `muwa_database_connection` | Eigene Datenbankverbindung fuer das DB-Backup (`name`, `type`, `host`, `port`, `database_name`, `username`, `password`, `password_source`, `dump_options`, `custom_fields`), Migrationen `Migration1794470400`, `Migration1794916800` (`dump_options`) | 1:n Backup-Repositories |
 | `muwa_s3_connection` | S3-Verbindung (`name`, `provider` aws/minio/ceph/other, `endpoint`, `region`, `access_key_id`, `secret_access_key`, `secret_source`, `custom_fields`), Migration `Migration1794830400` | 1:n Backup-Repositories (`ON DELETE RESTRICT`) |
 | `muwa_backup_repository_uploads` | Historie der Spiegel-Laeufe (`status`, `trigger_source`, `bucket`, `prefix`, `s3_connection_name`, Zeiten, `files_uploaded/deleted/unchanged`, `bytes_uploaded`, `message`) | n:1 Repository (`ON DELETE CASCADE`) |
 | `muwa_backup_repository.mirror_s3_connection_id` / `mirror_s3_bucket` / `mirror_s3_prefix` | Spiegelziel je Repository, NULL = keine Spiegelung | n:1 S3-Verbindung |
@@ -227,7 +275,7 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 `repository_password` traegt `removeFlag(ApiAware::class)` — das Passwort darf nie ueber die
 Admin-API rausgehen. Bei Aenderungen an der Definition darauf achten. Gleiches gilt fuer `password` /
 `password_source` von `muwa_database_connection`. Dort sind **alle** Felder (`name`, `type`, `host`,
-`port`, `database_name`, `username`, `password`, `password_source`, `custom_fields`)
+`port`, `database_name`, `username`, `password`, `password_source`, `dump_options`, `custom_fields`)
 `WriteProtected(SYSTEM_SCOPE)` und werden nur ueber `Services\Content\DatabaseConnectionRepository`
 im System-Scope geschrieben — sonst koennte ein Nutzer mit `update`-Recht die Verbindung per
 generischer Entity-API auf einen fremden Host umbiegen und bekaeme dort das gespeicherte Passwort.
@@ -268,6 +316,7 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `GET /api/_action/muwa/restic/info` | `ResticController::getInfo` | Plugin-Konfiguration, Komponente `muwa-restic-binary-info`, ACL `system_config:read` |
 | `POST /api/_action/muwa/backup/repository/takeover` | `TakeoverBackupRepositoryController::takeover` | Modal `muwa-backup-repository-add-modal` (Liste, "Repository hinzufuegen"), ACL `muwa_backup_repository:create`; Fehler 400 `{errors:[{code,detail,meta}]}` mit `MUWA_TAKEOVER_*` (u.a. `MUWA_TAKEOVER_INVALID_INPUT` fuer ungueltige Id; `MUWA_TAKEOVER_SAVE_FAILED` bei DB-Fehlern; `MUWA_TAKEOVER_ACCESS_FAILED` traegt die restic-Ausgabe in `meta.detail`); `MUWA_INVALID_ID` kommt nur von path-suggestions |
 | `POST /api/_action/muwa/backup/repository/path-suggestions` | `TakeoverBackupRepositoryController::pathSuggestions` | Detail-Seite, Tab Konfiguration (Pfad-Vorschlaege), ACL `muwa_backup_repository:update` |
+| `POST /api/_action/muwa/backup/schedule/preview` | `ScheduleController::preview` | Detail-Seite, Tab Zeitplan (Live-Vorschau beim Tippen, debounced), ACL `muwa_backup_repository:read`; liefert `{nextRuns: [...]}` mit `ScheduleController::PREVIEW_RUN_COUNT` (5) Terminen in UTC (ISO 8601) ueber `ScheduleCalculator::nextRuns()` — dieselbe Berechnung wie der Scheduler, keine eigene Cron-Logik im Admin; ungueltiger Ausdruck/Zeitzone 400; speichert nichts |
 
 Die Rolle `muwa_backup_repository.viewer` enthaelt auch `muwa_backup_repository_uploads:read` (Upload-Historie,
 S3-Dashboard-Widget) und `muwa_s3_connection:read`.
@@ -347,7 +396,8 @@ Handler wirft nie (Fehler werden als Benachrichtigung gemeldet); auch er hat Han
 ## Konfiguration
 
 `src/Resources/config/config.xml` definiert:
-`active`, `activeDbBackup`, `compressDbBackup`, `useOwnResticPath`, `ownPathResticBinary`,
+`active`, `activeDbBackup`, `compressDbBackup`, `failOnDumpError`, `dbDumpTimeout`, `mysqldump<Option>` (je ein Bool pro
+`Core\MysqlDumpOption`, nur Standardverbindung), `useOwnResticPath`, `ownPathResticBinary`,
 `numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`, `showDashboardWidget`,
 `showS3MirrorDashboardWidget`.
 

@@ -24,6 +24,10 @@ class BackupRepositoryStatsEntity extends Entity
     protected ?int $snapshotsCount = null;
     protected ?int $fileSystemSize = null;
     protected ?string $checkStatus = null;
+    /**
+     * Runtime of the whole backup run in seconds, null for stats collected outside a backup run
+     */
+    protected ?int $backupDuration = null;
 
     public function getBackupRepositoryId(): string
     {
@@ -83,5 +87,15 @@ class BackupRepositoryStatsEntity extends Entity
     public function setCheckStatus(?string $checkStatus): void
     {
         $this->checkStatus = $checkStatus;
+    }
+
+    public function getBackupDuration(): ?int
+    {
+        return $this->backupDuration;
+    }
+
+    public function setBackupDuration(?int $backupDuration): void
+    {
+        $this->backupDuration = $backupDuration;
     }
 }

@@ -18,6 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper;
 use MuckiFacilityPlugin\Core\Content\DatabaseConnection\DatabaseConnectionEntity;
 use MuckiFacilityPlugin\Core\DatabaseTypes;
+use MuckiFacilityPlugin\Core\MysqlDumpOption;
 use MuckiFacilityPlugin\Core\PasswordSource;
 use MuckiFacilityPlugin\Entity\ResolvedDatabaseConnection;
 use MuckiFacilityPlugin\Events\ResolveDatabaseConnectionEvent;
@@ -92,7 +93,11 @@ class MysqlDatabaseConnectionSubscriber implements EventSubscriberInterface
             (string) ($parts['database'] ?? ''),
             (string) ($parts['username'] ?? ''),
             (string) ($parts['password'] ?? ''),
-            [],
+            [
+                MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => MysqlDumpOption::toValues(
+                    $this->pluginSettings->getDefaultConnectionDumpOptions()
+                ),
+            ],
             $databaseUrl
         );
     }
@@ -130,7 +135,14 @@ class MysqlDatabaseConnectionSubscriber implements EventSubscriberInterface
             $databaseConnection->getPort() ?? DatabaseTypes::DEFAULT_PORTS[DatabaseTypes::MYSQL],
             $databaseConnection->getDatabaseName(),
             $databaseConnection->getUsername(),
-            $password
+            $password,
+            [
+                MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => MysqlDumpOption::toValues(
+                    $databaseConnection->getDumpOptions() === null
+                        ? MysqlDumpOption::DEFAULTS
+                        : MysqlDumpOption::fromValues($databaseConnection->getDumpOptions())
+                ),
+            ]
         );
     }
 

@@ -184,6 +184,19 @@ class BackupRepositorySettings
      * cannot guarantee it was set (e.g. paths shared with tests building this DTO by hand)
      * should check this first.
      */
+    public function hasBackupRepositoryId(): bool
+    {
+        return isset($this->backupRepositoryId) && $this->backupRepositoryId !== '';
+    }
+
+    /**
+     * Not set for a dump started from the CLI (muckiware:db:dump).
+     */
+    public function hasName(): bool
+    {
+        return isset($this->name) && $this->name !== '';
+    }
+
     public function hasRepositoryPath(): bool
     {
         return isset($this->repositoryPath) && $this->repositoryPath !== '';

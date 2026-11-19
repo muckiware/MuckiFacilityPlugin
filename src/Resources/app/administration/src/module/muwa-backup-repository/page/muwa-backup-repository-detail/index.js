@@ -1,5 +1,7 @@
 import template from './muwa-backup-repository-detail.html.twig';
 import './muwa-backup-repository-detail.scss';
+import formatDuration from '../../helper/format-duration';
+import formatScheduleDate from '../../helper/format-schedule-date';
 
 const { Component, Context, Mixin } = Shopware;
 const { Criteria } = Shopware.Data;
@@ -58,6 +60,10 @@ Component.register('muwa-backup-repository-detail', {
             backupRepository: { backupPaths: [] },
             schedule: { enabled: false, cronExpression: '0 2 * * *', timezone: 'UTC', status: 'inactive', lastExecutionTime: null, nextExecutionTime: null, lastError: null },
             timezoneOptions: [],
+            schedulePreview: [],
+            schedulePreviewError: null,
+            isSchedulePreviewLoading: false,
+            requestSchedulePreview: '/_action/muwa/backup/schedule/preview',
             isLoading: false,
             isBatchUploadLoading: {
                 preBackupCommand: false,
@@ -143,6 +149,14 @@ Component.register('muwa-backup-repository-detail', {
         tab() {
             this.maybeLoadPathSuggestions();
         },
+
+        'schedule.cronExpression'() {
+            this.debouncedLoadSchedulePreview();
+        },
+
+        'schedule.timezone'() {
+            this.debouncedLoadSchedulePreview();
+        },
     },
 
     computed: {
@@ -161,6 +175,10 @@ Component.register('muwa-backup-repository-detail', {
 
         backupRepositoryUploadsRepository() {
             return this.repositoryFactory.create('muwa_backup_repository_uploads');
+        },
+
+        formattedNextExecutionTime() {
+            return this.formatScheduleDate(this.schedule.nextExecutionTime);
         },
 
         isMirrorConfigured() {
@@ -286,6 +304,11 @@ Component.register('muwa-backup-repository-detail', {
                     id: 'checkStatus',
                     name: this.$tc('muwa-backup-repository.list.CheckStatusLabel'),
                     value: this.latestStats.checkStatus || this.$tc('muwa-backup-repository.detail.statsNoValue'),
+                },
+                {
+                    id: 'backupDuration',
+                    name: this.$tc('muwa-backup-repository.detail.statsBackupDurationLabel'),
+                    value: this.formatDuration(this.latestStats.backupDuration),
                 }
             ];
         },
@@ -322,6 +345,13 @@ Component.register('muwa-backup-repository-detail', {
                 {
                     property: 'totalFileCount',
                     label: 'muwa-backup-repository.list.totalFilesLabel',
+                    allowResize: true,
+                    align: 'right',
+                    width: '20%',
+                },
+                {
+                    property: 'backupDuration',
+                    label: 'muwa-backup-repository.detail.statsBackupDurationLabel',
                     allowResize: true,
                     align: 'right',
                     width: '20%',
@@ -602,6 +632,7 @@ Component.register('muwa-backup-repository-detail', {
                 this.backupRepository = entity;
                 this.syncMirrorForm();
                 if (entity.schedule) { this.schedule = entity.schedule; }
+                this.loadSchedulePreview();
                 this.maybeLoadPathSuggestions();
                 this.isLoading = false;
                 this.isBackupProcessInProgress = false;
@@ -861,6 +892,38 @@ Component.register('muwa-backup-repository-detail', {
 
         mirrorStatusVariant(status) {
             return { succeeded: 'success', failed: 'danger' }[status] ?? 'info';
+        },
+
+        debouncedLoadSchedulePreview: debounce(function debouncedLoadSchedulePreview() {
+            this.loadSchedulePreview();
+        }, 400),
+
+        // Asks the backend for the upcoming runs, so the preview uses the same cron parser as the scheduler.
+        loadSchedulePreview() {
+            if (!this.schedule.cronExpression) {
+                this.schedulePreview = [];
+                this.schedulePreviewError = null;
+                return;
+            }
+
+            this.isSchedulePreviewLoading = true;
+            const payload = { cronExpression: this.schedule.cronExpression, timezone: this.schedule.timezone || 'UTC' };
+            this.httpClient.post(this.requestSchedulePreview, payload, { headers: this.getApiHeader() })
+                .then((response) => {
+                    this.schedulePreview = response.data.nextRuns;
+                    this.schedulePreviewError = null;
+                })
+                .catch((exception) => {
+                    this.schedulePreview = [];
+                    this.schedulePreviewError = exception.response?.data?.errors?.[0]?.detail || exception.message;
+                })
+                .finally(() => {
+                    this.isSchedulePreviewLoading = false;
+                });
+        },
+
+        formatScheduleDate(value) {
+            return formatScheduleDate(value, this.schedule.timezone);
         },
 
         onScheduleSave() {
@@ -1144,6 +1207,10 @@ Component.register('muwa-backup-repository-detail', {
                 return this.$tc('muwa-backup-repository.detail.statsNoValue');
             }
             return value.toLocaleString();
+        },
+
+        formatDuration(seconds) {
+            return formatDuration(seconds, this.$t.bind(this));
         },
 
         formatChartDate(value) {

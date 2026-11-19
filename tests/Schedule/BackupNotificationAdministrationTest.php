@@ -80,5 +80,13 @@ final class BackupNotificationAdministrationTest extends TestCase
             'Backup “{name}” failed: {error}',
             $english['muwa-backup-repository']['notification']['backupFailed']
         );
+        self::assertSame(
+            'Backup „{name}“ wurde ohne vollständige Datenbank abgeschlossen: {error}',
+            $german['muwa-backup-repository']['notification']['backupDumpFailed']
+        );
+        self::assertSame(
+            'Backup “{name}” completed without a complete database: {error}',
+            $english['muwa-backup-repository']['notification']['backupDumpFailed']
+        );
     }
 }

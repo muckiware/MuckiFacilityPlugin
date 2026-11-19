@@ -1,5 +1,6 @@
 import template from './muwa-backup-repository-list.html.twig';
 import './muwa-backup-repository-list.scss';
+import { getNextScheduledRun } from '../../helper/format-schedule-date';
 
 const { Component, Mixin } = Shopware;
 const { Criteria } = Shopware.Data;
@@ -86,6 +87,12 @@ Component.register('muwa-backup-repository-list', {
                     allowResize: true,
                     sortable: false
                 }, {
+                    property: 'nextScheduledBackup',
+                    dataIndex: 'nextScheduledBackup',
+                    label: this.$t('muwa-backup-repository.list.column-next-scheduled-backup'),
+                    allowResize: true,
+                    sortable: false
+                }, {
                     property: 'createdAt',
                     dataIndex: 'createdAt',
                     label: this.$t('muwa-backup-repository.list.column-created-at'),
@@ -120,6 +127,14 @@ Component.register('muwa-backup-repository-list', {
             return item.backupRepositoryStats[0];
         },
 
+        formatNextScheduledBackup(item) {
+            const nextRun = getNextScheduledRun(item.schedule);
+            if (nextRun === null) {
+                return this.$t('muwa-backup-repository.schedule.noActiveSchedule');
+            }
+            return this.dateFilter(nextRun, { hour: '2-digit', minute: '2-digit' });
+        },
+
         getRepository() {
             return this.repositoryFactory.create('muwa_backup_repository');
         },
@@ -131,6 +146,7 @@ Component.register('muwa-backup-repository-list', {
             criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
             criteria.setTerm(this.term);
             criteria.addAssociation('backupRepositoryChecks');
+            criteria.addAssociation('schedule');
             criteria.getAssociation('backupRepositoryChecks').addSorting(Criteria.sort('createdAt', 'DESC'));
             criteria.getAssociation('backupRepositoryStats')
                 .addSorting(Criteria.sort('createdAt', 'DESC'))

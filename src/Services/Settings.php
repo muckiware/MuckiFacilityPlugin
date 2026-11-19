@@ -20,9 +20,15 @@ use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Core\ConfigPath;
 use MuckiFacilityPlugin\Core\DumpPathRejection;
+use MuckiFacilityPlugin\Core\MysqlDumpOption;
 
 class Settings implements SettingsInterface
 {
+    /**
+     * Control characters and characters a shell still interprets inside double quotes.
+     */
+    private const INVALID_DUMP_PATH_CHARACTERS = '/[\x00-\x1F\x7F$`"\\\\]/';
+
     /**
      * Absolute system directories a database dump must never be written to and cleaned out of.
      *
@@ -58,6 +64,52 @@ class Settings implements SettingsInterface
     public function isCompressDbBackupEnabled(): bool
     {
         return $this->config->getBool(ConfigPath::CONFIG_PATH_COMPRESS_DB_BACKUP->value);
+    }
+
+    /**
+     * A failed dump on the default connection aborts the whole backup run (own connections always do).
+     */
+    public function isFailOnDumpErrorEnabled(): bool
+    {
+        return $this->config->getBool(ConfigPath::CONFIG_PATH_FAIL_ON_DUMP_ERROR->value);
+    }
+
+    /**
+     * A hanging mysqldump would hold the global backup lock forever. Setting in minutes, never saved =
+     * Defaults::DB_DUMP_TIMEOUT_MINUTES, 0 = no limit.
+     */
+    public function getDbDumpTimeout(): int
+    {
+        $minutes = $this->config->get(ConfigPath::CONFIG_PATH_DB_DUMP_TIMEOUT->value);
+        if($minutes === null || $minutes === '') {
+            $minutes = PluginDefaults::DB_DUMP_TIMEOUT_MINUTES;
+        }
+
+        return max(0, (int) $minutes) * 60;
+    }
+
+    /**
+     * One bool setting per option. A never saved setting counts as its default, so
+     * --no-tablespaces stays active until it is switched off explicitly.
+     *
+     * @return array<int, MysqlDumpOption>
+     */
+    public function getDefaultConnectionDumpOptions(): array
+    {
+        return array_values(array_filter(
+            MysqlDumpOption::cases(),
+            fn (MysqlDumpOption $option): bool => $this->isDumpOptionEnabled($option)
+        ));
+    }
+
+    protected function isDumpOptionEnabled(MysqlDumpOption $option): bool
+    {
+        $value = $this->config->get(ConfigPath::CONFIG_PATH_MYSQLDUMP_OPTION_PREFIX->value.ucfirst($option->value));
+        if($value === null) {
+            return in_array($option, MysqlDumpOption::DEFAULTS, true);
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     public function getDateTimeStringFormat(): string
@@ -173,6 +225,9 @@ class Settings implements SettingsInterface
                 'Own database dump path must not be a system directory or a sensitive project directory, using default path instead: '.$resolvedDumpPath,
             DumpPathRejection::OVERLAPS_DUMP_PATH =>
                 'Path must not overlap with the database dump path: '.$resolvedDumpPath,
+            // the value itself is not logged, it may contain control characters
+            DumpPathRejection::INVALID_CHARACTERS =>
+                'Own database dump path contains control or shell characters ($ ` " \\), using default path instead',
         };
     }
 
@@ -202,6 +257,12 @@ class Settings implements SettingsInterface
         $ownDumpPath = trim((string) $ownDumpPath);
         if($ownDumpPath === '') {
             return null;
+        }
+
+        // Defence in depth: the dumper keeps the dump path out of the mysqldump shell command, these
+        // characters would be interpreted there inside double quotes.
+        if(preg_match(self::INVALID_DUMP_PATH_CHARACTERS, $ownDumpPath) === 1) {
+            return DumpPathRejection::INVALID_CHARACTERS;
         }
 
         $protectedPaths = [];

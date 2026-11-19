@@ -17,45 +17,63 @@ use PHPUnit\Framework\TestCase;
 use Spatie\DbDumper\Databases\MySql;
 use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
+use Symfony\Component\Process\Process;
 
 use MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Entity\ResolvedDatabaseConnection;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
+use MuckiFacilityPlugin\Services\SettingsInterface;
 
 class MysqlDatabaseDumperTest extends TestCase
 {
     private const DATABASE_URL = 'mysql://root:root@database:3306/shopware';
     private const PASSWORD = 's3cret-Pa55';
 
+    private string $workDir;
+
+    protected function setUp(): void
+    {
+        $this->workDir = sys_get_temp_dir() . '/muwa-dumper-test-' . bin2hex(random_bytes(6));
+        mkdir($this->workDir);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->removeDirectory($this->workDir);
+    }
+
     public function testDefaultConnectionDumpUsesDatabaseUrlAndSingleTransaction(): void
     {
-        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper = $this->createSpatieMock();
         $spatieDumper->expects(static::once())->method('setDatabaseUrl')->with(self::DATABASE_URL);
         $spatieDumper->expects(static::once())->method('useSingleTransaction');
+        $spatieDumper->expects(static::once())->method('addExtraOption')->with('--no-tablespaces');
         $spatieDumper->expects(static::never())->method('setHost');
         $spatieDumper->expects(static::never())->method('setPassword');
         $spatieDumper->expects(static::never())->method('includeTables');
-        $spatieDumper->expects(static::once())->method('dumpToFile')->with('/tmp/dump.sql');
 
         $dumper = $this->createDumperWithSpatie($spatieDumper);
-        $dumper->dump($this->createDefaultConnection(), '/tmp/dump.sql');
+        $dumper->dump($this->createDefaultConnection(), $this->workDir . '/dump.sql');
+
+        static::assertFileExists($this->workDir . '/dump.sql');
     }
 
     public function testDefaultConnectionDumpIncludesGivenTables(): void
     {
-        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper = $this->createSpatieMock();
         $spatieDumper->expects(static::once())->method('setDatabaseUrl')->with(self::DATABASE_URL);
         $spatieDumper->expects(static::once())->method('includeTables')->with(['product']);
-        $spatieDumper->expects(static::once())->method('dumpToFile')->with('/tmp/product.sql');
 
         $dumper = $this->createDumperWithSpatie($spatieDumper);
-        $dumper->dump($this->createDefaultConnection(), '/tmp/product.sql', ['product']);
+        $dumper->dump($this->createDefaultConnection(), $this->workDir . '/product.sql', ['product']);
+
+        static::assertFileExists($this->workDir . '/product.sql');
     }
 
     public function testOwnConnectionDumpSetsHostPortNameUserPassword(): void
     {
-        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper = $this->createSpatieMock();
         $spatieDumper->expects(static::never())->method('setDatabaseUrl');
         $spatieDumper->expects(static::once())->method('setHost')->with('db.example.org');
         $spatieDumper->expects(static::once())->method('setPort')->with(3307);
@@ -63,10 +81,12 @@ class MysqlDatabaseDumperTest extends TestCase
         $spatieDumper->expects(static::once())->method('setUserName')->with('backup');
         $spatieDumper->expects(static::once())->method('setPassword')->with(self::PASSWORD);
         $spatieDumper->expects(static::once())->method('useSingleTransaction');
-        $spatieDumper->expects(static::once())->method('dumpToFile')->with('/tmp/shop.sql');
+        $spatieDumper->expects(static::once())->method('addExtraOption')->with('--no-tablespaces');
 
         $dumper = $this->createDumperWithSpatie($spatieDumper);
-        $dumper->dump($this->createOwnConnection(), '/tmp/shop.sql');
+        $dumper->dump($this->createOwnConnection(), $this->workDir . '/shop.sql');
+
+        static::assertFileExists($this->workDir . '/shop.sql');
     }
 
     public function testDefaultListTablesUsesCoreDatabase(): void
@@ -128,7 +148,7 @@ class MysqlDatabaseDumperTest extends TestCase
      */
     public function testOwnConnectionDumpRejectsShellMetacharactersInDatabaseName(): void
     {
-        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper = $this->createSpatieMock();
         $spatieDumper->expects(static::never())->method('setDbName');
 
         $dumper = $this->createDumperWithSpatie($spatieDumper);
@@ -155,7 +175,7 @@ class MysqlDatabaseDumperTest extends TestCase
      */
     public function testDumpRejectsShellMetacharactersInTableNames(): void
     {
-        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper = $this->createSpatieMock();
         $spatieDumper->expects(static::never())->method('includeTables');
 
         $dumper = $this->createDumperWithSpatie($spatieDumper);
@@ -170,13 +190,13 @@ class MysqlDatabaseDumperTest extends TestCase
 
     public function testDumpFailureIsWrappedWithLegacyPrefixAndMaskedPassword(): void
     {
-        $spatieDumper = $this->createMock(MySql::class);
-        $spatieDumper->method('dumpToFile')->willThrowException(new DumpFailed('mysqldump said ' . self::PASSWORD));
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->method('checkIfDumpWasSuccessFul')->willThrowException(new DumpFailed('mysqldump said ' . self::PASSWORD));
 
         $dumper = $this->createDumperWithSpatie($spatieDumper);
 
         try {
-            $dumper->dump($this->createOwnConnection(), '/tmp/shop.sql');
+            $dumper->dump($this->createOwnConnection(), $this->workDir . '/shop.sql');
             static::fail('dump should have thrown');
         } catch (DatabaseBackupFailedException $e) {
             static::assertStringStartsWith('Dump failed:', $e->getMessage());
@@ -186,21 +206,251 @@ class MysqlDatabaseDumperTest extends TestCase
 
     public function testCannotStartDumpKeepsLegacyPrefixForDefaultConnection(): void
     {
-        $spatieDumper = $this->createMock(MySql::class);
-        $spatieDumper->method('dumpToFile')->willThrowException(new CannotStartDump('missing credentials'));
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->method('guardAgainstIncompleteCredentials')->willThrowException(new CannotStartDump('missing credentials'));
 
         $dumper = $this->createDumperWithSpatie($spatieDumper);
 
         $this->expectException(DatabaseBackupFailedException::class);
         $this->expectExceptionMessage('Cannot start dump:missing credentials');
 
-        $dumper->dump($this->createDefaultConnection(), '/tmp/dump.sql');
+        $dumper->dump($this->createDefaultConnection(), $this->workDir . '/dump.sql');
     }
 
-    private function createDumperWithSpatie(MySql $spatieDumper): MysqlDatabaseDumper&MockObject
+    public function testConfiguredDumpOptionsReplaceTheDefaults(): void
+    {
+        $spatieDumper = $this->createSpatieMock();
+        $arguments = [];
+        $spatieDumper->method('addExtraOption')->willReturnCallback(
+            function (string $argument) use (&$arguments, $spatieDumper): MySql {
+                $arguments[] = $argument;
+                return $spatieDumper;
+            }
+        );
+
+        $connection = new ResolvedDatabaseConnection(
+            'mysql', 'db.example.org', 3307, 'shop', 'backup', self::PASSWORD,
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => ['events', 'routines', 'setGtidPurgedOff']]
+        );
+        $this->createDumperWithSpatie($spatieDumper)->dump($connection, $this->workDir . '/shop.sql');
+
+        static::assertSame(['--routines', '--events', '--set-gtid-purged=OFF'], $arguments);
+    }
+
+    public function testEmptyDumpOptionsAddNoExtraOption(): void
+    {
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->expects(static::never())->method('addExtraOption');
+
+        $connection = new ResolvedDatabaseConnection(
+            'mysql', 'db.example.org', 3307, 'shop', 'backup', self::PASSWORD,
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => []]
+        );
+        $this->createDumperWithSpatie($spatieDumper)->dump($connection, $this->workDir . '/shop.sql');
+    }
+
+    /**
+     * Rows or third-party subscribers may carry arbitrary values; only allowlisted arguments may
+     * reach the shell command line.
+     */
+    public function testUnknownDumpOptionsNeverReachMysqldump(): void
+    {
+        $dumpDir = $this->workDir . '/dump';
+        mkdir($dumpDir);
+
+        $connection = new ResolvedDatabaseConnection(
+            'mysql', 'db.example.org', 3307, 'shop', 'backup', self::PASSWORD,
+            [MysqlDatabaseDumper::EXTRA_DUMP_OPTIONS => ['hexBlob', '--routines; touch pwned', 'routines']]
+        );
+        $dumper = $this->createDumperWithSpatie(MySql::create()->setDumpBinaryPath($this->createArgumentEchoMysqldump()));
+        $dumper->dump($connection, $dumpDir . '/shop.sql');
+
+        $arguments = (string) file_get_contents($dumpDir . '/shop.sql');
+        static::assertStringContainsString(' --routines --hex-blob ', ' ' . trim($arguments) . ' ');
+        static::assertStringNotContainsString('--no-tablespaces', $arguments);
+        static::assertStringNotContainsString('touch', $arguments);
+        static::assertSame(['shop.sql'], array_values(array_diff(scandir($dumpDir) ?: [], ['.', '..'])));
+    }
+
+    public function testTimeoutComesFromSettingsAndDefaultsWithoutThem(): void
+    {
+        $settings = $this->createMock(SettingsInterface::class);
+        $settings->method('getDbDumpTimeout')->willReturn(60);
+
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->expects(static::once())->method('setTimeout')->with(60);
+        $this->createDumperWithSpatie($spatieDumper, $settings)->dump($this->createOwnConnection(), $this->workDir . '/a.sql');
+
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->expects(static::once())->method('setTimeout')->with(240 * 60);
+        $this->createDumperWithSpatie($spatieDumper)->dump($this->createOwnConnection(), $this->workDir . '/b.sql');
+    }
+
+    /**
+     * A hanging mysqldump must not block the global backup lock forever.
+     */
+    public function testHangingMysqldumpIsStoppedAndCountsAsFailedDump(): void
+    {
+        $dumpDir = $this->workDir . '/dump';
+        mkdir($dumpDir);
+        $binDir = $this->workDir . '/bin';
+        mkdir($binDir);
+        file_put_contents($binDir . '/mysqldump', "#!/bin/sh\necho '-- partial'\nsleep 10\n");
+        chmod($binDir . '/mysqldump', 0755);
+
+        $settings = $this->createMock(SettingsInterface::class);
+        $settings->method('getDbDumpTimeout')->willReturn(1);
+        $dumper = $this->createDumperWithSpatie(MySql::create()->setDumpBinaryPath($binDir), $settings);
+
+        $start = microtime(true);
+        try {
+            $dumper->dump($this->createOwnConnection(), $dumpDir . '/shop.sql');
+            static::fail('dump should have thrown');
+        } catch (DatabaseBackupFailedException $e) {
+            static::assertSame('Dump failed:mysqldump did not finish within 1 seconds', $e->getMessage());
+        }
+
+        static::assertLessThan(5, microtime(true) - $start);
+        static::assertSame([], array_values(array_diff(scandir($dumpDir) ?: [], ['.', '..'])));
+    }
+
+    public function testFailedDumpRemovesPartialFileAndCreatesNoDumpFile(): void
+    {
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->method('checkIfDumpWasSuccessFul')->willThrowException(new DumpFailed('connection lost'));
+
+        $dumper = $this->createDumperWithSpatie($spatieDumper);
+
+        try {
+            $dumper->dump($this->createOwnConnection(), $this->workDir . '/shop.sql');
+            static::fail('dump should have thrown');
+        } catch (DatabaseBackupFailedException $e) {
+            static::assertStringStartsWith('Dump failed:', $e->getMessage());
+        }
+
+        static::assertSame([], $this->listWorkDir());
+    }
+
+    public function testShellReceivesOnlyGeneratedPartialFileName(): void
+    {
+        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper->expects(static::once())
+            ->method('getProcess')
+            ->with(static::matchesRegularExpression('/^\.muwa-dump-[0-9a-f]{16}\.partial$/'))
+            ->willReturnCallback(fn (string $file): Process => $this->createWritingProcess($file));
+
+        $dumper = $this->createDumperWithSpatie($spatieDumper);
+        $dumper->dump($this->createOwnConnection(), $this->workDir . '/shop.sql');
+
+        static::assertSame(['shop.sql'], $this->listWorkDir());
+    }
+
+    /**
+     * Regression for the shell injection through the dump path: spatie only escapes \ and " in the
+     * output file, $(...) in the configured directory used to be executed by the shell.
+     */
+    public function testDumpPathWithShellSyntaxIsNeverExecuted(): void
+    {
+        // the shell runs in the dump directory, an executed touch would create the marker there
+        $dumpDir = $this->workDir . '/dump $(touch pwned-a) `touch pwned-b`';
+        mkdir($dumpDir);
+
+        $dumper = $this->createDumperWithSpatie(MySql::create()->setDumpBinaryPath($this->createFakeMysqldump(0)));
+        $dumper->dump($this->createOwnConnection(), $dumpDir . '/shop.sql');
+
+        static::assertSame(['shop.sql'], array_values(array_diff(scandir($dumpDir) ?: [], ['.', '..'])));
+        static::assertSame("-- fake dump\n", file_get_contents($dumpDir . '/shop.sql'));
+    }
+
+    public function testAbortedMysqldumpLeavesNoHalfDump(): void
+    {
+        $dumpDir = $this->workDir . '/dump';
+        mkdir($dumpDir);
+
+        $dumper = $this->createDumperWithSpatie(MySql::create()->setDumpBinaryPath($this->createFakeMysqldump(2)));
+
+        try {
+            $dumper->dump($this->createOwnConnection(), $dumpDir . '/shop.sql');
+            static::fail('dump should have thrown');
+        } catch (DatabaseBackupFailedException $e) {
+            static::assertStringStartsWith('Dump failed:', $e->getMessage());
+            static::assertStringNotContainsString(self::PASSWORD, $e->getMessage());
+        }
+
+        static::assertSame([], array_values(array_diff(scandir($dumpDir) ?: [], ['.', '..'])));
+    }
+
+    /**
+     * Mock whose process really writes the partial file, so the rename to the target name can run.
+     */
+    private function createSpatieMock(): MySql&MockObject
+    {
+        $spatieDumper = $this->createMock(MySql::class);
+        $spatieDumper->method('getProcess')->willReturnCallback(
+            fn (string $file): Process => $this->createWritingProcess($file)
+        );
+
+        return $spatieDumper;
+    }
+
+    private function createWritingProcess(string $file): Process
+    {
+        return Process::fromShellCommandline('printf "%s" "-- dump" > ' . escapeshellarg($file));
+    }
+
+    /**
+     * Fake mysqldump that writes a partial dump and exits with the given code.
+     *
+     * @return string directory containing the fake binary
+     */
+    private function createFakeMysqldump(int $exitCode): string
+    {
+        $binDir = $this->workDir . '/bin';
+        if (!is_dir($binDir)) {
+            mkdir($binDir);
+        }
+        file_put_contents($binDir . '/mysqldump', "#!/bin/sh\necho '-- fake dump'\nexit " . $exitCode . "\n");
+        chmod($binDir . '/mysqldump', 0755);
+
+        return $binDir;
+    }
+
+    /**
+     * Fake mysqldump that writes its own arguments as dump content.
+     */
+    private function createArgumentEchoMysqldump(): string
+    {
+        $binDir = $this->workDir . '/bin';
+        if (!is_dir($binDir)) {
+            mkdir($binDir);
+        }
+        file_put_contents($binDir . '/mysqldump', "#!/bin/sh\necho \"$@\"\n");
+        chmod($binDir . '/mysqldump', 0755);
+
+        return $binDir;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function listWorkDir(): array
+    {
+        return array_values(array_diff(scandir($this->workDir) ?: [], ['.', '..']));
+    }
+
+    private function removeDirectory(string $directory): void
+    {
+        foreach (array_diff(scandir($directory) ?: [], ['.', '..']) as $entry) {
+            $path = $directory . '/' . $entry;
+            is_dir($path) && !is_link($path) ? $this->removeDirectory($path) : unlink($path);
+        }
+        rmdir($directory);
+    }
+
+    private function createDumperWithSpatie(MySql $spatieDumper, ?SettingsInterface $settings = null): MysqlDatabaseDumper&MockObject
     {
         $dumper = $this->getMockBuilder(MysqlDatabaseDumper::class)
-            ->setConstructorArgs([$this->createMock(CoreDatabase::class)])
+            ->setConstructorArgs([$this->createMock(CoreDatabase::class), $settings])
             ->onlyMethods(['createDumper'])
             ->getMock();
         $dumper->method('createDumper')->willReturn($spatieDumper);

@@ -126,6 +126,35 @@ class DatabaseConnectionControllerTest extends TestCase
         static::assertNull($this->created[0]['port']);
     }
 
+    public function testSaveStoresAllowlistedDumpOptionsInEnumOrder(): void
+    {
+        $this->controller->save(
+            new RequestDataBag($this->input(['dumpOptions' => ['hexBlob', 'noTablespaces', 'hexBlob']])),
+            $this->context(true)
+        );
+
+        static::assertSame(['noTablespaces', 'hexBlob'], $this->created[0]['dumpOptions']);
+    }
+
+    public function testSaveWithEmptyDumpOptionsStoresEmptyList(): void
+    {
+        $this->controller->save(new RequestDataBag($this->input(['dumpOptions' => []])), $this->context(true));
+
+        static::assertSame([], $this->created[0]['dumpOptions']);
+    }
+
+    public function testSaveWithoutDumpOptionsLeavesTheFieldUntouched(): void
+    {
+        $this->storedEntity = $this->storedConnection();
+        $this->controller->save(
+            new RequestDataBag($this->input(['id' => $this->storedEntity->getId(), 'password' => ''])),
+            $this->context(false)
+        );
+
+        static::assertCount(1, $this->updated);
+        static::assertArrayNotHasKey('dumpOptions', $this->updated[0]);
+    }
+
     public function testSaveWithEmptyPasswordKeepsStoredPassword(): void
     {
         $this->storedEntity = $this->storedConnection();
@@ -218,6 +247,8 @@ class DatabaseConnectionControllerTest extends TestCase
             'carriage return in username' => [['username' => "backup\rhost=evil"]],
             'nul in database name' => [['databaseName' => "shop\0x"]],
             'line break in name' => [['name' => "Shop\nDB"]],
+            'unknown dump option' => [['dumpOptions' => ['routines', '--routines; touch pwned']]],
+            'dump options not a list' => [['dumpOptions' => 'routines']],
         ];
     }
 

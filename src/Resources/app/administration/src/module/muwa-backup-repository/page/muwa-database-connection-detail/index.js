@@ -6,6 +6,17 @@ const { createId } = Shopware.Utils;
 const DEFAULT_PORTS = { mysql: 3306 };
 const KNOWN_TYPES = ['mysql'];
 const PASSWORD_SOURCES = ['encrypted', 'env', 'file'];
+// allowlist of MuckiFacilityPlugin\Core\MysqlDumpOption, in the same order
+const DUMP_OPTIONS = [
+    'noTablespaces',
+    'routines',
+    'events',
+    'setGtidPurgedOff',
+    'columnStatisticsOff',
+    'defaultCharacterSetUtf8mb4',
+    'hexBlob',
+];
+const DEFAULT_DUMP_OPTIONS = ['noTablespaces'];
 
 function createEmptyConnection() {
     return {
@@ -16,6 +27,7 @@ function createEmptyConnection() {
         databaseName: '',
         username: '',
         passwordSource: 'encrypted',
+        dumpOptions: [...DEFAULT_DUMP_OPTIONS],
     };
 }
 
@@ -115,6 +127,14 @@ export default {
             return this.$t(`muwa-backup-repository.databaseConnection.passwordValueLabels.${this.connection.passwordSource}`);
         },
 
+        isMysqlType() {
+            return this.connection.type === 'mysql';
+        },
+
+        dumpOptionList() {
+            return DUMP_OPTIONS;
+        },
+
         passwordPlaceholder() {
             return this.isNew ? '' : this.$t('muwa-backup-repository.databaseConnection.passwordKeepPlaceholder');
         },
@@ -184,6 +204,10 @@ export default {
                         databaseName: entity.databaseName,
                         username: entity.username,
                         passwordSource: entity.passwordSource || 'encrypted',
+                        // null = never configured, the backend uses the defaults then
+                        dumpOptions: Array.isArray(entity.dumpOptions)
+                            ? [...entity.dumpOptions]
+                            : [...DEFAULT_DUMP_OPTIONS],
                     };
                 })
                 .finally(() => {
@@ -202,7 +226,17 @@ export default {
                 username: this.connection.username,
                 passwordSource: this.connection.passwordSource,
                 password: this.password,
+                dumpOptions: DUMP_OPTIONS.filter((option) => this.connection.dumpOptions.includes(option)),
             };
+        },
+
+        isDumpOptionActive(option) {
+            return this.connection.dumpOptions.includes(option);
+        },
+
+        onToggleDumpOption(option, active) {
+            const others = this.connection.dumpOptions.filter((selected) => selected !== option);
+            this.connection.dumpOptions = active ? [...others, option] : others;
         },
 
         hasPasswordErrors() {

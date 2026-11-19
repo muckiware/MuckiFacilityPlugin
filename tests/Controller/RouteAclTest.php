@@ -49,6 +49,11 @@ class RouteAclTest extends TestCase
                 'configure',
                 ['muwa_backup_repository:update'],
             ],
+            'backup schedule preview' => [
+                ScheduleController::class,
+                'preview',
+                ['muwa_backup_repository:read'],
+            ],
             'repository init' => [
                 InitBackupRepositoryController::class,
                 'initRepository',

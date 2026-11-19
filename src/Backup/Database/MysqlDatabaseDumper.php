@@ -17,11 +17,15 @@ use Spatie\DbDumper\Databases\MySql;
 use Spatie\DbDumper\Exceptions\CannotSetParameter;
 use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Core\Database\DbIdentifier;
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
+use MuckiFacilityPlugin\Core\MysqlDumpOption;
 use MuckiFacilityPlugin\Entity\ResolvedDatabaseConnection;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
+use MuckiFacilityPlugin\Services\SettingsInterface;
 
 /**
  * Dumper for MySQL / MariaDB based on spatie/db-dumper (mysqldump).
@@ -31,13 +35,25 @@ use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
  * Own connection: host/port/name/user/password are passed one by one; spatie hands the password to
  * mysqldump through a temporary credentials file, so it never shows up in the process arguments.
  * Table list and connection test use a short-lived DBAL connection that is closed afterwards.
+ *
+ * The dump is written into a hidden partial file and renamed to the target name only after
+ * mysqldump succeeded, so a broken run never leaves a half dump that ends up in the backup.
  */
 class MysqlDatabaseDumper implements DatabaseDumperInterface
 {
+    /**
+     * Key in ResolvedDatabaseConnection::getExtra(): list of MysqlDumpOption values. Missing key
+     * (connection resolved by another subscriber) = MysqlDumpOption::DEFAULTS.
+     */
+    public const EXTRA_DUMP_OPTIONS = 'dumpOptions';
+
     protected const MASK = '***';
+    protected const PARTIAL_FILE_PREFIX = '.muwa-dump-';
+    protected const PARTIAL_FILE_SUFFIX = '.partial';
 
     public function __construct(
-        protected CoreDatabase $database
+        protected CoreDatabase $database,
+        protected ?SettingsInterface $pluginSettings = null
     )
     {}
 
@@ -70,12 +86,24 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
             $mysqlDumper = $this->createDumper();
             $this->configureDumper($mysqlDumper, $connection);
             $mysqlDumper->useSingleTransaction();
+            $mysqlDumper->setTimeout($this->getTimeout());
+            foreach ($this->getDumpOptions($connection) as $option) {
+                $mysqlDumper->addExtraOption($option->getArgument());
+            }
 
             if ($tables !== []) {
                 $mysqlDumper->includeTables($tables);
             }
 
-            $mysqlDumper->dumpToFile($dumpFile);
+            $this->runDump($mysqlDumper, $dumpFile);
+        } catch (DatabaseBackupFailedException $e) {
+            throw $e;
+        } catch (ProcessTimedOutException $e) {
+            // Symfony stops mysqldump itself (the shell is replaced via exec), the partial file is removed
+            throw $this->createException(
+                sprintf('Dump failed:mysqldump did not finish within %d seconds', (int) $e->getExceededTimeout()),
+                $connection
+            );
         } catch (CannotStartDump $e) {
             throw $this->createException('Cannot start dump:' . $e->getMessage(), $connection);
         } catch (DumpFailed $e) {
@@ -93,9 +121,71 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
         }
     }
 
+    /**
+     * Only allowlisted options: spatie puts extra options unescaped into the shell command line.
+     *
+     * @return array<int, MysqlDumpOption>
+     */
+    protected function getDumpOptions(ResolvedDatabaseConnection $connection): array
+    {
+        $extra = $connection->getExtra();
+        if (!array_key_exists(self::EXTRA_DUMP_OPTIONS, $extra) || !is_array($extra[self::EXTRA_DUMP_OPTIONS])) {
+            return MysqlDumpOption::DEFAULTS;
+        }
+
+        return MysqlDumpOption::fromValues($extra[self::EXTRA_DUMP_OPTIONS]);
+    }
+
+    /**
+     * Seconds, 0 = no limit. Without settings (other plugins creating the dumper) the default applies.
+     */
+    protected function getTimeout(): int
+    {
+        return $this->pluginSettings?->getDbDumpTimeout() ?? PluginDefaults::DB_DUMP_TIMEOUT_MINUTES * 60;
+    }
+
     protected function createDumper(): MySql
     {
         return MySql::create();
+    }
+
+    /**
+     * Replacement for MySql::dumpToFile(). spatie puts the output file into the shell command line
+     * and only escapes \ and " in it, so $(...) and backticks of a configured dump path would be
+     * executed. The command therefore only gets the generated partial file name (hex, no
+     * metacharacters) and runs in the dump directory; the configured path never reaches the shell.
+     *
+     * @throws DatabaseBackupFailedException when the finished dump can not be moved to its target
+     */
+    protected function runDump(MySql $mysqlDumper, string $dumpFile): void
+    {
+        $directory = dirname($dumpFile);
+        $partialFileName = self::PARTIAL_FILE_PREFIX . bin2hex(random_bytes(8)) . self::PARTIAL_FILE_SUFFIX;
+        $partialFile = $directory . '/' . $partialFileName;
+        $credentialsFileHandle = null;
+
+        try {
+            $mysqlDumper->guardAgainstIncompleteCredentials();
+            $credentialsFileHandle = tmpfile();
+            $mysqlDumper->setTempFileHandle($credentialsFileHandle);
+
+            $process = $mysqlDumper->getProcess($partialFileName);
+            $process->setWorkingDirectory($directory);
+            $process->run();
+
+            $mysqlDumper->checkIfDumpWasSuccessFul($process, $partialFile);
+            if (!rename($partialFile, $dumpFile)) {
+                throw new DatabaseBackupFailedException('Dump failed:Dump file could not be moved to ' . $dumpFile);
+            }
+        } finally {
+            if (is_resource($credentialsFileHandle)) {
+                // closing a tmpfile() handle deletes the credentials file right away
+                fclose($credentialsFileHandle);
+            }
+            if (is_file($partialFile)) {
+                unlink($partialFile);
+            }
+        }
     }
 
     protected function createConnection(ResolvedDatabaseConnection $connection): Connection

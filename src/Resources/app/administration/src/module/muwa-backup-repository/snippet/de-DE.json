@@ -75,6 +75,7 @@
       "column-updated-at": "Aktualisiert am",
       "column-check-status": "Check Status",
       "column-last-backup-at": "Letzter Backup-Lauf",
+      "column-next-scheduled-backup": "Nächste Sicherung",
       "textDeleteSnapshotConfirm": "Möchtest Du den Snapshot \"{snapshotShortId}\" wirklich löschen?",
       "textDeleteRepositoryConfirm": "Sind Sie sicher, dieses Repository löschen zu wollen?",
       "totalFileSizeLabel": "Gesamt Dateigröße",
@@ -141,7 +142,11 @@
       "statsHistoryEmptyTitle": "Keine Einträge in diesem Zeitraum",
       "statsEmptyTitle": "Noch kein Status erhoben",
       "statsEmptySubline": "Der Status wird am Ende jedes Backup-Laufs erhoben. Alternativ per CLI: bin/console muckiware:repository:stats <id>",
-      "statsNoValue": "–"
+      "statsNoValue": "–",
+      "statsBackupDurationLabel": "Backup-Laufzeit",
+      "durationSeconds": "{value} Sek.",
+      "durationMinutes": "{value} Min.",
+      "durationHours": "{value} Std."
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten",
@@ -171,6 +176,7 @@
         "projectDirOrParent": "Das Shop-Verzeichnis oder eines seiner Elternverzeichnisse kann nicht als Dump-Pfad verwendet werden. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
         "overlapsRepositoryOrRestorePath": "Der Dump-Pfad überschneidet sich mit dem Repository-Pfad oder dem Restore-Pfad. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
         "blockedPath": "Dieses Verzeichnis ist geschützt und kann nicht als Dump-Pfad verwendet werden. Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
+        "invalidCharacters": "Der Pfad enthält unzulässige Zeichen (Steuerzeichen, $, `, \" oder \\). Das Backup nimmt stattdessen den Standardpfad var/db/backup.",
         "notWritable": "Der Ordner (bzw. sein nächster existierender Elternordner) ist für den Webserver-User nicht beschreibbar. Das Backup fällt dann ggf. auf den Standardpfad var/db/backup zurück."
       }
     },
@@ -189,6 +195,7 @@
       "title": "Backup-Status",
       "repositoryLabel": "Repository",
       "lastBackupAtLabel": "Letzter Backup-Lauf",
+      "nextScheduledBackupLabel": "Nächste Sicherung",
       "noStats": "Kein Status",
       "noCheck": "Kein Check",
       "checkOk": "OK",
@@ -218,6 +225,7 @@
       "backupStarted": "Backup „{name}“ wurde gestartet.",
       "backupSucceeded": "Backup „{name}“ wurde erfolgreich abgeschlossen.",
       "backupFailed": "Backup „{name}“ ist fehlgeschlagen: {error}",
+      "backupDumpFailed": "Backup „{name}“ wurde ohne vollständige Datenbank abgeschlossen: {error}",
       "restoreSucceeded": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ wurde erfolgreich abgeschlossen.",
       "restoreFailed": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ ist fehlgeschlagen: {error}",
       "takeoverCheckSucceeded": "Repository „{name}“ übernommen und geprüft: {status}",
@@ -234,6 +242,9 @@
       "status": "Status",
       "lastExecutionTime": "Letzte Ausführung",
       "nextExecutionTime": "Nächste Ausführung",
+      "previewTitle": "Nächste Ausführungen (Vorschau)",
+      "previewError": "Ungültiger Cron-Ausdruck oder ungültige Zeitzone.",
+      "noActiveSchedule": "Kein aktiver Zeitplan",
       "lastError": "Letzter Fehler",
       "save": "Zeitplan speichern",
       "error": "Zeitplan konnte nicht gespeichert werden"
@@ -295,6 +306,40 @@
       "selectHelpText": "Datenbank, von der der Dump erstellt wird. Die Standardverbindung ist die Datenbank dieses Shops.",
       "types": {
         "mysql": "MySQL / MariaDB"
+      },
+      "dumpOptions": {
+        "cardTitle": "mysqldump-Optionen",
+        "description": "Zusätzliche Optionen für den Datenbank-Dump dieser Verbindung. Es sind nur diese Optionen wählbar. Kennt das installierte mysqldump eine Option nicht, schlägt der Dump fehl.",
+        "options": {
+          "noTablespaces": {
+            "label": "--no-tablespaces",
+            "helpText": "Tablespace-Informationen weglassen. Ab MySQL 8.0.21 nötig, wenn der Benutzer kein PROCESS-Recht hat."
+          },
+          "routines": {
+            "label": "--routines",
+            "helpText": "Stored Procedures und Functions mit sichern."
+          },
+          "events": {
+            "label": "--events",
+            "helpText": "Geplante Events des Event-Schedulers mit sichern."
+          },
+          "setGtidPurgedOff": {
+            "label": "--set-gtid-purged=OFF",
+            "helpText": "Für Server mit GTID-Replikation (z. B. AWS RDS, Google Cloud SQL): der Dump lässt sich ohne SUPER-Recht einspielen. Vom MariaDB-mysqldump nicht unterstützt."
+          },
+          "columnStatisticsOff": {
+            "label": "--column-statistics=0",
+            "helpText": "Nötig, wenn mysqldump 8 einen MariaDB- oder MySQL-5.7-Server sichert. Vom MariaDB-mysqldump nicht unterstützt."
+          },
+          "defaultCharacterSetUtf8mb4": {
+            "label": "--default-character-set=utf8mb4",
+            "helpText": "utf8mb4 als Zeichensatz der Dump-Verbindung erzwingen."
+          },
+          "hexBlob": {
+            "label": "--hex-blob",
+            "helpText": "Binäre Spalten (BLOB, BINARY) hexadezimal exportieren."
+          }
+        }
       }
     },
     "takeover": {
@@ -431,6 +476,7 @@
     "triggers": {
       "muckiFacility": "Mucki Facility",
       "repositoryUpload": "Repository-Upload (S3)",
+      "databaseDump": "Datenbank-Dump",
       "succeeded": "Erfolgreich",
       "failed": "Fehlgeschlagen"
     }

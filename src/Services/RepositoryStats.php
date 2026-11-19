@@ -95,6 +95,65 @@ class RepositoryStats
         return null;
     }
 
+    /**
+     * Same as collectAndSave(), but returns the id of the saved stats entry, so the backup run can
+     * add its duration once it is completely finished. Never throws.
+     */
+    public function collectAndSaveForBackup(string $backupRepositoryId): ?string
+    {
+        try {
+            return $this->backupRepositoryStats->saveNewStats($backupRepositoryId, $this->collect($backupRepositoryId));
+        } catch (\Throwable $e) {
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+
+        return null;
+    }
+
+    /**
+     * Persists the runtime of a backup run, successful or not. Updates the stats entry of the run
+     * if there is one, otherwise (run aborted before its stats were saved) saves a new entry with the
+     * current state, falling back to empty values if even that cannot be collected. Never throws.
+     */
+    public function saveBackupDuration(string $backupRepositoryId, ?string $statsId, int $backupDuration): void
+    {
+        try {
+            if ($statsId !== null) {
+                $this->backupRepositoryStats->updateBackupDuration($statsId, $backupDuration);
+                return;
+            }
+
+            $collected = $this->collectOrEmpty($backupRepositoryId);
+            $collected['backupDuration'] = $backupDuration;
+            $this->backupRepositoryStats->saveNewStats($backupRepositoryId, $collected);
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Backup duration could not be saved: '.$e->getMessage(),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+        }
+    }
+
+    /**
+     * @return array{totalSize: int|null, totalFileCount: int|null, snapshotsCount: int|null, fileSystemSize: int|null, checkStatus: string|null}
+     */
+    protected function collectOrEmpty(string $backupRepositoryId): array
+    {
+        try {
+            return $this->collect($backupRepositoryId);
+        } catch (\Throwable $e) {
+            $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+
+        return [
+            'totalSize' => null,
+            'totalFileCount' => null,
+            'snapshotsCount' => null,
+            'fileSystemSize' => null,
+            'checkStatus' => null,
+        ];
+    }
+
     protected function collectFileSystemSize(string $backupRepositoryId): ?int
     {
         $backupRepository = $this->backupRepository->getBackupRepositoryById($backupRepositoryId);

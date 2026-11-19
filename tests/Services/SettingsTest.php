@@ -20,6 +20,7 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
 use MuckiFacilityPlugin\Services\Settings as PluginSettings;
 use MuckiFacilityPlugin\Services\Helper as PluginHelper;
 use MuckiFacilityPlugin\Core\DumpPathRejection;
+use MuckiFacilityPlugin\Core\MysqlDumpOption;
 
 class SettingsTest extends TestCase
 {
@@ -357,6 +358,11 @@ class SettingsTest extends TestCase
             'system dir' => ['/etc/backup', null, DumpPathRejection::BLOCKED_PATH],
             'sensitive project dir' => ['vendor/x', null, DumpPathRejection::BLOCKED_PATH],
             'overlap' => ['/mnt/repo/dump', '/mnt/repo', DumpPathRejection::OVERLAPS_REPOSITORY_OR_RESTORE_PATH],
+            'command substitution' => ['/mnt/backup/$(id)', null, DumpPathRejection::INVALID_CHARACTERS],
+            'backtick' => ['/mnt/backup/`id`', null, DumpPathRejection::INVALID_CHARACTERS],
+            'double quote' => ['/mnt/backup/a"b', null, DumpPathRejection::INVALID_CHARACTERS],
+            'backslash' => ['/mnt/backup/a\\b', null, DumpPathRejection::INVALID_CHARACTERS],
+            'newline' => ["/mnt/backup/a\nb", null, DumpPathRejection::INVALID_CHARACTERS],
         ];
     }
 
@@ -422,6 +428,52 @@ class SettingsTest extends TestCase
         $settings = $this->createSettings();
         static::assertNull($settings->getRestorePathRejection('/mnt/restore', '/mnt/repo', '/mnt/dumps'));
         static::assertNull($settings->getRestorePathRejection('var/restore', null, null));
+    }
+
+    public function testDefaultConnectionDumpOptionsFallBackToDefaultsWhenNeverSaved(): void
+    {
+        static::assertSame(MysqlDumpOption::DEFAULTS, $this->createSettings()->getDefaultConnectionDumpOptions());
+    }
+
+    public function testDefaultConnectionDumpOptionsFollowTheBoolSettings(): void
+    {
+        $config = $this->createMock(SystemConfigService::class);
+        $config->method('get')->willReturnMap([
+            ['MuckiFacilityPlugin.config.mysqldumpNoTablespaces', null, false],
+            ['MuckiFacilityPlugin.config.mysqldumpRoutines', null, true],
+            ['MuckiFacilityPlugin.config.mysqldumpSetGtidPurgedOff', null, 'true'],
+        ]);
+
+        $settings = new PluginSettings(
+            $config,
+            $this->createMock(KernelInterface::class),
+            $this->createMock(PluginHelper::class),
+            $this->createMock(LoggerInterface::class)
+        );
+
+        static::assertSame(
+            [MysqlDumpOption::ROUTINES, MysqlDumpOption::SET_GTID_PURGED_OFF],
+            $settings->getDefaultConnectionDumpOptions()
+        );
+    }
+
+    public function testDbDumpTimeoutIsConfiguredInMinutes(): void
+    {
+        $values = [null, '', '0', 30, '-5'];
+        $expected = [240 * 60, 240 * 60, 0, 1800, 0];
+
+        foreach ($values as $index => $value) {
+            $config = $this->createMock(SystemConfigService::class);
+            $config->method('get')->willReturn($value);
+            $settings = new PluginSettings(
+                $config,
+                $this->createMock(KernelInterface::class),
+                $this->createMock(PluginHelper::class),
+                $this->createMock(LoggerInterface::class)
+            );
+
+            static::assertSame($expected[$index], $settings->getDbDumpTimeout(), var_export($value, true));
+        }
     }
 
     private function createSettings(?LoggerInterface $logger = null): PluginSettings

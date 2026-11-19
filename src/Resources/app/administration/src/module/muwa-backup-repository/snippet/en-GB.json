@@ -75,6 +75,7 @@
       "column-updated-at": "Updated at",
       "column-check-status": "Check Status",
       "column-last-backup-at": "Last backup run",
+      "column-next-scheduled-backup": "Next backup",
       "textDeleteSnapshotConfirm": "Are you sure you want to delete the snapshot \"{snapshotShortId}\"?",
       "textDeleteRepositoryConfirm": "Are you sure you want to delete this repository?",
       "totalFileSizeLabel": "Total File Size",
@@ -141,7 +142,11 @@
       "statsHistoryEmptyTitle": "No entries in the selected period",
       "statsEmptyTitle": "No status collected yet",
       "statsEmptySubline": "The status is collected at the end of every backup run. Alternatively via CLI: bin/console muckiware:repository:stats <id>",
-      "statsNoValue": "–"
+      "statsNoValue": "–",
+      "statsBackupDurationLabel": "Backup duration",
+      "durationSeconds": "{value} sec",
+      "durationMinutes": "{value} min",
+      "durationHours": "{value} h"
     },
     "create": {
       "errorTitle": "Storage problem occurred",
@@ -171,6 +176,7 @@
         "projectDirOrParent": "The shop directory or one of its parent directories cannot be used as dump path. The backup uses the default path var/db/backup instead.",
         "overlapsRepositoryOrRestorePath": "The dump path overlaps with the repository path or the restore path. The backup uses the default path var/db/backup instead.",
         "blockedPath": "This directory is protected and cannot be used as dump path. The backup uses the default path var/db/backup instead.",
+        "invalidCharacters": "The path contains invalid characters (control characters, $, `, \" or \\). The backup uses the default path var/db/backup instead.",
         "notWritable": "The folder (or its nearest existing parent folder) is not writable for the web server user. The backup may fall back to the default path var/db/backup."
       }
     },
@@ -189,6 +195,7 @@
       "title": "Backup status",
       "repositoryLabel": "Repository",
       "lastBackupAtLabel": "Last backup run",
+      "nextScheduledBackupLabel": "Next backup",
       "noStats": "No status",
       "noCheck": "No check",
       "checkOk": "OK",
@@ -218,6 +225,7 @@
       "backupStarted": "Backup “{name}” started.",
       "backupSucceeded": "Backup “{name}” completed successfully.",
       "backupFailed": "Backup “{name}” failed: {error}",
+      "backupDumpFailed": "Backup “{name}” completed without a complete database: {error}",
       "restoreSucceeded": "Restore of snapshot “{snapshot}” from “{name}” completed successfully.",
       "restoreFailed": "Restore of snapshot “{snapshot}” from “{name}” failed: {error}",
       "takeoverCheckSucceeded": "Repository “{name}” taken over and checked: {status}",
@@ -234,6 +242,9 @@
       "status": "Status",
       "lastExecutionTime": "Last execution",
       "nextExecutionTime": "Next execution",
+      "previewTitle": "Upcoming runs (preview)",
+      "previewError": "Invalid cron expression or timezone.",
+      "noActiveSchedule": "No active schedule",
       "lastError": "Last error",
       "save": "Save schedule",
       "error": "Could not save schedule"
@@ -295,6 +306,40 @@
       "selectHelpText": "Database the dump is created from. The default connection is the database of this shop.",
       "types": {
         "mysql": "MySQL / MariaDB"
+      },
+      "dumpOptions": {
+        "cardTitle": "mysqldump options",
+        "description": "Additional options for the database dump of this connection. Only these options are selectable. An option the installed mysqldump does not know makes the dump fail.",
+        "options": {
+          "noTablespaces": {
+            "label": "--no-tablespaces",
+            "helpText": "Skip tablespace information. Required for MySQL 8.0.21 and newer when the user has no PROCESS privilege."
+          },
+          "routines": {
+            "label": "--routines",
+            "helpText": "Also dump stored procedures and functions."
+          },
+          "events": {
+            "label": "--events",
+            "helpText": "Also dump scheduled events of the event scheduler."
+          },
+          "setGtidPurgedOff": {
+            "label": "--set-gtid-purged=OFF",
+            "helpText": "For servers with GTID replication (e.g. AWS RDS, Google Cloud SQL): the dump can be restored without SUPER privilege. Not supported by the MariaDB mysqldump."
+          },
+          "columnStatisticsOff": {
+            "label": "--column-statistics=0",
+            "helpText": "Needed when mysqldump 8 dumps a MariaDB or MySQL 5.7 server. Not supported by the MariaDB mysqldump."
+          },
+          "defaultCharacterSetUtf8mb4": {
+            "label": "--default-character-set=utf8mb4",
+            "helpText": "Force utf8mb4 as connection character set of the dump."
+          },
+          "hexBlob": {
+            "label": "--hex-blob",
+            "helpText": "Export binary columns (BLOB, BINARY) hexadecimal."
+          }
+        }
       }
     },
     "takeover": {
@@ -431,6 +476,7 @@
     "triggers": {
       "muckiFacility": "Mucki Facility",
       "repositoryUpload": "Repository upload (S3)",
+      "databaseDump": "Database dump",
       "succeeded": "Succeeded",
       "failed": "Failed"
     }

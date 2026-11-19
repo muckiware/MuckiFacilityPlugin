@@ -12,6 +12,7 @@
 namespace MuckiFacilityPlugin\Services;
 
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -24,6 +25,9 @@ use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
 use MuckiFacilityPlugin\Events\AfterDatabaseDumpCreatedEvent;
 use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
 use MuckiFacilityPlugin\Events\BeforeDatabaseDumpCreatedEvent;
+use MuckiFacilityPlugin\Events\DatabaseDumpFailedEvent;
+use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
+use MuckiFacilityPlugin\Backup\Database\DumpFailureAwareInterface;
 use MuckiFacilityPlugin\Core\ConfigPath;
 use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Backup\BackupRunnerFactory;
@@ -64,6 +68,13 @@ class Backup
     protected ?string $checkFailure = null;
     public const CHECK_FAILED_PREFIX = 'check failed: ';
     public const CHECK_FAILED_MAX_LENGTH = 200;
+
+    /**
+     * Status of the extra check entry saved when the database dump failed but the run went on
+     * (default connection without failOnDumpError). Never matches CheckStatus::isHealthy().
+     */
+    protected ?string $dumpFailure = null;
+    public const DUMP_FAILED_PREFIX = 'database dump failed: ';
 
     /**
      * @param LoggerInterface $logger
@@ -153,34 +164,57 @@ class Backup
      */
     public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
-        $this->eventDispatcher->dispatch(
-            new BeforeBackupCreatedEvent($createBackup),
-            BeforeBackupCreatedEvent::NAME
-        );
+        //the backup type and paths of $createBackup are overwritten during the run
+        $backupRepositoryId = $createBackup->getBackupRepositoryId();
+        $startedAt = hrtime(true);
+        $statsId = null;
 
-        $cachePaths = $createBackup->getBackupPaths();
+        // finally: the duration covers the whole run incl. pre and post backup command, failed runs too
+        try {
+            $this->eventDispatcher->dispatch(
+                new BeforeBackupCreatedEvent($createBackup),
+                BeforeBackupCreatedEvent::NAME
+            );
 
-        //Backup database
-        if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
-            $this->runDatabaseBackup($createBackup, $isJsonOutput);
+            $cachePaths = $createBackup->getBackupPaths();
+            $this->dumpFailure = null;
+
+            //Backup database
+            if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
+                $this->runDatabaseBackup($createBackup, $isJsonOutput);
+            }
+
+            //Backup files
+            //$createBackup->getBackupPaths() has been overwritten by runDatabaseBackup(),
+            //so the originally configured file paths have to be checked instead.
+            if(!empty($cachePaths)) {
+                $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
+            }
+
+            $checkId = $this->createCheckItem($createBackup);
+            $this->dispatchMirror($backupRepositoryId, $checkId);
+            $this->manageService->saveSnapshots($backupRepositoryId);
+            $statsId = $this->repositoryStats->collectAndSaveForBackup($backupRepositoryId);
+
+            $this->eventDispatcher->dispatch(
+                new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
+                AfterBackupCreatedEvent::NAME
+            );
+        } finally {
+            $this->repositoryStats->saveBackupDuration(
+                $backupRepositoryId,
+                $statsId,
+                $this->getElapsedSeconds($startedAt)
+            );
         }
+    }
 
-        //Backup files
-        //$createBackup->getBackupPaths() has been overwritten by runDatabaseBackup(),
-        //so the originally configured file paths have to be checked instead.
-        if(!empty($cachePaths)) {
-            $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
-        }
-
-        $checkId = $this->createCheckItem($createBackup);
-        $this->dispatchMirror($createBackup->getBackupRepositoryId(), $checkId);
-        $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
-        $this->repositoryStats->collectAndSave($createBackup->getBackupRepositoryId());
-
-        $this->eventDispatcher->dispatch(
-            new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
-            AfterBackupCreatedEvent::NAME
-        );
+    /**
+     * @param int|float $startedAt result of hrtime(true)
+     */
+    protected function getElapsedSeconds(int|float $startedAt): int
+    {
+        return (int) round((hrtime(true) - $startedAt) / 1_000_000_000);
     }
 
     /**
@@ -248,18 +282,22 @@ class Backup
 
         $createBackup->setBackupPaths(array($backupPath));
 
-        //create database dump
-        $this->startBackupRunner($createBackup, $isJsonOutput);
+        // finally: an aborted run (failed restic backup, own connection, failOnDumpError) must not leave
+        // a plain text dump with customer data on disk until the next run
+        try {
+            //create database dump
+            $this->startBackupRunner($createBackup, $isJsonOutput);
 
-        //write dump into backup repository
-        $createBackup->setBackupType(BackupTypes::FILES->value);
-        $this->startBackupRunner($createBackup, $isJsonOutput);
-
-        if(!$this->pluginHelper->deleteDirectory($dbDumpPath)) {
-            $this->logger->error(
-                'Database dump path could not be cleared after the dump, stale files may end up in the next backup: '.$dbDumpPath,
-                PluginDefaults::DEFAULT_LOGGER_CONFIG
-            );
+            //write dump into backup repository
+            $createBackup->setBackupType(BackupTypes::FILES->value);
+            $this->startBackupRunner($createBackup, $isJsonOutput);
+        } finally {
+            if(!$this->pluginHelper->deleteDirectory($dbDumpPath)) {
+                $this->logger->error(
+                    'Database dump path could not be cleared after the dump, stale files may end up in the next backup: '.$dbDumpPath,
+                    PluginDefaults::DEFAULT_LOGGER_CONFIG
+                );
+            }
         }
     }
 
@@ -360,7 +398,10 @@ class Backup
             $this->addAllResult($backupResults);
             $this->setBackup($backupRunner);
 
-            if($isDatabaseDump) {
+            $dumpFailures = $backupRunner instanceof DumpFailureAwareInterface ? $backupRunner->getDumpFailures() : [];
+            if($isDatabaseDump && $dumpFailures !== []) {
+                $this->handleDumpFailures($createBackup, $dumpFailures);
+            } elseif($isDatabaseDump) {
                 $this->eventDispatcher->dispatch(
                     new AfterDatabaseDumpCreatedEvent($createBackup, $backupResults),
                     AfterDatabaseDumpCreatedEvent::NAME
@@ -373,6 +414,56 @@ class Backup
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
             throw $e;
         }
+    }
+
+    /**
+     * Dump errors the runner only logged (default connection). Makes them visible instead of
+     * silently storing a backup without database: the event is dispatched, the extra red check entry
+     * is saved by createCheckItem(), and with failOnDumpError the whole run is aborted.
+     *
+     * @param array<int, string> $dumpFailures
+     * @throws DatabaseBackupFailedException with failOnDumpError
+     */
+    protected function handleDumpFailures(BackupRepositorySettings $createBackup, array $dumpFailures): void
+    {
+        $abort = $this->pluginSettings->isFailOnDumpErrorEnabled();
+        $this->dumpFailure = $this->buildDumpFailedStatus($dumpFailures);
+
+        try {
+            $this->eventDispatcher->dispatch(
+                new DatabaseDumpFailedEvent($createBackup, $dumpFailures, $abort, Context::createDefaultContext()),
+                DatabaseDumpFailedEvent::EVENT_NAME
+            );
+        } catch (\Throwable $e) {
+            // a failing flow or listener must not change the outcome of the backup run
+            $this->logger->error('DatabaseDumpFailedEvent listener failed: '.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
+
+        if($abort) {
+            throw new DatabaseBackupFailedException('Database backup failed, backup aborted (failOnDumpError): '.$dumpFailures[0]);
+        }
+    }
+
+    /**
+     * @param array<int, string> $dumpFailures password-masked messages from the dumper
+     */
+    protected function buildDumpFailedStatus(array $dumpFailures): string
+    {
+        $count = count($dumpFailures);
+        $status = self::DUMP_FAILED_PREFIX
+            .($count > 1 ? '('.$count.' dumps) ' : '')
+            .mb_substr($dumpFailures[0], 0, self::CHECK_FAILED_MAX_LENGTH);
+
+        return CheckStatus::isHealthy($status) ? rtrim(self::DUMP_FAILED_PREFIX, ': ') : $status;
+    }
+
+    /**
+     * Status text of the failed database dump of the last createBackup() run, null when the dump
+     * succeeded or was not part of the run.
+     */
+    public function getDumpFailure(): ?string
+    {
+        return $this->dumpFailure;
     }
 
     /**
@@ -409,6 +500,8 @@ class Backup
             $lastCheckResult = $checkResult;
         }
 
+        $this->saveDumpFailureCheck($createBackup);
+
         $backupRepository = $this->backupRepository->getBackupRepositoryById(
             $createBackup->getBackupRepositoryId()
         );
@@ -420,6 +513,29 @@ class Backup
         }
 
         return $lastCheckId;
+    }
+
+    /**
+     * Extra red entry after the restic check, so dashboard and list show the run as failed. Its id is
+     * not returned: the repository itself is fine, the mirror of this run keeps the restic check id.
+     * Saved 1 ms later, otherwise both entries could share the timestamp and the green one could
+     * stay the latest check.
+     */
+    protected function saveDumpFailureCheck(BackupRepositorySettings $createBackup): void
+    {
+        if($this->dumpFailure === null) {
+            return;
+        }
+
+        try {
+            $this->backupRepositoryChecks->saveNewCheck(
+                $createBackup->getBackupRepositoryId(),
+                $this->dumpFailure,
+                (new \DateTimeImmutable())->modify('+1 millisecond')
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error('Database dump failure could not be saved as check: '.$e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+        }
     }
 
     /**

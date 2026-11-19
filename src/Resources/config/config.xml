@@ -17,6 +17,23 @@
             <name>compressDbBackup</name>
             <label>Compress database backup file</label>
         </input-field>
+        <input-field type="bool">
+            <name>failOnDumpError</name>
+            <label>Abort backup when the database dump fails</label>
+            <label lang="de-DE">Backup abbrechen, wenn der Datenbank-Dump fehlschlägt</label>
+            <helpText>Only for the default database connection (own connections always abort). Off: the backup goes on without the database, the run is marked with a red check entry.</helpText>
+            <helpText lang="de-DE">Nur für die Standard-Datenbankverbindung (eigene Verbindungen brechen immer ab). Aus: das Backup läuft ohne Datenbank weiter, der Lauf wird mit einem roten Check-Eintrag markiert.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+        <input-field type="int">
+            <name>dbDumpTimeout</name>
+            <label>Maximum runtime of a database dump (minutes)</label>
+            <label lang="de-DE">Maximale Laufzeit eines Datenbank-Dumps (Minuten)</label>
+            <helpText>A hanging mysqldump is stopped after this time and counts as failed dump, otherwise it would block all further backups. 0 = no limit.</helpText>
+            <helpText lang="de-DE">Ein hängender mysqldump wird nach dieser Zeit beendet und zählt als fehlgeschlagener Dump, sonst blockiert er alle weiteren Backups. 0 = keine Begrenzung.</helpText>
+            <defaultValue>240</defaultValue>
+            <min>0</min>
+        </input-field>
 
         <component name="muwa-restic-binary-info">
             <name>resticBinaryInfo</name>
@@ -28,6 +45,66 @@
         <input-field type="text">
             <name>ownPathResticBinary</name>
             <label>Own path to binary of restic</label>
+        </input-field>
+    </card>
+    <card>
+        <title>mysqldump options (default database connection)</title>
+        <title lang="de-DE">mysqldump-Optionen (Standard-Datenbankverbindung)</title>
+        <input-field type="bool">
+            <name>mysqldumpNoTablespaces</name>
+            <label>--no-tablespaces</label>
+            <label lang="de-DE">--no-tablespaces</label>
+            <helpText>Skip tablespace information. Required for MySQL 8.0.21 and newer when the user has no PROCESS privilege.</helpText>
+            <helpText lang="de-DE">Tablespace-Informationen weglassen. Ab MySQL 8.0.21 nötig, wenn der Benutzer kein PROCESS-Recht hat.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+        <input-field type="bool">
+            <name>mysqldumpRoutines</name>
+            <label>--routines</label>
+            <label lang="de-DE">--routines</label>
+            <helpText>Also dump stored procedures and functions.</helpText>
+            <helpText lang="de-DE">Stored Procedures und Functions mit sichern.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+        <input-field type="bool">
+            <name>mysqldumpEvents</name>
+            <label>--events</label>
+            <label lang="de-DE">--events</label>
+            <helpText>Also dump scheduled events of the event scheduler.</helpText>
+            <helpText lang="de-DE">Geplante Events des Event-Schedulers mit sichern.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+        <input-field type="bool">
+            <name>mysqldumpSetGtidPurgedOff</name>
+            <label>--set-gtid-purged=OFF</label>
+            <label lang="de-DE">--set-gtid-purged=OFF</label>
+            <helpText>For servers with GTID replication (e.g. AWS RDS, Google Cloud SQL): the dump can be restored without SUPER privilege. Not supported by the MariaDB mysqldump.</helpText>
+            <helpText lang="de-DE">Für Server mit GTID-Replikation (z. B. AWS RDS, Google Cloud SQL): der Dump lässt sich ohne SUPER-Recht einspielen. Vom MariaDB-mysqldump nicht unterstützt.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+        <input-field type="bool">
+            <name>mysqldumpColumnStatisticsOff</name>
+            <label>--column-statistics=0</label>
+            <label lang="de-DE">--column-statistics=0</label>
+            <helpText>Needed when mysqldump 8 dumps a MariaDB or MySQL 5.7 server. Not supported by the MariaDB mysqldump.</helpText>
+            <helpText lang="de-DE">Nötig, wenn mysqldump 8 einen MariaDB- oder MySQL-5.7-Server sichert. Vom MariaDB-mysqldump nicht unterstützt.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+        <input-field type="bool">
+            <name>mysqldumpDefaultCharacterSetUtf8mb4</name>
+            <label>--default-character-set=utf8mb4</label>
+            <label lang="de-DE">--default-character-set=utf8mb4</label>
+            <helpText>Force utf8mb4 as connection character set of the dump.</helpText>
+            <helpText lang="de-DE">utf8mb4 als Zeichensatz der Dump-Verbindung erzwingen.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+        <input-field type="bool">
+            <name>mysqldumpHexBlob</name>
+            <label>--hex-blob</label>
+            <label lang="de-DE">--hex-blob</label>
+            <helpText>Export binary columns (BLOB, BINARY) hexadecimal.</helpText>
+            <helpText lang="de-DE">Binäre Spalten (BLOB, BINARY) hexadezimal exportieren.</helpText>
+            <defaultValue>false</defaultValue>
         </input-field>
     </card>
     <card>

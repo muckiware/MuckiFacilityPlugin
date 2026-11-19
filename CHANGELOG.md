@@ -2,16 +2,73 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.10.1]
+
+### Added
+- Schedule tab: live preview of the next 5 runs of the cron expression, shown in the schedule's
+  timezone and updated while typing. Invalid expressions or timezones are flagged directly. New API
+  route `POST /api/_action/muwa/backup/schedule/preview` (ACL `muwa_backup_repository:read`) uses the
+  same `ScheduleCalculator` as the scheduler.
+- Repository list and dashboard widget "Backup status": new column "Next backup" with the next
+  scheduled run in the same format and timezone as "Last backup run", or "No active schedule" if the
+  schedule is switched off.
+
+### Changed
+- Schedule tab: "Next execution" is displayed as a localized date in the schedule's timezone instead
+  of the raw UTC timestamp.
+
 ### [0.10.0]
 
 ### Added
+- Backup duration: every backup run stores its total runtime in seconds in the new column
+  `muwa_backup_repository_stats.backup_duration` (migration `Migration1795093023`), measured from the
+  start of the run incl. pre backup command until after the post backup command, successful or not. A
+  failed run gets its own stats entry. The administration shows it in the repository status, the
+  history table and the dashboard widget "Backup status", scaled automatically to seconds, minutes or
+  hours.
 - Dashboard widget "S3 transfer status": a separate card with the latest S3 mirror run of every
   active repository with a mirror target (target, status, last run, last successful run,
   uploaded/deleted files, data volume; message as tooltip). New plugin setting
   `showS3MirrorDashboardWidget` (card "Dashboard", default off) switches it on independently of
   `showDashboardWidget`.
+- Selectable mysqldump options from a fixed allowlist: `--no-tablespaces` (default on), `--routines`,
+  `--events`, `--set-gtid-purged=OFF`, `--column-statistics=0`, `--default-character-set=utf8mb4` and
+  `--hex-blob`. Per database connection in the new card "mysqldump options" (new column
+  `muwa_database_connection.dump_options`, migration `Migration1794916800`, NULL = defaults), for the
+  default connection (`DATABASE_URL`) in the new plugin settings card "mysqldump options". There is no
+  free text input, because spatie/db-dumper puts the options into a shell command line.
+- Failed database dumps on the default connection are visible: the run saves an extra red check entry
+  `database dump failed: …` after the restic check (dashboard and list show red; the S3 mirror of the run
+  keeps the healthy restic check and still runs), the administration notification is a warning
+  "completed without a complete database" instead of "completed successfully", and the new Flow Builder
+  trigger `mucki_facility.database_dump.failed` (`DatabaseDumpFailedEvent`) is dispatched instead of
+  `AfterDatabaseDumpCreatedEvent`. New plugin setting `failOnDumpError` (default off) aborts the whole
+  backup run in that case, as own connections already do.
+
+### Security
+- Database dump: the configured dump path no longer reaches the shell. spatie/db-dumper put the
+  output file into the mysqldump command line and only escaped `\` and `"`, so `$(...)` or backticks
+  in a dump path were executed on the next backup. mysqldump now writes a generated file name in the
+  dump directory. Dump paths with control characters, `$`, backticks, `"` or `\` are additionally
+  rejected (fallback to the default path, warning in the administration).
+
+### Fixed
+- Database dump: a failed or aborted mysqldump no longer leaves a half dump file that ends up in the
+  backup. The dump is written to a hidden `.muwa-dump-*.partial` file and only renamed to its final
+  name after mysqldump succeeded, the partial file is removed otherwise.
+- Database dump with one file per table on the default connection: when the table list could not be
+  read (the database error was only logged), no table was dumped and the run still counted as a
+  successful backup. An empty table list now counts as failed dump.
+- A hanging mysqldump (no timeout) held the global backup lock forever and blocked every further
+  backup. New plugin setting `dbDumpTimeout` (minutes, default 240, 0 = no limit); mysqldump is stopped
+  after that time and the dump counts as failed.
+- The plain text dump folder is now also cleared when the backup run aborts (failed `restic backup`,
+  own connection, `failOnDumpError`). Before, the dump with customer data stayed on disk until the next run.
 
 ### Changed
+- Database dump: mysqldump now runs with `--no-tablespaces` by default, so backup users without the
+  global `PROCESS` privilege (MySQL >= 8.0.21) no longer fail with "Access denied; you need the PROCESS
+  privilege". It can be switched off per connection or in the plugin settings.
 - Dashboard widget "Backup status": the S3 mirror column was removed, the S3 status is now only
   shown in the new "S3 transfer status" card.
 

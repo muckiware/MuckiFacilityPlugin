@@ -168,6 +168,55 @@ class CompleteFilesRunnerTest extends TestCase
         $runner->createBackupData();
 
         static::assertSame(['a', 'b', 'c'], $dumped);
+        static::assertSame(['Dump failed:boom'], $runner->getDumpFailures());
+
+        $successfulDumper = $this->createMock(DatabaseDumperInterface::class);
+        $successfulDumper->method('listTables')->willReturn(['a']);
+        $successfulRunner = new CompleteFilesRunner(
+            $this->createMock(LoggerInterface::class),
+            $this->createSettings(false),
+            new BackupRepositorySettings(),
+            $this->createTarget($successfulDumper, true),
+            $this->createMock(DumpArchiver::class)
+        );
+        $successfulRunner->createBackupData();
+        static::assertSame([], $successfulRunner->getDumpFailures());
+    }
+
+    public function testEmptyTableListOfDefaultConnectionCountsAsDumpFailure(): void
+    {
+        $dumper = $this->createMock(DatabaseDumperInterface::class);
+        $dumper->method('listTables')->willReturn([]);
+        $dumper->expects(static::never())->method('dump');
+
+        $runner = new CompleteFilesRunner(
+            $this->createMock(LoggerInterface::class),
+            $this->createSettings(false),
+            new BackupRepositorySettings(),
+            $this->createTarget($dumper, true),
+            $this->createMock(DumpArchiver::class)
+        );
+        $runner->createBackupData();
+
+        static::assertSame(['Cannot list tables: no tables found in the database'], $runner->getDumpFailures());
+    }
+
+    public function testEmptyTableListOfOwnConnectionAbortsTheRun(): void
+    {
+        $dumper = $this->createMock(DatabaseDumperInterface::class);
+        $dumper->method('listTables')->willReturn([]);
+
+        $runner = new CompleteFilesRunner(
+            $this->createMock(LoggerInterface::class),
+            $this->createSettings(false),
+            new BackupRepositorySettings(),
+            $this->createTarget($dumper, false, 'Replica'),
+            $this->createMock(DumpArchiver::class)
+        );
+
+        $this->expectException(DatabaseBackupFailedException::class);
+        $this->expectExceptionMessage('Database backup for connection "Replica" failed: Cannot list tables: no tables found');
+        $runner->createBackupData();
     }
 
     private function createSettings(bool $compress): SettingsInterface

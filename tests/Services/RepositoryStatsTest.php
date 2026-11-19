@@ -223,4 +223,110 @@ class RepositoryStatsTest extends TestCase
             'the returned array must carry the same five keys as collect()'
         );
     }
+
+    public function testCollectAndSaveForBackupReturnsTheIdOfTheSavedEntry(): void
+    {
+        $manageService = $this->createMock(ManageService::class);
+        $manageService->method('getRepositoryStatsById')->willReturn(json_encode(['total_size' => 4096]));
+
+        $backupRepositoryStats = $this->createMock(BackupRepositoryStats::class);
+        $backupRepositoryStats->expects(static::once())->method('saveNewStats')->willReturn('stats-id');
+
+        $repositoryStats = new RepositoryStats(
+            $this->createMock(LoggerInterface::class),
+            $manageService,
+            $this->createBackupRepositoryMock(),
+            $this->createMock(BackupRepositoryChecks::class),
+            $backupRepositoryStats,
+            $this->createMock(PluginHelper::class)
+        );
+
+        static::assertSame('stats-id', $repositoryStats->collectAndSaveForBackup(Uuid::randomHex()));
+    }
+
+    public function testCollectAndSaveForBackupReturnsNullWhenItSwallowedAThrowable(): void
+    {
+        $manageService = $this->createMock(ManageService::class);
+        $manageService->method('getRepositoryStatsById')->willThrowException(new \RuntimeException('restic broke'));
+
+        $repositoryStats = new RepositoryStats(
+            $this->createMock(LoggerInterface::class),
+            $manageService,
+            $this->createBackupRepositoryMock(),
+            $this->createMock(BackupRepositoryChecks::class),
+            $this->createMock(BackupRepositoryStats::class),
+            $this->createMock(PluginHelper::class)
+        );
+
+        static::assertNull($repositoryStats->collectAndSaveForBackup(Uuid::randomHex()));
+    }
+
+    public function testSaveBackupDurationUpdatesTheStatsEntryOfTheRun(): void
+    {
+        $manageService = $this->createMock(ManageService::class);
+        $manageService->expects(static::never())->method('getRepositoryStatsById');
+
+        $backupRepositoryStats = $this->createMock(BackupRepositoryStats::class);
+        $backupRepositoryStats->expects(static::once())->method('updateBackupDuration')->with('stats-id', 125);
+        $backupRepositoryStats->expects(static::never())->method('saveNewStats');
+
+        $repositoryStats = new RepositoryStats(
+            $this->createMock(LoggerInterface::class),
+            $manageService,
+            $this->createBackupRepositoryMock(),
+            $this->createMock(BackupRepositoryChecks::class),
+            $backupRepositoryStats,
+            $this->createMock(PluginHelper::class)
+        );
+
+        $repositoryStats->saveBackupDuration(Uuid::randomHex(), 'stats-id', 125);
+    }
+
+    public function testSaveBackupDurationWithoutStatsEntrySavesANewEntryEvenIfCollectingFails(): void
+    {
+        $manageService = $this->createMock(ManageService::class);
+        $manageService->method('getRepositoryStatsById')->willThrowException(new \RuntimeException('restic broke'));
+
+        $backupRepositoryId = Uuid::randomHex();
+        $backupRepositoryStats = $this->createMock(BackupRepositoryStats::class);
+        $backupRepositoryStats->expects(static::once())->method('saveNewStats')->with($backupRepositoryId, [
+            'totalSize' => null,
+            'totalFileCount' => null,
+            'snapshotsCount' => null,
+            'fileSystemSize' => null,
+            'checkStatus' => null,
+            'backupDuration' => 7,
+        ])->willReturn('stats-id');
+
+        $repositoryStats = new RepositoryStats(
+            $this->createMock(LoggerInterface::class),
+            $manageService,
+            $this->createBackupRepositoryMock(),
+            $this->createMock(BackupRepositoryChecks::class),
+            $backupRepositoryStats,
+            $this->createMock(PluginHelper::class)
+        );
+
+        $repositoryStats->saveBackupDuration($backupRepositoryId, null, 7);
+    }
+
+    public function testSaveBackupDurationNeverThrows(): void
+    {
+        $backupRepositoryStats = $this->createMock(BackupRepositoryStats::class);
+        $backupRepositoryStats->method('updateBackupDuration')->willThrowException(new \RuntimeException('db down'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(static::once())->method('error');
+
+        $repositoryStats = new RepositoryStats(
+            $logger,
+            $this->createMock(ManageService::class),
+            $this->createBackupRepositoryMock(),
+            $this->createMock(BackupRepositoryChecks::class),
+            $backupRepositoryStats,
+            $this->createMock(PluginHelper::class)
+        );
+
+        $repositoryStats->saveBackupDuration(Uuid::randomHex(), 'stats-id', 1);
+    }
 }

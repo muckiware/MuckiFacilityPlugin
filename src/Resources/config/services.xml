@@ -3,6 +3,7 @@
     <services>
         <service id="MuckiFacilityPlugin\Controller\ScheduleController" public="true">
             <argument type="service" id="MuckiFacilityPlugin\Schedule\ScheduleConfiguration"/>
+            <argument type="service" id="MuckiFacilityPlugin\Schedule\ScheduleCalculator"/>
             <call method="setContainer"><argument type="service" id="service_container"/></call>
         </service>
         <service id="MuckiFacilityPlugin\Controller\BackupController" public="true">
@@ -290,6 +291,7 @@
         </service>
         <service id="MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper">
             <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
         </service>
         <service id="MuckiFacilityPlugin\Subscriber\MysqlDatabaseConnectionSubscriber">
             <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
