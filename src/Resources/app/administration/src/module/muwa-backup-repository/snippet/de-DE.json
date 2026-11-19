@@ -141,7 +141,11 @@
       "statsHistoryEmptyTitle": "Keine Einträge in diesem Zeitraum",
       "statsEmptyTitle": "Noch kein Status erhoben",
       "statsEmptySubline": "Der Status wird am Ende jedes Backup-Laufs erhoben. Alternativ per CLI: bin/console muckiware:repository:stats <id>",
-      "statsNoValue": "–"
+      "statsNoValue": "–",
+      "statsBackupDurationLabel": "Backup-Laufzeit",
+      "durationSeconds": "{value} Sek.",
+      "durationMinutes": "{value} Min.",
+      "durationHours": "{value} Std."
     },
     "create": {
       "errorTitle": "Speicherproblem aufgetreten",
@@ -236,6 +240,8 @@
       "status": "Status",
       "lastExecutionTime": "Letzte Ausführung",
       "nextExecutionTime": "Nächste Ausführung",
+      "previewTitle": "Nächste Ausführungen (Vorschau)",
+      "previewError": "Ungültiger Cron-Ausdruck oder ungültige Zeitzone.",
       "lastError": "Letzter Fehler",
       "save": "Zeitplan speichern",
       "error": "Zeitplan konnte nicht gespeichert werden"

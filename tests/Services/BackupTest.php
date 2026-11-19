@@ -240,7 +240,7 @@ class BackupTest extends TestCase
 
         $repositoryStats = $this->createMock(RepositoryStats::class);
         $repositoryStats->expects(static::once())
-            ->method('collectAndSave')
+            ->method('collectAndSaveForBackup')
             ->with($backupRepositoryId);
 
         $backupService = new BackupService(
@@ -299,8 +299,12 @@ class BackupTest extends TestCase
             $sequence[] = 'snapshots';
         });
         $repositoryStats = $this->createMock(RepositoryStats::class);
-        $repositoryStats->method('collectAndSave')->willReturnCallback(static function () use (&$sequence): void {
+        $repositoryStats->method('collectAndSaveForBackup')->willReturnCallback(static function () use (&$sequence): ?string {
             $sequence[] = 'stats';
+            return null;
+        });
+        $repositoryStats->method('saveBackupDuration')->willReturnCallback(static function () use (&$sequence): void {
+            $sequence[] = 'duration';
         });
 
         $service = new BackupService(
@@ -324,7 +328,78 @@ class BackupTest extends TestCase
             'snapshots',
             'stats',
             ['php', 'cache:clear', false],
+            'duration',
         ], $sequence);
+    }
+
+    public function testCreateBackupSavesDurationOnTheStatsEntryOfTheRun(): void
+    {
+        $backupRepositoryId = Uuid::randomHex();
+
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('collectAndSaveForBackup')->willReturn('stats-id');
+        $repositoryStats->expects(static::once())
+            ->method('saveBackupDuration')
+            ->with($backupRepositoryId, 'stats-id', static::greaterThanOrEqual(0));
+
+        $backupService = new BackupService(
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(BackupRunnerFactory::class),
+            $this->createMock(BackupRepository::class),
+            $this->createMock(BackupRepositoryChecks::class),
+            $this->createMock(PluginSettings::class),
+            $this->createMock(PluginHelper::class),
+            $this->createMock(ManageService::class),
+            $this->createMock(ServicesCliOutput::class),
+            $repositoryStats,
+            $this->createMock(EventDispatcherInterface::class),
+            $this->createMock(MessageBusInterface::class)
+        );
+
+        $createBackup = new BackupRepositorySettings();
+        $createBackup->setBackupRepositoryId($backupRepositoryId);
+        $createBackup->setBackupType(BackupTypes::NONE_DATABASE->value);
+        $createBackup->setBackupPaths([]);
+
+        $backupService->createBackup($createBackup, false);
+    }
+
+    public function testFailedBackupRunStillSavesItsDuration(): void
+    {
+        $backupRepositoryId = Uuid::randomHex();
+        $settings = new BackupRepositorySettings();
+        $settings->setBackupRepositoryId($backupRepositoryId);
+        $settings->setBackupType(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
+        $settings->setBackupPaths([]);
+        $settings->setDbDumpPath('/tmp/muwa-db-dump');
+
+        $factory = $this->createMock(BackupRunnerFactory::class);
+        $factory->method('createBackupRunner')->willThrowException(
+            new DatabaseBackupFailedException('Database connection "x" not found')
+        );
+
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->expects(static::never())->method('collectAndSaveForBackup');
+        $repositoryStats->expects(static::once())
+            ->method('saveBackupDuration')
+            ->with($backupRepositoryId, null, static::greaterThanOrEqual(0));
+
+        $service = new BackupService(
+            $this->createMock(LoggerInterface::class),
+            $factory,
+            $this->createMock(BackupRepository::class),
+            $this->createMock(BackupRepositoryChecks::class),
+            $this->createMock(PluginSettings::class),
+            $this->createMock(PluginHelper::class),
+            $this->createMock(ManageService::class),
+            $this->createMock(ServicesCliOutput::class),
+            $repositoryStats,
+            $this->createMock(EventDispatcherInterface::class),
+            $this->createMock(MessageBusInterface::class)
+        );
+
+        $this->expectException(DatabaseBackupFailedException::class);
+        $service->createBackup($settings, false);
     }
 
     public function testOwnConnectionResolveFailureAbortsBackupRun(): void

@@ -30,6 +30,9 @@
                 <template #column-snapshotsCount="{ item }">
                     {{ formatCount(item.snapshotsCount) }}
                 </template>
+                <template #column-backupDuration="{ item }">
+                    {{ formatDuration(item.backupDuration) }}
+                </template>
                 <template #column-checkStatus="{ item }">
                     <sw-label
                         :variant="checkStatusVariant(item)"

@@ -109,9 +109,17 @@
                             :is-loading="timezoneOptions.length <= 0"
                             required
                         />
+                        <div class="muwa-backup-schedule__preview">
+                            <p class="muwa-backup-schedule__preview-title">{{ $tc('muwa-backup-repository.schedule.previewTitle') }}</p>
+                            <sw-loader v-if="isSchedulePreviewLoading" size="24px" />
+                            <p v-else-if="schedulePreviewError" class="muwa-backup-schedule__preview-error">{{ $tc('muwa-backup-repository.schedule.previewError') }}</p>
+                            <ul v-else-if="schedulePreview.length > 0">
+                                <li v-for="run in schedulePreview" :key="run">{{ formatScheduleDate(run) }}</li>
+                            </ul>
+                        </div>
                         <sw-text-field :value="schedule.status" :label="$tc('muwa-backup-repository.schedule.status')" disabled />
                         <sw-text-field :value="schedule.lastExecutionTime" :label="$tc('muwa-backup-repository.schedule.lastExecutionTime')" disabled />
-                        <sw-text-field :value="schedule.nextExecutionTime" :label="$tc('muwa-backup-repository.schedule.nextExecutionTime')" disabled />
+                        <sw-text-field :value="formattedNextExecutionTime" :label="$tc('muwa-backup-repository.schedule.nextExecutionTime')" disabled />
                         <sw-textarea-field :value="schedule.lastError" :label="$tc('muwa-backup-repository.schedule.lastError')" disabled />
                     </sw-card>
                     <sw-card positionIdentifier="muwaBackupRepository" v-if="backupRepository && tab === 'backupRepositoryConfig'" :title="$tc('muwa-backup-repository.detail.generalLabel')">
@@ -727,6 +735,9 @@
                                     </template>
                                     <template #column-totalFileCount="{ item }">
                                         {{ formatCount(item.totalFileCount) }}
+                                    </template>
+                                    <template #column-backupDuration="{ item }">
+                                        {{ formatDuration(item.backupDuration) }}
                                     </template>
                                 </sw-data-grid>
                             </template>

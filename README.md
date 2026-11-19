@@ -194,14 +194,29 @@ available:
 | Active               | Enables or disables automatic backups for this repository. |
 | Cron expression      | Defines when the backup is executed, for example `0 2 * * *` for every day at 02:00. |
 | Timezone (IANA)      | Timezone used to evaluate the cron expression, for example `Europe/Berlin` or `UTC`. Daylight-saving time is taken into account. |
+| Upcoming runs        | Live preview of the next 5 runs of the entered cron expression, shown in the selected timezone and updated while typing. An invalid cron expression or timezone is flagged directly. |
 | Status               | Current state of the schedule: `inactive`, `scheduled`, `queued`, `running`, `success`, `failed` or `skipped`. |
 | Last execution       | Time of the latest completed execution. |
-| Next execution       | Time at which the next backup is due. |
+| Next execution       | Time at which the next backup is due, shown in the selected timezone. |
 | Last error           | Error message from the latest failed or skipped execution. |
 
 Cron expressions and timezones are validated when the schedule is saved. Runtime timestamps are
 stored in UTC. If a backup is already running, another backup is not started; the scheduled run is
 marked as `skipped` instead.
+
+The preview is calculated by the same component as the scheduler itself, via the API route
+`POST /api/_action/muwa/backup/schedule/preview` (ACL `muwa_backup_repository:read`). It does not
+save anything:
+
+```json
+// request
+{ "cronExpression": "30 */3 * * *", "timezone": "Europe/Berlin" }
+
+// response 200 (times in UTC, ISO 8601)
+{ "nextRuns": ["2026-11-19T14:30:00+00:00", "2026-11-19T17:30:00+00:00", "..."] }
+```
+
+An invalid cron expression or timezone returns HTTP 400. If `timezone` is omitted, `UTC` is used.
 
 The scheduler uses Shopware's Scheduled Task and Message Queue systems. Both runners must therefore
 be active, for example as continuously running services:

@@ -1,5 +1,6 @@
 import template from './muwa-backup-status-dashboard-widget.html.twig';
 import './muwa-backup-status-dashboard-widget.scss';
+import formatDuration from '../../helper/format-duration';
 
 const { Component, Context } = Shopware;
 const { Criteria } = Shopware.Data;
@@ -68,6 +69,7 @@ Component.register('muwa-backup-status-dashboard-widget', {
                     totalSize: latestStats?.totalSize ?? null,
                     snapshotsCount: latestStats?.snapshotsCount ?? null,
                     checkStatus: latestStats?.checkStatus ?? null,
+                    backupDuration: latestStats?.backupDuration ?? null,
                     hasStats: latestStats !== null,
                 };
             });
@@ -79,6 +81,7 @@ Component.register('muwa-backup-status-dashboard-widget', {
                 { property: 'lastBackupAt', label: 'muwa-backup-repository.dashboard.lastBackupAtLabel' },
                 { property: 'totalSize', label: 'muwa-backup-repository.list.totalFileRepositorySizeLabel' },
                 { property: 'snapshotsCount', label: 'muwa-backup-repository.list.totalSnapshotsLabel' },
+                { property: 'backupDuration', label: 'muwa-backup-repository.detail.statsBackupDurationLabel' },
                 { property: 'checkStatus', label: 'muwa-backup-repository.list.CheckStatusLabel' },
             ];
         },
@@ -177,6 +180,10 @@ Component.register('muwa-backup-status-dashboard-widget', {
                 return this.$t('muwa-backup-repository.detail.statsNoValue');
             }
             return value.toLocaleString();
+        },
+
+        formatDuration(seconds) {
+            return formatDuration(seconds, this.$t.bind(this));
         },
     },
 });

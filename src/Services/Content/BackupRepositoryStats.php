@@ -33,23 +33,36 @@ class BackupRepositoryStats
     {}
 
     /**
-     * @param array{totalSize: int|null, totalFileCount: int|null, snapshotsCount: int|null, fileSystemSize: int|null, checkStatus: string|null} $values
+     * @param array{totalSize: int|null, totalFileCount: int|null, snapshotsCount: int|null, fileSystemSize: int|null, checkStatus: string|null, backupDuration?: int|null} $values
+     * @return string id of the saved stats entry
      */
-    public function saveNewStats(string $backupRepositoryId, array $values): void
+    public function saveNewStats(string $backupRepositoryId, array $values): string
     {
+        $id = Uuid::randomHex();
         $data = [
-            'id' => Uuid::randomHex(),
+            'id' => $id,
             'backupRepositoryId' => $backupRepositoryId,
             'totalSize' => $values['totalSize'],
             'totalFileCount' => $values['totalFileCount'],
             'snapshotsCount' => $values['snapshotsCount'],
             'fileSystemSize' => $values['fileSystemSize'],
             'checkStatus' => $values['checkStatus'] !== null ? substr($values['checkStatus'], 0, 254) : null,
+            'backupDuration' => $values['backupDuration'] ?? null,
             'created_at' => new \DateTime()
         ];
 
         $this->logger->debug('saveNewStats '. print_r($data, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         $this->backupRepositoryStats->create([$data], Context::createDefaultContext());
+
+        return $id;
+    }
+
+    public function updateBackupDuration(string $statsId, int $backupDuration): void
+    {
+        $this->backupRepositoryStats->update(
+            [['id' => $statsId, 'backupDuration' => $backupDuration]],
+            Context::createDefaultContext()
+        );
     }
 
     public function getLatestStatsByRepositoryId(string $backupRepositoryId): ?BackupRepositoryStatsEntity

@@ -54,6 +54,7 @@ class BackupRepositoryStatsDefinition extends EntityDefinition
             (new IntField('snapshots_count', 'snapshotsCount'))->addFlags(new ApiAware()),
             (new IntField('file_system_size', 'fileSystemSize'))->addFlags(new ApiAware()),
             (new StringField('check_status', 'checkStatus'))->addFlags(new ApiAware()),
+            (new IntField('backup_duration', 'backupDuration', 0))->addFlags(new ApiAware()),
 
             new CreatedAtField(),
             new UpdatedAtField()

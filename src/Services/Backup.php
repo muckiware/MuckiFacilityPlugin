@@ -164,35 +164,57 @@ class Backup
      */
     public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
-        $this->eventDispatcher->dispatch(
-            new BeforeBackupCreatedEvent($createBackup),
-            BeforeBackupCreatedEvent::NAME
-        );
+        //the backup type and paths of $createBackup are overwritten during the run
+        $backupRepositoryId = $createBackup->getBackupRepositoryId();
+        $startedAt = hrtime(true);
+        $statsId = null;
 
-        $cachePaths = $createBackup->getBackupPaths();
-        $this->dumpFailure = null;
+        // finally: the duration covers the whole run incl. pre and post backup command, failed runs too
+        try {
+            $this->eventDispatcher->dispatch(
+                new BeforeBackupCreatedEvent($createBackup),
+                BeforeBackupCreatedEvent::NAME
+            );
 
-        //Backup database
-        if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
-            $this->runDatabaseBackup($createBackup, $isJsonOutput);
+            $cachePaths = $createBackup->getBackupPaths();
+            $this->dumpFailure = null;
+
+            //Backup database
+            if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
+                $this->runDatabaseBackup($createBackup, $isJsonOutput);
+            }
+
+            //Backup files
+            //$createBackup->getBackupPaths() has been overwritten by runDatabaseBackup(),
+            //so the originally configured file paths have to be checked instead.
+            if(!empty($cachePaths)) {
+                $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
+            }
+
+            $checkId = $this->createCheckItem($createBackup);
+            $this->dispatchMirror($backupRepositoryId, $checkId);
+            $this->manageService->saveSnapshots($backupRepositoryId);
+            $statsId = $this->repositoryStats->collectAndSaveForBackup($backupRepositoryId);
+
+            $this->eventDispatcher->dispatch(
+                new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
+                AfterBackupCreatedEvent::NAME
+            );
+        } finally {
+            $this->repositoryStats->saveBackupDuration(
+                $backupRepositoryId,
+                $statsId,
+                $this->getElapsedSeconds($startedAt)
+            );
         }
+    }
 
-        //Backup files
-        //$createBackup->getBackupPaths() has been overwritten by runDatabaseBackup(),
-        //so the originally configured file paths have to be checked instead.
-        if(!empty($cachePaths)) {
-            $this->runFilesBackup($createBackup, $cachePaths, $isJsonOutput);
-        }
-
-        $checkId = $this->createCheckItem($createBackup);
-        $this->dispatchMirror($createBackup->getBackupRepositoryId(), $checkId);
-        $this->manageService->saveSnapshots($createBackup->getBackupRepositoryId());
-        $this->repositoryStats->collectAndSave($createBackup->getBackupRepositoryId());
-
-        $this->eventDispatcher->dispatch(
-            new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
-            AfterBackupCreatedEvent::NAME
-        );
+    /**
+     * @param int|float $startedAt result of hrtime(true)
+     */
+    protected function getElapsedSeconds(int|float $startedAt): int
+    {
+        return (int) round((hrtime(true) - $startedAt) / 1_000_000_000);
     }
 
     /**

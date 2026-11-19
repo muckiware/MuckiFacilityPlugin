@@ -15,18 +15,26 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\PlatformRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 use MuckiFacilityPlugin\Schedule\Exception\BackupRepositoryNotFoundException;
+use MuckiFacilityPlugin\Schedule\ScheduleCalculator;
 use MuckiFacilityPlugin\Schedule\ScheduleConfiguration;
 
 #[Route(defaults: ['_routeScope' => ['api']])]
 final class ScheduleController extends AbstractController
 {
-    public function __construct(private readonly ScheduleConfiguration $configuration) {}
+    public const PREVIEW_RUN_COUNT = 5;
+
+    public function __construct(
+        private readonly ScheduleConfiguration $configuration,
+        private readonly ScheduleCalculator $calculator
+    ) {}
+
     #[Route(
         path: '/api/_action/muwa/backup/{backupRepositoryId}/schedule',
         name: 'api.action.muwa.backup.schedule',
@@ -49,5 +57,28 @@ final class ScheduleController extends AbstractController
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route(
+        path: '/api/_action/muwa/backup/schedule/preview',
+        name: 'api.action.muwa.backup.schedule.preview',
+        defaults: [PlatformRequest::ATTRIBUTE_ACL => ['muwa_backup_repository:read']],
+        methods: ['POST']
+    )]
+    public function preview(RequestDataBag $data, Context $context): JsonResponse
+    {
+        try {
+            $runs = $this->calculator->nextRuns(
+                (string) $data->get('cronExpression'),
+                (string) ($data->get('timezone') ?: 'UTC'),
+                self::PREVIEW_RUN_COUNT
+            );
+        } catch (\InvalidArgumentException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        return new JsonResponse([
+            'nextRuns' => array_map(static fn (\DateTimeImmutable $run): string => $run->format(\DATE_ATOM), $runs),
+        ]);
     }
 }

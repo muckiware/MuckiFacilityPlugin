@@ -44,10 +44,18 @@ CLI (muckiware:*) ────────────────────�
 ```
 
 `Services\RepositoryStats::collectAndSave()` wird dreifach getriggert: synchron am Ende von
-`Services\Backup::createBackup()`, asynchron ueber `UpdateRepositoryStatsMessage` /
+`Services\Backup::createBackup()` (dort als `collectAndSaveForBackup()`, liefert die Id des Eintrags), asynchron ueber `UpdateRepositoryStatsMessage` /
 `UpdateRepositoryStatsHandler` (dispatcht von `ManageController::removeSnapshots()`), und
 synchron ueber den CLI-Command `muckiware:repository:stats` — letzterer bewusst synchron, damit
 ein Cronjob auch ohne laufenden Messenger-Worker funktioniert.
+
+**Backup-Laufzeit.** `createBackup()` misst per `hrtime()` vom Anfang (vor `BeforeBackupCreatedEvent`,
+also inkl. Pre-Command) bis nach `AfterBackupCreatedEvent` (Post-Command) und schreibt im `finally`
+ueber `RepositoryStats::saveBackupDuration()`: mit Stats-Id wird der Eintrag des Laufs aktualisiert,
+ohne (Lauf vorher abgebrochen) wird ein neuer Eintrag mit dem aktuellen Stand angelegt, notfalls mit
+leeren Werten. Wirft nie. Die Administration skaliert die Sekunden im gemeinsamen Helper
+`module/muwa-backup-repository/helper/format-duration.js` auf Sek./Min./Std. (Snippets
+`detail.durationSeconds|Minutes|Hours` mit `{value}`), genutzt von Detail-Seite und Dashboard-Widget.
 
 Zwei Factory-Patterns tragen die ganze Fachlogik — bei neuen Backup- oder Cleanup-Typen sind
 immer drei Stellen zu aendern: Enum + Factory + Runner.
@@ -253,7 +261,7 @@ Alle Tabellen kommen aus `src/Migration/`, DAL-Registrierung per `shopware.entit
 | `muwa_backup_repository` | Repository-Konfiguration (Pfad, Passwort, Hostname, Restore-Pfad, `db_dump_path`, `backup_paths` als JsonField, forget-Policy, `database_connection_id` NULL = Standardverbindung) | 1:n Checks, 1:n Snapshots, n:1 Datenbankverbindung (`ON DELETE RESTRICT`) |
 | `muwa_backup_repository_checks` | Ergebnis von `restic check` je Backup-Lauf | n:1 Repository |
 | `muwa_backup_repository_snapshots` | gespiegelte restic-Snapshot-Liste (snapshotId, shortId, paths, hostname, size) | n:1 Repository |
-| `muwa_backup_repository_stats` | Historie der Repository-Statistik je Backup-Lauf (Rohwerte in Bytes/Anzahl) | n:1 Repository |
+| `muwa_backup_repository_stats` | Historie der Repository-Statistik je Backup-Lauf (Rohwerte in Bytes/Anzahl), `backup_duration` = Laufzeit des Backup-Laufs in Sekunden (`Migration1795093023`, NULL bei Stats ausserhalb eines Laufs) | n:1 Repository |
 | `muwa_database_connection` | Eigene Datenbankverbindung fuer das DB-Backup (`name`, `type`, `host`, `port`, `database_name`, `username`, `password`, `password_source`, `dump_options`, `custom_fields`), Migrationen `Migration1794470400`, `Migration1794916800` (`dump_options`) | 1:n Backup-Repositories |
 | `muwa_s3_connection` | S3-Verbindung (`name`, `provider` aws/minio/ceph/other, `endpoint`, `region`, `access_key_id`, `secret_access_key`, `secret_source`, `custom_fields`), Migration `Migration1794830400` | 1:n Backup-Repositories (`ON DELETE RESTRICT`) |
 | `muwa_backup_repository_uploads` | Historie der Spiegel-Laeufe (`status`, `trigger_source`, `bucket`, `prefix`, `s3_connection_name`, Zeiten, `files_uploaded/deleted/unchanged`, `bytes_uploaded`, `message`) | n:1 Repository (`ON DELETE CASCADE`) |
@@ -303,6 +311,7 @@ Registrierung per Attribut, eingelesen ueber `Resources/config/routes.xml`.
 | `GET /api/_action/muwa/restic/info` | `ResticController::getInfo` | Plugin-Konfiguration, Komponente `muwa-restic-binary-info`, ACL `system_config:read` |
 | `POST /api/_action/muwa/backup/repository/takeover` | `TakeoverBackupRepositoryController::takeover` | Modal `muwa-backup-repository-add-modal` (Liste, "Repository hinzufuegen"), ACL `muwa_backup_repository:create`; Fehler 400 `{errors:[{code,detail,meta}]}` mit `MUWA_TAKEOVER_*` (u.a. `MUWA_TAKEOVER_INVALID_INPUT` fuer ungueltige Id; `MUWA_TAKEOVER_SAVE_FAILED` bei DB-Fehlern; `MUWA_TAKEOVER_ACCESS_FAILED` traegt die restic-Ausgabe in `meta.detail`); `MUWA_INVALID_ID` kommt nur von path-suggestions |
 | `POST /api/_action/muwa/backup/repository/path-suggestions` | `TakeoverBackupRepositoryController::pathSuggestions` | Detail-Seite, Tab Konfiguration (Pfad-Vorschlaege), ACL `muwa_backup_repository:update` |
+| `POST /api/_action/muwa/backup/schedule/preview` | `ScheduleController::preview` | Detail-Seite, Tab Zeitplan (Live-Vorschau beim Tippen, debounced), ACL `muwa_backup_repository:read`; liefert `{nextRuns: [...]}` mit `ScheduleController::PREVIEW_RUN_COUNT` (5) Terminen in UTC (ISO 8601) ueber `ScheduleCalculator::nextRuns()` — dieselbe Berechnung wie der Scheduler, keine eigene Cron-Logik im Admin; ungueltiger Ausdruck/Zeitzone 400; speichert nichts |
 
 Die Rolle `muwa_backup_repository.viewer` enthaelt auch `muwa_backup_repository_uploads:read` (Upload-Historie,
 S3-Dashboard-Widget) und `muwa_s3_connection:read`.

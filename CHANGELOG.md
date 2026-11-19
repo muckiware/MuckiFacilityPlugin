@@ -2,9 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.10.1]
+
+### Added
+- Schedule tab: live preview of the next 5 runs of the cron expression, shown in the schedule's
+  timezone and updated while typing. Invalid expressions or timezones are flagged directly. New API
+  route `POST /api/_action/muwa/backup/schedule/preview` (ACL `muwa_backup_repository:read`) uses the
+  same `ScheduleCalculator` as the scheduler.
+
+### Changed
+- Schedule tab: "Next execution" is displayed as a localized date in the schedule's timezone instead
+  of the raw UTC timestamp.
+
 ### [0.10.0]
 
 ### Added
+- Backup duration: every backup run stores its total runtime in seconds in the new column
+  `muwa_backup_repository_stats.backup_duration` (migration `Migration1795093023`), measured from the
+  start of the run incl. pre backup command until after the post backup command, successful or not. A
+  failed run gets its own stats entry. The administration shows it in the repository status, the
+  history table and the dashboard widget "Backup status", scaled automatically to seconds, minutes or
+  hours.
 - Dashboard widget "S3 transfer status": a separate card with the latest S3 mirror run of every
   active repository with a mirror target (target, status, last run, last successful run,
   uploaded/deleted files, data volume; message as tooltip). New plugin setting

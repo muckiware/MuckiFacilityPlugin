@@ -141,7 +141,11 @@
       "statsHistoryEmptyTitle": "No entries in the selected period",
       "statsEmptyTitle": "No status collected yet",
       "statsEmptySubline": "The status is collected at the end of every backup run. Alternatively via CLI: bin/console muckiware:repository:stats <id>",
-      "statsNoValue": "–"
+      "statsNoValue": "–",
+      "statsBackupDurationLabel": "Backup duration",
+      "durationSeconds": "{value} sec",
+      "durationMinutes": "{value} min",
+      "durationHours": "{value} h"
     },
     "create": {
       "errorTitle": "Storage problem occurred",
@@ -236,6 +240,8 @@
       "status": "Status",
       "lastExecutionTime": "Last execution",
       "nextExecutionTime": "Next execution",
+      "previewTitle": "Upcoming runs (preview)",
+      "previewError": "Invalid cron expression or timezone.",
       "lastError": "Last error",
       "save": "Save schedule",
       "error": "Could not save schedule"
