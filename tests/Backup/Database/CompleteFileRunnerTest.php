@@ -125,6 +125,8 @@ class CompleteFileRunnerTest extends TestCase
         );
 
         $runner->createBackupData();
+
+        static::assertSame(['Dump failed:boom'], $runner->getDumpFailures());
     }
 
     public function testOwnConnectionDumpFailureThrows(): void

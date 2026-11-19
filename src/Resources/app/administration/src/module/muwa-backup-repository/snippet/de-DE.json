@@ -219,6 +219,7 @@
       "backupStarted": "Backup „{name}“ wurde gestartet.",
       "backupSucceeded": "Backup „{name}“ wurde erfolgreich abgeschlossen.",
       "backupFailed": "Backup „{name}“ ist fehlgeschlagen: {error}",
+      "backupDumpFailed": "Backup „{name}“ wurde ohne vollständige Datenbank abgeschlossen: {error}",
       "restoreSucceeded": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ wurde erfolgreich abgeschlossen.",
       "restoreFailed": "Wiederherstellung von Snapshot „{snapshot}“ aus „{name}“ ist fehlgeschlagen: {error}",
       "takeoverCheckSucceeded": "Repository „{name}“ übernommen und geprüft: {status}",
@@ -466,6 +467,7 @@
     "triggers": {
       "muckiFacility": "Mucki Facility",
       "repositoryUpload": "Repository-Upload (S3)",
+      "databaseDump": "Datenbank-Dump",
       "succeeded": "Erfolgreich",
       "failed": "Fehlgeschlagen"
     }

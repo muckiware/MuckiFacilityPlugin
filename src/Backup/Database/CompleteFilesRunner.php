@@ -20,8 +20,13 @@ use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Entity\DatabaseBackupTarget;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 
-class CompleteFilesRunner implements BackupInterface
+class CompleteFilesRunner implements BackupInterface, DumpFailureAwareInterface
 {
+    /**
+     * @var array<int, string>
+     */
+    protected array $dumpFailures = [];
+
     public function __construct(
         protected LoggerInterface $logger,
         protected SettingsInterface $pluginSettings,
@@ -38,6 +43,7 @@ class CompleteFilesRunner implements BackupInterface
         $connection = $this->target->getConnection();
         $dumper = $this->target->getDumper();
         $isCompressDbBackupEnabled = $this->pluginSettings->isCompressDbBackupEnabled();
+        $this->dumpFailures = [];
 
         try {
             $tables = $dumper->listTables($connection);
@@ -61,7 +67,7 @@ class CompleteFilesRunner implements BackupInterface
     }
 
     /**
-     * Default connection: log and go on (legacy behaviour). Own connection: abort the backup run.
+     * Default connection: log, remember for Services\Backup and go on. Own connection: abort the backup run.
      *
      * @throws DatabaseBackupFailedException
      */
@@ -74,7 +80,13 @@ class CompleteFilesRunner implements BackupInterface
                 $e->getMessage()
             ), 0, $e);
         }
+        $this->dumpFailures[] = $e->getMessage();
         $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
+    }
+
+    public function getDumpFailures(): array
+    {
+        return $this->dumpFailures;
     }
 
     public function getBackupData(): mixed

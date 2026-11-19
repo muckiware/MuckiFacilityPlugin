@@ -16,6 +16,13 @@ All notable changes to this project will be documented in this file.
   `muwa_database_connection.dump_options`, migration `Migration1794916800`, NULL = defaults), for the
   default connection (`DATABASE_URL`) in the new plugin settings card "mysqldump options". There is no
   free text input, because spatie/db-dumper puts the options into a shell command line.
+- Failed database dumps on the default connection are visible: the run saves an extra red check entry
+  `database dump failed: …` after the restic check (dashboard and list show red; the S3 mirror of the run
+  keeps the healthy restic check and still runs), the administration notification is a warning
+  "completed without a complete database" instead of "completed successfully", and the new Flow Builder
+  trigger `mucki_facility.database_dump.failed` (`DatabaseDumpFailedEvent`) is dispatched instead of
+  `AfterDatabaseDumpCreatedEvent`. New plugin setting `failOnDumpError` (default off) aborts the whole
+  backup run in that case, as own connections already do.
 
 ### Security
 - Database dump: the configured dump path no longer reaches the shell. spatie/db-dumper put the

@@ -17,6 +17,14 @@
             <name>compressDbBackup</name>
             <label>Compress database backup file</label>
         </input-field>
+        <input-field type="bool">
+            <name>failOnDumpError</name>
+            <label>Abort backup when the database dump fails</label>
+            <label lang="de-DE">Backup abbrechen, wenn der Datenbank-Dump fehlschlägt</label>
+            <helpText>Only for the default database connection (own connections always abort). Off: the backup goes on without the database, the run is marked with a red check entry.</helpText>
+            <helpText lang="de-DE">Nur für die Standard-Datenbankverbindung (eigene Verbindungen brechen immer ab). Aus: das Backup läuft ohne Datenbank weiter, der Lauf wird mit einem roten Check-Eintrag markiert.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
 
         <component name="muwa-restic-binary-info">
             <name>resticBinaryInfo</name>

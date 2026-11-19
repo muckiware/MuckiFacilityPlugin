@@ -20,8 +20,13 @@ use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Entity\DatabaseBackupTarget;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 
-class CompleteFileRunner implements BackupInterface
+class CompleteFileRunner implements BackupInterface, DumpFailureAwareInterface
 {
+    /**
+     * @var array<int, string>
+     */
+    protected array $dumpFailures = [];
+
     public function __construct(
         protected LoggerInterface $logger,
         protected SettingsInterface $pluginSettings,
@@ -35,6 +40,7 @@ class CompleteFileRunner implements BackupInterface
     public function createBackupData(bool $isJsonOutput=true): void
     {
         $connection = $this->target->getConnection();
+        $this->dumpFailures = [];
 
         try {
             $dumpFile = $this->createBackupFileName($connection->getDatabaseName());
@@ -51,8 +57,14 @@ class CompleteFileRunner implements BackupInterface
                     $e->getMessage()
                 ), 0, $e);
             }
+            $this->dumpFailures[] = $e->getMessage();
             $this->logger->error($e->getMessage(), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         }
+    }
+
+    public function getDumpFailures(): array
+    {
+        return $this->dumpFailures;
     }
 
     public function getBackupData(): mixed

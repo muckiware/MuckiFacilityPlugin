@@ -42,6 +42,11 @@ use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
 use MuckiFacilityPlugin\MessageQueue\Message\MirrorRepositoryMessage;
+use MuckiFacilityPlugin\Backup\Database\DumpFailureAwareInterface;
+use MuckiFacilityPlugin\Events\AfterDatabaseDumpCreatedEvent;
+use MuckiFacilityPlugin\Events\DatabaseDumpFailedEvent;
+use MuckiFacilityPlugin\Core\CheckStatus;
+use MuckiRestic\Entity\Result\ResultEntity;
 
 class BackupTest extends TestCase
 {
@@ -530,4 +535,187 @@ class BackupTest extends TestCase
 
         static::assertSame('check failed', $service->getCheckFailure());
     }
+
+    public function testDefaultConnectionDumpFailureSavesRedCheckAfterGreenOneAndMirrorKeepsGreenId(): void
+    {
+        $saved = [];
+        $events = [];
+        $mirrorCheckId = null;
+        $service = $this->createDumpFailureService(['Dump failed:boom'], false, $saved, $events, $mirrorCheckId);
+
+        $service->createBackup($this->createDumpFailureSettings(), false);
+
+        static::assertCount(2, $saved);
+        static::assertSame('no errors were found', $saved[0]['status']);
+        static::assertNull($saved[0]['createdAt']);
+        static::assertSame('database dump failed: Dump failed:boom', $saved[1]['status']);
+        static::assertInstanceOf(\DateTimeInterface::class, $saved[1]['createdAt']);
+        static::assertFalse(CheckStatus::isHealthy($saved[1]['status']));
+        static::assertSame('check-1', $mirrorCheckId, 'the repository is fine, the mirror keeps the restic check');
+        static::assertSame('database dump failed: Dump failed:boom', $service->getDumpFailure());
+
+        static::assertSame([DatabaseDumpFailedEvent::EVENT_NAME, AfterBackupCreatedEvent::NAME], array_column($events, 'name'));
+        $failedEvent = $events[0]['event'];
+        static::assertInstanceOf(DatabaseDumpFailedEvent::class, $failedEvent);
+        static::assertFalse($failedEvent->isBackupAborted());
+        static::assertSame(['Dump failed:boom'], $failedEvent->getFailures());
+    }
+
+    public function testFailOnDumpErrorAbortsTheBackupRun(): void
+    {
+        $saved = [];
+        $events = [];
+        $mirrorCheckId = null;
+        $service = $this->createDumpFailureService(['Dump failed:boom'], true, $saved, $events, $mirrorCheckId);
+
+        try {
+            $service->createBackup($this->createDumpFailureSettings(), false);
+            static::fail('Expected DatabaseBackupFailedException');
+        } catch (DatabaseBackupFailedException $e) {
+            static::assertStringContainsString('failOnDumpError', $e->getMessage());
+            static::assertStringContainsString('Dump failed:boom', $e->getMessage());
+        }
+
+        static::assertSame([DatabaseDumpFailedEvent::EVENT_NAME], array_column($events, 'name'));
+        static::assertTrue($events[0]['event']->isBackupAborted());
+        static::assertSame([], $saved);
+        static::assertNull($mirrorCheckId);
+    }
+
+    public function testSuccessfulDumpKeepsAfterDumpEventAndSavesNoExtraCheck(): void
+    {
+        $saved = [];
+        $events = [];
+        $mirrorCheckId = null;
+        $service = $this->createDumpFailureService([], false, $saved, $events, $mirrorCheckId);
+
+        $service->createBackup($this->createDumpFailureSettings(), false);
+
+        static::assertSame(['no errors were found'], array_column($saved, 'status'));
+        static::assertSame([AfterDatabaseDumpCreatedEvent::NAME, AfterBackupCreatedEvent::NAME], array_column($events, 'name'));
+        static::assertNull($service->getDumpFailure());
+    }
+
+    public function testDumpFailureStatusCountsFailuresAndNeverLooksHealthy(): void
+    {
+        $saved = [];
+        $events = [];
+        $mirrorCheckId = null;
+        $service = $this->createDumpFailureService(['No errors were found', 'other'], false, $saved, $events, $mirrorCheckId);
+
+        $service->createBackup($this->createDumpFailureSettings(), false);
+
+        static::assertSame('database dump failed', $saved[1]['status']);
+
+        $saved = [];
+        $service = $this->createDumpFailureService(['Dump failed:a', 'Dump failed:b'], false, $saved, $events, $mirrorCheckId);
+        $service->createBackup($this->createDumpFailureSettings(), false);
+
+        static::assertSame('database dump failed: (2 dumps) Dump failed:a', $saved[1]['status']);
+    }
+
+    public function testFailingDumpFailedListenerDoesNotChangeTheRun(): void
+    {
+        $saved = [];
+        $events = [];
+        $mirrorCheckId = null;
+        $service = $this->createDumpFailureService(['Dump failed:boom'], false, $saved, $events, $mirrorCheckId, true);
+
+        $service->createBackup($this->createDumpFailureSettings(), false);
+
+        static::assertCount(2, $saved);
+        static::assertContains(AfterBackupCreatedEvent::NAME, array_column($events, 'name'));
+    }
+
+    private function createDumpFailureSettings(): BackupRepositorySettings
+    {
+        $settings = new BackupRepositorySettings();
+        $settings->setBackupRepositoryId('repo-id');
+        $settings->setName('Shop');
+        $settings->setBackupType(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
+        $settings->setBackupPaths([]);
+
+        return $settings;
+    }
+
+    /**
+     * @param array<int, string> $dumpFailures
+     * @param array<int, array{status: string, createdAt: ?\DateTimeInterface}> $saved
+     * @param array<int, array{name: string, event: object}> $events
+     */
+    private function createDumpFailureService(
+        array $dumpFailures,
+        bool $failOnDumpError,
+        array &$saved,
+        array &$events,
+        ?string &$mirrorCheckId,
+        bool $throwingListener = false
+    ): BackupService {
+        $result = new ResultEntity();
+        $result->setOutput('restic check output');
+
+        $runner = $this->createMockForIntersectionOfInterfaces([BackupInterface::class, DumpFailureAwareInterface::class]);
+        $runner->method('getDumpFailures')->willReturn($dumpFailures);
+        // dump runner, files runner (dump folder), check runner: only `restic check` has an output
+        $runner->method('getBackupResults')->willReturnOnConsecutiveCalls([], [], [$result]);
+        $factory = $this->createMock(BackupRunnerFactory::class);
+        $factory->method('createBackupRunner')->willReturn($runner);
+
+        $checks = $this->createMock(BackupRepositoryChecks::class);
+        $checks->method('saveNewCheck')->willReturnCallback(
+            static function (string $repositoryId, string $status, ?\DateTimeInterface $createdAt = null) use (&$saved): string {
+                $saved[] = ['status' => $status, 'createdAt' => $createdAt];
+                return 'check-' . count($saved);
+            }
+        );
+
+        $entity = new BackupRepositoryEntity();
+        $entity->setId('repo-id');
+        $entity->setMirrorS3ConnectionId('conn-id');
+        $backupRepository = $this->createMock(BackupRepository::class);
+        $backupRepository->method('getBackupRepositoryById')->willReturn($entity);
+
+        $pluginSettings = $this->createMock(PluginSettings::class);
+        $pluginSettings->method('getBackupPath')->willReturn('/tmp/muwa-dump-failure-test');
+        $pluginSettings->method('isFailOnDumpErrorEnabled')->willReturn($failOnDumpError);
+
+        $helper = $this->createMock(PluginHelper::class);
+        $helper->method('deleteDirectory')->willReturn(true);
+        $helper->method('getCheckResults')->willReturn(['no errors were found']);
+
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->method('dispatch')->willReturnCallback(static function (object $message) use (&$mirrorCheckId): Envelope {
+            if ($message instanceof MirrorRepositoryMessage) {
+                $mirrorCheckId = $message->getCheckId();
+            }
+            return new Envelope($message);
+        });
+
+        $dispatcher = new EventDispatcher();
+        foreach ([DatabaseDumpFailedEvent::EVENT_NAME, AfterDatabaseDumpCreatedEvent::NAME, AfterBackupCreatedEvent::NAME] as $name) {
+            $dispatcher->addListener($name, static function (object $event) use (&$events, $name): void {
+                $events[] = ['name' => $name, 'event' => $event];
+            });
+        }
+        if ($throwingListener) {
+            $dispatcher->addListener(DatabaseDumpFailedEvent::EVENT_NAME, static function (): void {
+                throw new \RuntimeException('flow action failed');
+            });
+        }
+
+        return new BackupService(
+            $this->createMock(LoggerInterface::class),
+            $factory,
+            $backupRepository,
+            $checks,
+            $pluginSettings,
+            $helper,
+            $this->createMock(ManageService::class),
+            $this->createMock(ServicesCliOutput::class),
+            $this->createMock(RepositoryStats::class),
+            $dispatcher,
+            $bus
+        );
+    }
+
 }

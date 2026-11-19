@@ -11,6 +11,7 @@
  */
 namespace MuckiFacilityPlugin\Subscriber;
 
+use MuckiFacilityPlugin\Events\DatabaseDumpFailedEvent;
 use MuckiFacilityPlugin\Events\RepositoryUploadFailedEvent;
 use MuckiFacilityPlugin\Events\RepositoryUploadSucceededEvent;
 use Shopware\Core\Framework\Event\BusinessEventCollector;
@@ -18,7 +19,7 @@ use Shopware\Core\Framework\Event\BusinessEventCollectorEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Makes the repository upload events selectable as triggers in the Flow Builder.
+ * Makes the repository upload events and the database dump failure selectable as triggers in the Flow Builder.
  */
 class RepositoryUploadBusinessEventSubscriber implements EventSubscriberInterface
 {
@@ -37,7 +38,7 @@ class RepositoryUploadBusinessEventSubscriber implements EventSubscriberInterfac
     {
         $collection = $event->getCollection();
 
-        foreach ([RepositoryUploadSucceededEvent::class, RepositoryUploadFailedEvent::class] as $class) {
+        foreach ([RepositoryUploadSucceededEvent::class, RepositoryUploadFailedEvent::class, DatabaseDumpFailedEvent::class] as $class) {
             $definition = $this->collector->define($class);
             if ($definition === null) {
                 continue;

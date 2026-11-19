@@ -67,6 +67,14 @@ class Settings implements SettingsInterface
     }
 
     /**
+     * A failed dump on the default connection aborts the whole backup run (own connections always do).
+     */
+    public function isFailOnDumpErrorEnabled(): bool
+    {
+        return $this->config->getBool(ConfigPath::CONFIG_PATH_FAIL_ON_DUMP_ERROR->value);
+    }
+
+    /**
      * One bool setting per option. A never saved setting counts as its default, so
      * --no-tablespaces stays active until it is switched off explicitly.
      *

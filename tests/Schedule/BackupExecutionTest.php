@@ -56,6 +56,38 @@ final class BackupExecutionTest extends TestCase
         }
     }
 
+    public function testDumpFailureIsReportedAsWarningInsteadOfSuccess(): void
+    {
+        $settings = new \MuckiFacilityPlugin\Entity\BackupRepositorySettings();
+        $settings->setName('Daily backup');
+        $backup = $this->createMock(Backup::class);
+        $backup->method('prepareCreateBackup')->willReturn($settings);
+        $backup->method('getDumpFailure')->willReturn('database dump failed: Dump failed:boom');
+
+        $lock = $this->createMock(SharedLockInterface::class);
+        $lock->method('acquire')->willReturn(true);
+        $lock->expects(self::once())->method('release');
+        $lockFactory = $this->createMock(LockFactory::class);
+        $lockFactory->method('createLock')->willReturn($lock);
+
+        $notifications = [];
+        $notificationService = $this->createMock(AdminNotification::class);
+        $notificationService->method('createNotification')
+            ->willReturnCallback(static function (array $data, Context $context) use (&$notifications): void {
+                $notifications[] = $data;
+            });
+
+        (new BackupExecution($backup, $lockFactory, $notificationService))->execute('repository-id');
+
+        self::assertCount(2, $notifications);
+        self::assertSame('warning', $notifications[1]['status']);
+        self::assertSame([
+            'source' => 'mucki-facility',
+            'snippet' => 'muwa-backup-repository.notification.backupDumpFailed',
+            'parameters' => ['name' => 'Daily backup', 'error' => 'database dump failed: Dump failed:boom'],
+        ], json_decode($notifications[1]['message'], true, 512, JSON_THROW_ON_ERROR));
+    }
+
     public function testLockContentionStopsEveryExecutionPathBeforePreparingBackup(): void
     {
         $backup = $this->createMock(Backup::class);

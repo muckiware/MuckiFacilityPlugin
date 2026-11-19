@@ -65,6 +65,7 @@
             <file>tests/Services/Mirror/MirrorKeyRulesTest.php</file>
             <file>tests/Services/Mirror/MirrorPlannerTest.php</file>
             <file>tests/Events/RepositoryUploadEventTest.php</file>
+            <file>tests/Events/DatabaseDumpFailedEventTest.php</file>
             <file>tests/Subscriber/RepositoryUploadBusinessEventSubscriberTest.php</file>
             <file>tests/Services/Mirror/LocalRepositoryScannerTest.php</file>
             <file>tests/Controller/S3ConnectionControllerTest.php</file>

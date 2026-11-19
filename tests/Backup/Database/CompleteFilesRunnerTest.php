@@ -168,6 +168,19 @@ class CompleteFilesRunnerTest extends TestCase
         $runner->createBackupData();
 
         static::assertSame(['a', 'b', 'c'], $dumped);
+        static::assertSame(['Dump failed:boom'], $runner->getDumpFailures());
+
+        $successfulDumper = $this->createMock(DatabaseDumperInterface::class);
+        $successfulDumper->method('listTables')->willReturn(['a']);
+        $successfulRunner = new CompleteFilesRunner(
+            $this->createMock(LoggerInterface::class),
+            $this->createSettings(false),
+            new BackupRepositorySettings(),
+            $this->createTarget($successfulDumper, true),
+            $this->createMock(DumpArchiver::class)
+        );
+        $successfulRunner->createBackupData();
+        static::assertSame([], $successfulRunner->getDumpFailures());
     }
 
     private function createSettings(bool $compress): SettingsInterface

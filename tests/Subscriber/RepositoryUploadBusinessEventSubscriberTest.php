@@ -40,5 +40,6 @@ class RepositoryUploadBusinessEventSubscriberTest extends TestCase
         static::assertTrue($response->has(RepositoryUploadSucceededEvent::EVENT_NAME));
         static::assertTrue($response->has(RepositoryUploadFailedEvent::EVENT_NAME));
         static::assertSame(RepositoryUploadFailedEvent::class, $response->get(RepositoryUploadFailedEvent::EVENT_NAME)->getClass());
+        static::assertTrue($response->has(\MuckiFacilityPlugin\Events\DatabaseDumpFailedEvent::EVENT_NAME));
     }
 }

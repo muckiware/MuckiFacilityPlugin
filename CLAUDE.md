@@ -187,8 +187,16 @@ in die `ResolvedDatabaseConnection`, der Dumper filtert erneut ueber `fromValues
 in `muwa-database-connection-detail/index.js` + Snippets; `MysqlDumpOptionTest` prueft die
 Gleichlaeufigkeit von Enum, `config.xml` und Administration.
 
-**Fehlersemantik.** Standardverbindung (`database_connection_id` NULL): exakt wie vor dem Feature, der
-Dump-Fehler wird nur geloggt und das Backup laeuft weiter. Eigene Verbindung: jeder Fehler (Verbindung
+**Fehlersemantik.** Standardverbindung (`database_connection_id` NULL): das Backup laeuft weiter, der
+Fehler wird aber sichtbar gemacht. Die Runner sammeln ihn (`DumpFailureAwareInterface::getDumpFailures()`),
+`Services\Backup::handleDumpFailures()` loest `DatabaseDumpFailedEvent` (Flow-Builder-Trigger
+`mucki_facility.database_dump.failed`, statt `AfterDatabaseDumpCreatedEvent`) aus, und
+`createCheckItem()` speichert **nach** dem restic-Check einen zusaetzlichen roten Check
+`database dump failed: …` mit `createdAt` +1 ms (sonst koennte der gruene gleich alt sein und der
+neueste bleiben). Die Mirror-Message bekommt bewusst die Id des **restic**-Checks — das Repository ist
+intakt, die Spiegelung laeuft. `Backup::getDumpFailure()` liefert den Status; `BackupExecution` meldet
+dann `backupDumpFailed` (warning) statt `backupSucceeded`. Mit `failOnDumpError` bricht der Lauf wie bei
+eigenen Verbindungen ab. Eigene Verbindung: jeder Fehler (Verbindung
 nicht gefunden, Passwort nicht aufloesbar, kein Subscriber/Dumper, Dump fehlgeschlagen) wirft
 `DatabaseBackupFailedException` mit Verbindungsnamen und bricht den ganzen `createBackup()`-Lauf ab; es
 gibt **keinen** Fallback auf `DATABASE_URL` und keinen leeren Dump im restic-Repository.
@@ -368,7 +376,7 @@ Handler wirft nie (Fehler werden als Benachrichtigung gemeldet); auch er hat Han
 ## Konfiguration
 
 `src/Resources/config/config.xml` definiert:
-`active`, `activeDbBackup`, `compressDbBackup`, `mysqldump<Option>` (je ein Bool pro
+`active`, `activeDbBackup`, `compressDbBackup`, `failOnDumpError`, `mysqldump<Option>` (je ein Bool pro
 `Core\MysqlDumpOption`, nur Standardverbindung), `useOwnResticPath`, `ownPathResticBinary`,
 `numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`, `showDashboardWidget`,
 `showS3MirrorDashboardWidget`.

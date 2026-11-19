@@ -37,15 +37,22 @@ class BackupRepositoryChecks
     /**
      * @return string id of the written check entry
      */
-    public function saveNewCheck(string $backupRepositoryId, string $checkStatus): string
+    /**
+     * @param \DateTimeInterface|null $createdAt explicit time, e.g. to order two checks saved in the same millisecond
+     */
+    public function saveNewCheck(string $backupRepositoryId, string $checkStatus, ?\DateTimeInterface $createdAt = null): string
     {
         $id = Uuid::randomHex();
         $data = [
             'id' => $id,
             'backupRepositoryId' => $backupRepositoryId,
             'checkStatus' => substr($checkStatus, 0, 254),
-            'created_at' => new \DateTime()
         ];
+        // the DAL reads property names (a 'created_at' key is silently ignored); without a value it
+        // sets the current time itself
+        if($createdAt !== null) {
+            $data['createdAt'] = $createdAt;
+        }
 
         $this->logger->debug('saveNewCheck '. print_r($data, true), PluginDefaults::DEFAULT_LOGGER_CONFIG);
         $this->backupRepositoryChecks->create([$data], Context::createDefaultContext());

@@ -18,6 +18,7 @@ interface SettingsInterface
 {
     public function isEnabled(): bool;
     public function isCompressDbBackupEnabled(): bool;
+    public function isFailOnDumpErrorEnabled(): bool;
     /**
      * mysqldump options for the default connection (DATABASE_URL).
      *
