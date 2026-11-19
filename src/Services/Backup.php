@@ -260,18 +260,22 @@ class Backup
 
         $createBackup->setBackupPaths(array($backupPath));
 
-        //create database dump
-        $this->startBackupRunner($createBackup, $isJsonOutput);
+        // finally: an aborted run (failed restic backup, own connection, failOnDumpError) must not leave
+        // a plain text dump with customer data on disk until the next run
+        try {
+            //create database dump
+            $this->startBackupRunner($createBackup, $isJsonOutput);
 
-        //write dump into backup repository
-        $createBackup->setBackupType(BackupTypes::FILES->value);
-        $this->startBackupRunner($createBackup, $isJsonOutput);
-
-        if(!$this->pluginHelper->deleteDirectory($dbDumpPath)) {
-            $this->logger->error(
-                'Database dump path could not be cleared after the dump, stale files may end up in the next backup: '.$dbDumpPath,
-                PluginDefaults::DEFAULT_LOGGER_CONFIG
-            );
+            //write dump into backup repository
+            $createBackup->setBackupType(BackupTypes::FILES->value);
+            $this->startBackupRunner($createBackup, $isJsonOutput);
+        } finally {
+            if(!$this->pluginHelper->deleteDirectory($dbDumpPath)) {
+                $this->logger->error(
+                    'Database dump path could not be cleared after the dump, stale files may end up in the next backup: '.$dbDumpPath,
+                    PluginDefaults::DEFAULT_LOGGER_CONFIG
+                );
+            }
         }
     }
 

@@ -290,6 +290,7 @@
         </service>
         <service id="MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper">
             <argument type="service" id="MuckiFacilityPlugin\Core\Database\Database"/>
+            <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>
         </service>
         <service id="MuckiFacilityPlugin\Subscriber\MysqlDatabaseConnectionSubscriber">
             <argument type="service" id="MuckiFacilityPlugin\Services\SettingsInterface"/>

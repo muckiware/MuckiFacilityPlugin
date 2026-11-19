@@ -35,6 +35,14 @@ All notable changes to this project will be documented in this file.
 - Database dump: a failed or aborted mysqldump no longer leaves a half dump file that ends up in the
   backup. The dump is written to a hidden `.muwa-dump-*.partial` file and only renamed to its final
   name after mysqldump succeeded, the partial file is removed otherwise.
+- Database dump with one file per table on the default connection: when the table list could not be
+  read (the database error was only logged), no table was dumped and the run still counted as a
+  successful backup. An empty table list now counts as failed dump.
+- A hanging mysqldump (no timeout) held the global backup lock forever and blocked every further
+  backup. New plugin setting `dbDumpTimeout` (minutes, default 240, 0 = no limit); mysqldump is stopped
+  after that time and the dump counts as failed.
+- The plain text dump folder is now also cleared when the backup run aborts (failed `restic backup`,
+  own connection, `failOnDumpError`). Before, the dump with customer data stayed on disk until the next run.
 
 ### Changed
 - Database dump: mysqldump now runs with `--no-tablespaces` by default, so backup users without the

@@ -52,6 +52,13 @@ class CompleteFilesRunner implements BackupInterface, DumpFailureAwareInterface
             return;
         }
 
+        // The default connection's table list swallows database errors and returns nothing; a backup
+        // without a single table must never pass as a successful database dump.
+        if ($tables === []) {
+            $this->handleFailure(new DatabaseBackupFailedException('Cannot list tables: no tables found in the database'));
+            return;
+        }
+
         foreach ($tables as $table) {
             try {
                 $dumpFile = $this->createBackupFileName($table, true);

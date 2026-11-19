@@ -20,6 +20,10 @@ interface SettingsInterface
     public function isCompressDbBackupEnabled(): bool;
     public function isFailOnDumpErrorEnabled(): bool;
     /**
+     * Maximum runtime of one mysqldump process in seconds, 0 = no limit.
+     */
+    public function getDbDumpTimeout(): int;
+    /**
      * mysqldump options for the default connection (DATABASE_URL).
      *
      * @return array<int, \MuckiFacilityPlugin\Core\MysqlDumpOption>

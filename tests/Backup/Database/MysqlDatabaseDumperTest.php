@@ -23,6 +23,7 @@ use MuckiFacilityPlugin\Backup\Database\MysqlDatabaseDumper;
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Entity\ResolvedDatabaseConnection;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
+use MuckiFacilityPlugin\Services\SettingsInterface;
 
 class MysqlDatabaseDumperTest extends TestCase
 {
@@ -271,6 +272,48 @@ class MysqlDatabaseDumperTest extends TestCase
         static::assertSame(['shop.sql'], array_values(array_diff(scandir($dumpDir) ?: [], ['.', '..'])));
     }
 
+    public function testTimeoutComesFromSettingsAndDefaultsWithoutThem(): void
+    {
+        $settings = $this->createMock(SettingsInterface::class);
+        $settings->method('getDbDumpTimeout')->willReturn(60);
+
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->expects(static::once())->method('setTimeout')->with(60);
+        $this->createDumperWithSpatie($spatieDumper, $settings)->dump($this->createOwnConnection(), $this->workDir . '/a.sql');
+
+        $spatieDumper = $this->createSpatieMock();
+        $spatieDumper->expects(static::once())->method('setTimeout')->with(240 * 60);
+        $this->createDumperWithSpatie($spatieDumper)->dump($this->createOwnConnection(), $this->workDir . '/b.sql');
+    }
+
+    /**
+     * A hanging mysqldump must not block the global backup lock forever.
+     */
+    public function testHangingMysqldumpIsStoppedAndCountsAsFailedDump(): void
+    {
+        $dumpDir = $this->workDir . '/dump';
+        mkdir($dumpDir);
+        $binDir = $this->workDir . '/bin';
+        mkdir($binDir);
+        file_put_contents($binDir . '/mysqldump', "#!/bin/sh\necho '-- partial'\nsleep 10\n");
+        chmod($binDir . '/mysqldump', 0755);
+
+        $settings = $this->createMock(SettingsInterface::class);
+        $settings->method('getDbDumpTimeout')->willReturn(1);
+        $dumper = $this->createDumperWithSpatie(MySql::create()->setDumpBinaryPath($binDir), $settings);
+
+        $start = microtime(true);
+        try {
+            $dumper->dump($this->createOwnConnection(), $dumpDir . '/shop.sql');
+            static::fail('dump should have thrown');
+        } catch (DatabaseBackupFailedException $e) {
+            static::assertSame('Dump failed:mysqldump did not finish within 1 seconds', $e->getMessage());
+        }
+
+        static::assertLessThan(5, microtime(true) - $start);
+        static::assertSame([], array_values(array_diff(scandir($dumpDir) ?: [], ['.', '..'])));
+    }
+
     public function testFailedDumpRemovesPartialFileAndCreatesNoDumpFile(): void
     {
         $spatieDumper = $this->createSpatieMock();
@@ -404,10 +447,10 @@ class MysqlDatabaseDumperTest extends TestCase
         rmdir($directory);
     }
 
-    private function createDumperWithSpatie(MySql $spatieDumper): MysqlDatabaseDumper&MockObject
+    private function createDumperWithSpatie(MySql $spatieDumper, ?SettingsInterface $settings = null): MysqlDatabaseDumper&MockObject
     {
         $dumper = $this->getMockBuilder(MysqlDatabaseDumper::class)
-            ->setConstructorArgs([$this->createMock(CoreDatabase::class)])
+            ->setConstructorArgs([$this->createMock(CoreDatabase::class), $settings])
             ->onlyMethods(['createDumper'])
             ->getMock();
         $dumper->method('createDumper')->willReturn($spatieDumper);

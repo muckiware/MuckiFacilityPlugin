@@ -124,7 +124,9 @@ Default) ueberschneidet. `RestoreDirectoryBrowser` nutzt sie und prueft den real
 Das ist kein Schoenheitsthema: der Dump-Ordner wird vor **und** nach jedem DB-Backup per
 `Helper::deleteDirectory()` rekursiv geloescht. Diese Methode folgt keinen Symlinks mehr (weder
 als Top-Level-Pfad noch beim Durchlaufen), gibt `bool` zurueck statt `void`, und beide Aufrufer
-in `runDatabaseBackup()` loggen einen Fehler, wenn sie `false` zurueckbekommt.
+in `runDatabaseBackup()` loggen einen Fehler, wenn sie `false` zurueckbekommt. Das Loeschen danach
+steht im `finally`: auch ein abgebrochener Lauf darf keinen Klartext-Dump liegen lassen. Ausnahme ist
+`muckiware:db:dump` (`createDump()`), dessen Zweck gerade die Dump-Datei ist.
 
 **Falle: `backupPaths` wird mitten im Lauf ueberschrieben.** `runDatabaseBackup()` setzt
 `$createBackup->setBackupPaths([<Dump-Ordner>])` und den Typ auf `files`, damit derselbe
@@ -196,7 +198,11 @@ Fehler wird aber sichtbar gemacht. Die Runner sammeln ihn (`DumpFailureAwareInte
 neueste bleiben). Die Mirror-Message bekommt bewusst die Id des **restic**-Checks — das Repository ist
 intakt, die Spiegelung laeuft. `Backup::getDumpFailure()` liefert den Status; `BackupExecution` meldet
 dann `backupDumpFailed` (warning) statt `backupSucceeded`. Mit `failOnDumpError` bricht der Lauf wie bei
-eigenen Verbindungen ab. Eigene Verbindung: jeder Fehler (Verbindung
+eigenen Verbindungen ab. Eine leere Tabellenliste (`CompleteFilesRunner`) zaehlt als Dump-Fehler —
+`Core\Database\Database::getListOfAllTables()` schluckt DB-Fehler und liefert dann `[]`. mysqldump
+laeuft mit Timeout (`dbDumpTimeout`, Minuten, Default `Defaults::DB_DUMP_TIMEOUT_MINUTES` = 240), weil
+ein haengender Dump sonst den globalen Lock `mucki-facility.backup` (TTL `null`) fuer immer haelt;
+`ProcessTimedOutException` wird im Dumper zum normalen Dump-Fehler. Eigene Verbindung: jeder Fehler (Verbindung
 nicht gefunden, Passwort nicht aufloesbar, kein Subscriber/Dumper, Dump fehlgeschlagen) wirft
 `DatabaseBackupFailedException` mit Verbindungsnamen und bricht den ganzen `createBackup()`-Lauf ab; es
 gibt **keinen** Fallback auf `DATABASE_URL` und keinen leeren Dump im restic-Repository.
@@ -376,7 +382,7 @@ Handler wirft nie (Fehler werden als Benachrichtigung gemeldet); auch er hat Han
 ## Konfiguration
 
 `src/Resources/config/config.xml` definiert:
-`active`, `activeDbBackup`, `compressDbBackup`, `failOnDumpError`, `mysqldump<Option>` (je ein Bool pro
+`active`, `activeDbBackup`, `compressDbBackup`, `failOnDumpError`, `dbDumpTimeout`, `mysqldump<Option>` (je ein Bool pro
 `Core\MysqlDumpOption`, nur Standardverbindung), `useOwnResticPath`, `ownPathResticBinary`,
 `numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`, `showDashboardWidget`,
 `showS3MirrorDashboardWidget`.

@@ -75,6 +75,20 @@ class Settings implements SettingsInterface
     }
 
     /**
+     * A hanging mysqldump would hold the global backup lock forever. Setting in minutes, never saved =
+     * Defaults::DB_DUMP_TIMEOUT_MINUTES, 0 = no limit.
+     */
+    public function getDbDumpTimeout(): int
+    {
+        $minutes = $this->config->get(ConfigPath::CONFIG_PATH_DB_DUMP_TIMEOUT->value);
+        if($minutes === null || $minutes === '') {
+            $minutes = PluginDefaults::DB_DUMP_TIMEOUT_MINUTES;
+        }
+
+        return max(0, (int) $minutes) * 60;
+    }
+
+    /**
      * One bool setting per option. A never saved setting counts as its default, so
      * --no-tablespaces stays active until it is switched off explicitly.
      *

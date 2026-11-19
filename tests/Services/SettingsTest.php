@@ -457,6 +457,25 @@ class SettingsTest extends TestCase
         );
     }
 
+    public function testDbDumpTimeoutIsConfiguredInMinutes(): void
+    {
+        $values = [null, '', '0', 30, '-5'];
+        $expected = [240 * 60, 240 * 60, 0, 1800, 0];
+
+        foreach ($values as $index => $value) {
+            $config = $this->createMock(SystemConfigService::class);
+            $config->method('get')->willReturn($value);
+            $settings = new PluginSettings(
+                $config,
+                $this->createMock(KernelInterface::class),
+                $this->createMock(PluginHelper::class),
+                $this->createMock(LoggerInterface::class)
+            );
+
+            static::assertSame($expected[$index], $settings->getDbDumpTimeout(), var_export($value, true));
+        }
+    }
+
     private function createSettings(?LoggerInterface $logger = null): PluginSettings
     {
         $kernel = $this->createMock(KernelInterface::class);

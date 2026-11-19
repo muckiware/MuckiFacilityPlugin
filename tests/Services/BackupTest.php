@@ -627,6 +627,23 @@ class BackupTest extends TestCase
         static::assertContains(AfterBackupCreatedEvent::NAME, array_column($events, 'name'));
     }
 
+    public function testDumpFolderIsClearedEvenWhenTheRunAborts(): void
+    {
+        $saved = [];
+        $events = [];
+        $mirrorCheckId = null;
+        $deleted = [];
+        $service = $this->createDumpFailureService(['Dump failed:boom'], true, $saved, $events, $mirrorCheckId, false, $deleted);
+
+        try {
+            $service->createBackup($this->createDumpFailureSettings(), false);
+            static::fail('Expected DatabaseBackupFailedException');
+        } catch (DatabaseBackupFailedException) {
+        }
+
+        static::assertSame(['/tmp/muwa-dump-failure-test', '/tmp/muwa-dump-failure-test'], $deleted, 'before and after the dump');
+    }
+
     private function createDumpFailureSettings(): BackupRepositorySettings
     {
         $settings = new BackupRepositorySettings();
@@ -642,6 +659,7 @@ class BackupTest extends TestCase
      * @param array<int, string> $dumpFailures
      * @param array<int, array{status: string, createdAt: ?\DateTimeInterface}> $saved
      * @param array<int, array{name: string, event: object}> $events
+     * @param array<int, string> $deleted
      */
     private function createDumpFailureService(
         array $dumpFailures,
@@ -649,7 +667,8 @@ class BackupTest extends TestCase
         array &$saved,
         array &$events,
         ?string &$mirrorCheckId,
-        bool $throwingListener = false
+        bool $throwingListener = false,
+        array &$deleted = []
     ): BackupService {
         $result = new ResultEntity();
         $result->setOutput('restic check output');
@@ -680,7 +699,10 @@ class BackupTest extends TestCase
         $pluginSettings->method('isFailOnDumpErrorEnabled')->willReturn($failOnDumpError);
 
         $helper = $this->createMock(PluginHelper::class);
-        $helper->method('deleteDirectory')->willReturn(true);
+        $helper->method('deleteDirectory')->willReturnCallback(static function (string $path) use (&$deleted): bool {
+            $deleted[] = $path;
+            return true;
+        });
         $helper->method('getCheckResults')->willReturn(['no errors were found']);
 
         $bus = $this->createMock(MessageBusInterface::class);

@@ -25,6 +25,15 @@
             <helpText lang="de-DE">Nur für die Standard-Datenbankverbindung (eigene Verbindungen brechen immer ab). Aus: das Backup läuft ohne Datenbank weiter, der Lauf wird mit einem roten Check-Eintrag markiert.</helpText>
             <defaultValue>false</defaultValue>
         </input-field>
+        <input-field type="int">
+            <name>dbDumpTimeout</name>
+            <label>Maximum runtime of a database dump (minutes)</label>
+            <label lang="de-DE">Maximale Laufzeit eines Datenbank-Dumps (Minuten)</label>
+            <helpText>A hanging mysqldump is stopped after this time and counts as failed dump, otherwise it would block all further backups. 0 = no limit.</helpText>
+            <helpText lang="de-DE">Ein hängender mysqldump wird nach dieser Zeit beendet und zählt als fehlgeschlagener Dump, sonst blockiert er alle weiteren Backups. 0 = keine Begrenzung.</helpText>
+            <defaultValue>240</defaultValue>
+            <min>0</min>
+        </input-field>
 
         <component name="muwa-restic-binary-info">
             <name>resticBinaryInfo</name>

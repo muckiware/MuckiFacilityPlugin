@@ -17,12 +17,15 @@ use Spatie\DbDumper\Databases\MySql;
 use Spatie\DbDumper\Exceptions\CannotSetParameter;
 use Spatie\DbDumper\Exceptions\CannotStartDump;
 use Spatie\DbDumper\Exceptions\DumpFailed;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 
 use MuckiFacilityPlugin\Core\Database\Database as CoreDatabase;
 use MuckiFacilityPlugin\Core\Database\DbIdentifier;
+use MuckiFacilityPlugin\Core\Defaults as PluginDefaults;
 use MuckiFacilityPlugin\Core\MysqlDumpOption;
 use MuckiFacilityPlugin\Entity\ResolvedDatabaseConnection;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
+use MuckiFacilityPlugin\Services\SettingsInterface;
 
 /**
  * Dumper for MySQL / MariaDB based on spatie/db-dumper (mysqldump).
@@ -49,7 +52,8 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
     protected const PARTIAL_FILE_SUFFIX = '.partial';
 
     public function __construct(
-        protected CoreDatabase $database
+        protected CoreDatabase $database,
+        protected ?SettingsInterface $pluginSettings = null
     )
     {}
 
@@ -82,6 +86,7 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
             $mysqlDumper = $this->createDumper();
             $this->configureDumper($mysqlDumper, $connection);
             $mysqlDumper->useSingleTransaction();
+            $mysqlDumper->setTimeout($this->getTimeout());
             foreach ($this->getDumpOptions($connection) as $option) {
                 $mysqlDumper->addExtraOption($option->getArgument());
             }
@@ -93,6 +98,12 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
             $this->runDump($mysqlDumper, $dumpFile);
         } catch (DatabaseBackupFailedException $e) {
             throw $e;
+        } catch (ProcessTimedOutException $e) {
+            // Symfony stops mysqldump itself (the shell is replaced via exec), the partial file is removed
+            throw $this->createException(
+                sprintf('Dump failed:mysqldump did not finish within %d seconds', (int) $e->getExceededTimeout()),
+                $connection
+            );
         } catch (CannotStartDump $e) {
             throw $this->createException('Cannot start dump:' . $e->getMessage(), $connection);
         } catch (DumpFailed $e) {
@@ -123,6 +134,14 @@ class MysqlDatabaseDumper implements DatabaseDumperInterface
         }
 
         return MysqlDumpOption::fromValues($extra[self::EXTRA_DUMP_OPTIONS]);
+    }
+
+    /**
+     * Seconds, 0 = no limit. Without settings (other plugins creating the dumper) the default applies.
+     */
+    protected function getTimeout(): int
+    {
+        return $this->pluginSettings?->getDbDumpTimeout() ?? PluginDefaults::DB_DUMP_TIMEOUT_MINUTES * 60;
     }
 
     protected function createDumper(): MySql
