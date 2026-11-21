@@ -41,6 +41,7 @@ use MuckiFacilityPlugin\Core\BackupTypes;
 use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
+use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
 use MuckiFacilityPlugin\MessageQueue\Message\MirrorRepositoryMessage;
 use MuckiFacilityPlugin\Backup\Database\DumpFailureAwareInterface;
 use MuckiFacilityPlugin\Events\AfterDatabaseDumpCreatedEvent;
@@ -263,6 +264,94 @@ class BackupTest extends TestCase
         $createBackup->setBackupPaths([]);
 
         $backupService->createBackup($createBackup, false);
+    }
+
+    public function testCreateBackupResetsRunStateBeforeDispatchingBeforeEvent(): void
+    {
+        $firstSettings = new BackupRepositorySettings();
+        $firstSettings->setBackupRepositoryId('first-run');
+        $firstSettings->setBackupType(BackupTypes::COMPLETE_DATABASE_SINGLE_FILE->value);
+        $firstSettings->setBackupPaths([]);
+        $firstSettings->setDbDumpPath('/tmp/muwa-state-reset-test');
+
+        $result = new ResultEntity();
+        $result->setOutput('first-run-result');
+
+        $databaseRunner = $this->createMockForIntersectionOfInterfaces([
+            BackupInterface::class,
+            DumpFailureAwareInterface::class,
+        ]);
+        $databaseRunner->method('getBackupResults')->willReturn([$result]);
+        $databaseRunner->method('getDumpFailures')->willReturn(['first-run-dump-failure']);
+
+        $filesRunner = $this->createMock(BackupInterface::class);
+        $filesRunner->method('getBackupResults')->willReturn([]);
+
+        $checkRunner = $this->createMock(BackupInterface::class);
+        $checkRunner->method('checkBackupData')->willThrowException(new \RuntimeException('first-run-check-failure'));
+
+        $factory = $this->createMock(BackupRunnerFactory::class);
+        $factory->method('createBackupRunner')->willReturnOnConsecutiveCalls(
+            $databaseRunner,
+            $filesRunner,
+            $checkRunner
+        );
+
+        $pluginSettings = $this->createMock(PluginSettings::class);
+        $pluginSettings->method('getBackupPath')->willReturn('/tmp/muwa-state-reset-test');
+
+        $helper = $this->createMock(PluginHelper::class);
+        $helper->method('deleteDirectory')->willReturn(true);
+
+        $checks = $this->createMock(BackupRepositoryChecks::class);
+        $checks->method('saveNewCheck')->willReturn('check-id');
+
+        $beforeCalls = 0;
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(
+            BeforeBackupCreatedEvent::NAME,
+            static function () use (&$beforeCalls): void {
+                ++$beforeCalls;
+                if ($beforeCalls === 2) {
+                    throw new \RuntimeException('second run rejected by before listener');
+                }
+            }
+        );
+
+        $service = new BackupService(
+            $this->createMock(LoggerInterface::class),
+            $factory,
+            $this->createMock(BackupRepository::class),
+            $checks,
+            $pluginSettings,
+            $helper,
+            $this->createMock(ManageService::class),
+            $this->createMock(ServicesCliOutput::class),
+            $this->createMock(RepositoryStats::class),
+            $dispatcher,
+            $this->createMock(MessageBusInterface::class)
+        );
+
+        $service->createBackup($firstSettings, false);
+        static::assertSame([$result], $service->getAllResults());
+        static::assertNotNull($service->getCheckFailure());
+        static::assertNotNull($service->getDumpFailure());
+
+        $secondSettings = new BackupRepositorySettings();
+        $secondSettings->setBackupRepositoryId('second-run');
+        $secondSettings->setBackupType(BackupTypes::NONE_DATABASE->value);
+        $secondSettings->setBackupPaths([]);
+
+        try {
+            $service->createBackup($secondSettings, false);
+            static::fail('Expected the second run to fail in the before listener');
+        } catch (\RuntimeException $exception) {
+            static::assertSame('second run rejected by before listener', $exception->getMessage());
+        }
+
+        static::assertSame([], $service->getAllResults());
+        static::assertNull($service->getCheckFailure());
+        static::assertNull($service->getDumpFailure());
     }
 
     public function testCreateBackupRunsSubscriberCommandsAtOuterBoundaries(): void

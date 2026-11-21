@@ -164,6 +164,8 @@ class Backup
      */
     public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
+        $this->resetRunState();
+
         //the backup type and paths of $createBackup are overwritten during the run
         $backupRepositoryId = $createBackup->getBackupRepositoryId();
         $startedAt = hrtime(true);
@@ -177,7 +179,6 @@ class Backup
             );
 
             $cachePaths = $createBackup->getBackupPaths();
-            $this->dumpFailure = null;
 
             //Backup database
             if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
@@ -207,6 +208,13 @@ class Backup
                 $this->getElapsedSeconds($startedAt)
             );
         }
+    }
+
+    private function resetRunState(): void
+    {
+        $this->allResults = [];
+        $this->checkFailure = null;
+        $this->dumpFailure = null;
     }
 
     /**
