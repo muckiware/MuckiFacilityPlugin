@@ -24,6 +24,7 @@ use MuckiFacilityPlugin\Events\AfterBackupCheckedEvent;
 use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
 use MuckiFacilityPlugin\Events\AfterDatabaseDumpCreatedEvent;
 use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
+use MuckiFacilityPlugin\Events\BackupFinishedEvent;
 use MuckiFacilityPlugin\Events\BeforeDatabaseDumpCreatedEvent;
 use MuckiFacilityPlugin\Events\DatabaseDumpFailedEvent;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
@@ -200,6 +201,10 @@ class Backup
             $this->eventDispatcher->dispatch(
                 new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
                 AfterBackupCreatedEvent::NAME
+            );
+            $this->eventDispatcher->dispatch(
+                new BackupFinishedEvent($createBackup, $this->getAllResults(), null, true),
+                BackupFinishedEvent::NAME
             );
         } finally {
             $this->repositoryStats->saveBackupDuration(

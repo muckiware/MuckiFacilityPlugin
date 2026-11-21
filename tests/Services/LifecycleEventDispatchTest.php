@@ -16,6 +16,7 @@ use MuckiFacilityPlugin\Events\AfterSnapshotsDeletedEvent;
 use MuckiFacilityPlugin\Events\AfterSnapshotsForgottenEvent;
 use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
 use MuckiFacilityPlugin\Events\BeforeDatabaseDumpCreatedEvent;
+use MuckiFacilityPlugin\Events\BackupFinishedEvent;
 use MuckiFacilityPlugin\Services\Backup;
 use MuckiFacilityPlugin\Services\CliOutput;
 use MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository;
@@ -40,26 +41,42 @@ class LifecycleEventDispatchTest extends TestCase
         $repositoryId = Uuid::randomHex();
         $settings = new BackupRepositorySettings();
         $settings->setBackupRepositoryId($repositoryId);
-        $settings->setBackupType(BackupTypes::FILES->value);
+        $settings->setBackupType(BackupTypes::NONE_DATABASE->value);
         $path = new BackupPathEntity();
         $path->setBackupPath('/tmp/files');
         $path->setPosition(0);
         $path->setCompress(false);
         $settings->setBackupPaths([$path]);
 
-        $runner = $this->createMock(BackupInterface::class);
-        $runner->method('getBackupResults')->willReturn([]);
+        $result = new ResultEntity();
+        $result->setOutput('backup created');
+        $backupRunner = $this->createMock(BackupInterface::class);
+        $backupRunner->method('getBackupResults')->willReturn([$result]);
+        $checkRunner = $this->createMock(BackupInterface::class);
+        $checkRunner->method('getBackupResults')->willReturn([]);
         $runnerFactory = $this->createMock(BackupRunnerFactory::class);
-        $runnerFactory->method('createBackupRunner')->willReturn($runner);
+        $runnerFactory->method('createBackupRunner')->willReturnOnConsecutiveCalls($backupRunner, $checkRunner);
 
         $dispatcher = new EventDispatcher();
-        $events = [];
-        $dispatcher->addListener(BeforeBackupCreatedEvent::NAME, static function (BeforeBackupCreatedEvent $event) use (&$events): void {
-            $events[] = ['before', $event->getBackupSettings()->getBackupRepositoryId()];
+        $sequence = [];
+        $finishedEvent = null;
+        $dispatcher->addListener(BeforeBackupCreatedEvent::NAME, static function () use (&$sequence): void {
+            $sequence[] = 'before';
         });
-        $dispatcher->addListener(AfterBackupCreatedEvent::NAME, static function (AfterBackupCreatedEvent $event) use (&$events): void {
-            $events[] = ['after', $event->getBackupSettings()->getBackupRepositoryId()];
+        $dispatcher->addListener(AfterBackupCreatedEvent::NAME, static function () use (&$sequence): void {
+            $sequence[] = 'after';
         });
+        $dispatcher->addListener(BackupFinishedEvent::NAME, static function (BackupFinishedEvent $event) use (&$sequence, &$finishedEvent): void {
+            $sequence[] = 'finished';
+            $finishedEvent = $event;
+        });
+
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('saveBackupDuration')->willReturnCallback(
+            static function () use (&$sequence): void {
+                $sequence[] = 'duration';
+            }
+        );
 
         $service = new Backup(
             $this->createMock(LoggerInterface::class),
@@ -70,17 +87,19 @@ class LifecycleEventDispatchTest extends TestCase
             $this->createMock(Helper::class),
             $this->createMock(ManageRepository::class),
             $this->createMock(CliOutput::class),
-            $this->createMock(RepositoryStats::class),
+            $repositoryStats,
             $dispatcher,
             $this->createMock(MessageBusInterface::class)
         );
 
         $service->createBackup($settings, false);
 
-        static::assertSame([
-            ['before', $repositoryId],
-            ['after', $repositoryId],
-        ], $events);
+        static::assertSame(['before', 'after', 'finished', 'duration'], $sequence);
+        static::assertInstanceOf(BackupFinishedEvent::class, $finishedEvent);
+        static::assertSame($settings, $finishedEvent->getBackupSettings());
+        static::assertSame([$result], $finishedEvent->getResults());
+        static::assertNull($finishedEvent->getPrimaryError());
+        static::assertTrue($finishedEvent->isCoreSucceeded());
     }
 
     public function testDatabaseDumpEventsAreDispatchedAroundSuccessfulDump(): void
