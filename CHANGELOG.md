@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.11.0]
+
+### Added
+- New neutral backup lifecycle event `mucki_facility.backup.finished` (`BackupFinishedEvent`). It is
+  dispatched exactly once for every started backup run, after `AfterBackupCreatedEvent` on success and
+  also after a before, core or after failure. Its payload contains the unchanged backup settings and
+  results, the original primary `Throwable` (if any), and `isCoreSucceeded()`.
+
+### Changed
+- Backup lifecycle errors now have deterministic priority: the original backup error wins over a
+  failing finished listener, which wins over an error while persisting the backup duration. Lower
+  priority errors are logged without replacing the selected exception, and duration persistence is
+  still attempted exactly once.
+
+### Fixed
+- Reusing the backup service no longer carries `allResults`, `checkFailure` or `dumpFailure` from the
+  previous run into the next one. The run-local state is reset before the before-event is dispatched.
+
 ### [0.10.1]
 
 ### Added
