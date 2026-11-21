@@ -42,6 +42,7 @@ use MuckiFacilityPlugin\Entity\BackupRepositorySettings;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
 use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
 use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
+use MuckiFacilityPlugin\Events\BackupFinishedEvent;
 use MuckiFacilityPlugin\MessageQueue\Message\MirrorRepositoryMessage;
 use MuckiFacilityPlugin\Backup\Database\DumpFailureAwareInterface;
 use MuckiFacilityPlugin\Events\AfterDatabaseDumpCreatedEvent;
@@ -462,16 +463,21 @@ class BackupTest extends TestCase
         $settings->setBackupPaths([]);
         $settings->setDbDumpPath('/tmp/muwa-db-dump');
 
+        $primaryError = new DatabaseBackupFailedException('Database connection "x" not found');
         $factory = $this->createMock(BackupRunnerFactory::class);
-        $factory->method('createBackupRunner')->willThrowException(
-            new DatabaseBackupFailedException('Database connection "x" not found')
-        );
+        $factory->method('createBackupRunner')->willThrowException($primaryError);
 
         $repositoryStats = $this->createMock(RepositoryStats::class);
         $repositoryStats->expects(static::never())->method('collectAndSaveForBackup');
         $repositoryStats->expects(static::once())
             ->method('saveBackupDuration')
             ->with($backupRepositoryId, null, static::greaterThanOrEqual(0));
+
+        $finishedEvents = [];
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(BackupFinishedEvent::NAME, static function (BackupFinishedEvent $event) use (&$finishedEvents): void {
+            $finishedEvents[] = $event;
+        });
 
         $service = new BackupService(
             $this->createMock(LoggerInterface::class),
@@ -483,12 +489,20 @@ class BackupTest extends TestCase
             $this->createMock(ManageService::class),
             $this->createMock(ServicesCliOutput::class),
             $repositoryStats,
-            $this->createMock(EventDispatcherInterface::class),
+            $dispatcher,
             $this->createMock(MessageBusInterface::class)
         );
 
-        $this->expectException(DatabaseBackupFailedException::class);
-        $service->createBackup($settings, false);
+        try {
+            $service->createBackup($settings, false);
+            static::fail('Expected DatabaseBackupFailedException');
+        } catch (DatabaseBackupFailedException $exception) {
+            static::assertSame($primaryError, $exception);
+        }
+
+        static::assertCount(1, $finishedEvents);
+        static::assertSame($primaryError, $finishedEvents[0]->getPrimaryError());
+        static::assertFalse($finishedEvents[0]->isCoreSucceeded());
     }
 
     public function testOwnConnectionResolveFailureAbortsBackupRun(): void

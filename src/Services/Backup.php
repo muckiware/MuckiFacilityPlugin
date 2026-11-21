@@ -172,7 +172,11 @@ class Backup
         $startedAt = hrtime(true);
         $statsId = null;
 
-        // finally: the duration covers the whole run incl. pre and post backup command, failed runs too
+        $primaryError = null;
+        $finishedError = null;
+        $durationError = null;
+        $coreSucceeded = false;
+
         try {
             $this->eventDispatcher->dispatch(
                 new BeforeBackupCreatedEvent($createBackup),
@@ -202,16 +206,45 @@ class Backup
                 new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
                 AfterBackupCreatedEvent::NAME
             );
+            $coreSucceeded = true;
+        } catch (\Throwable $exception) {
+            $primaryError = $exception;
+        }
+
+        try {
             $this->eventDispatcher->dispatch(
-                new BackupFinishedEvent($createBackup, $this->getAllResults(), null, true),
+                new BackupFinishedEvent(
+                    $createBackup,
+                    $this->getAllResults(),
+                    $primaryError,
+                    $coreSucceeded
+                ),
                 BackupFinishedEvent::NAME
             );
-        } finally {
+        } catch (\Throwable $exception) {
+            $finishedError = $exception;
+        }
+
+        try {
             $this->repositoryStats->saveBackupDuration(
                 $backupRepositoryId,
                 $statsId,
                 $this->getElapsedSeconds($startedAt)
             );
+        } catch (\Throwable $exception) {
+            $durationError = $exception;
+        }
+
+        $errorToThrow = $primaryError ?? $finishedError ?? $durationError;
+        if ($finishedError !== null && $finishedError !== $errorToThrow) {
+            $this->logSuppressedLifecycleError('Finished lifecycle', $finishedError);
+        }
+        if ($durationError !== null && $durationError !== $errorToThrow) {
+            $this->logSuppressedLifecycleError('Backup duration persistence', $durationError);
+        }
+
+        if ($errorToThrow !== null) {
+            throw $errorToThrow;
         }
     }
 
@@ -220,6 +253,18 @@ class Backup
         $this->allResults = [];
         $this->checkFailure = null;
         $this->dumpFailure = null;
+    }
+
+    private function logSuppressedLifecycleError(string $stage, \Throwable $error): void
+    {
+        try {
+            $this->logger->error(
+                $stage.' failed after a higher-priority backup error: '.$error->getMessage(),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+        } catch (\Throwable) {
+            // Logging must never replace the lifecycle error selected for rethrow.
+        }
     }
 
     /**
