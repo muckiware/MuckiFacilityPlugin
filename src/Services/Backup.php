@@ -24,6 +24,7 @@ use MuckiFacilityPlugin\Events\AfterBackupCheckedEvent;
 use MuckiFacilityPlugin\Events\AfterBackupCreatedEvent;
 use MuckiFacilityPlugin\Events\AfterDatabaseDumpCreatedEvent;
 use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
+use MuckiFacilityPlugin\Events\BackupFinishedEvent;
 use MuckiFacilityPlugin\Events\BeforeDatabaseDumpCreatedEvent;
 use MuckiFacilityPlugin\Events\DatabaseDumpFailedEvent;
 use MuckiFacilityPlugin\Exception\DatabaseBackupFailedException;
@@ -164,12 +165,18 @@ class Backup
      */
     public function createBackup(BackupRepositorySettings $createBackup, bool $isJsonOutput=true): void
     {
+        $this->resetRunState();
+
         //the backup type and paths of $createBackup are overwritten during the run
         $backupRepositoryId = $createBackup->getBackupRepositoryId();
         $startedAt = hrtime(true);
         $statsId = null;
 
-        // finally: the duration covers the whole run incl. pre and post backup command, failed runs too
+        $primaryError = null;
+        $finishedError = null;
+        $durationError = null;
+        $coreSucceeded = false;
+
         try {
             $this->eventDispatcher->dispatch(
                 new BeforeBackupCreatedEvent($createBackup),
@@ -177,7 +184,6 @@ class Backup
             );
 
             $cachePaths = $createBackup->getBackupPaths();
-            $this->dumpFailure = null;
 
             //Backup database
             if($createBackup->getBackupType() !== BackupTypes::NONE_DATABASE->value) {
@@ -200,12 +206,64 @@ class Backup
                 new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),
                 AfterBackupCreatedEvent::NAME
             );
-        } finally {
+            $coreSucceeded = true;
+        } catch (\Throwable $exception) {
+            $primaryError = $exception;
+        }
+
+        try {
+            $this->eventDispatcher->dispatch(
+                new BackupFinishedEvent(
+                    $createBackup,
+                    $this->getAllResults(),
+                    $primaryError,
+                    $coreSucceeded
+                ),
+                BackupFinishedEvent::NAME
+            );
+        } catch (\Throwable $exception) {
+            $finishedError = $exception;
+        }
+
+        try {
             $this->repositoryStats->saveBackupDuration(
                 $backupRepositoryId,
                 $statsId,
                 $this->getElapsedSeconds($startedAt)
             );
+        } catch (\Throwable $exception) {
+            $durationError = $exception;
+        }
+
+        $errorToThrow = $primaryError ?? $finishedError ?? $durationError;
+        if ($finishedError !== null && $finishedError !== $errorToThrow) {
+            $this->logSuppressedLifecycleError('Finished lifecycle', $finishedError);
+        }
+        if ($durationError !== null && $durationError !== $errorToThrow) {
+            $this->logSuppressedLifecycleError('Backup duration persistence', $durationError);
+        }
+
+        if ($errorToThrow !== null) {
+            throw $errorToThrow;
+        }
+    }
+
+    private function resetRunState(): void
+    {
+        $this->allResults = [];
+        $this->checkFailure = null;
+        $this->dumpFailure = null;
+    }
+
+    private function logSuppressedLifecycleError(string $stage, \Throwable $error): void
+    {
+        try {
+            $this->logger->error(
+                $stage.' failed after a higher-priority backup error: '.$error->getMessage(),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+        } catch (\Throwable) {
+            // Logging must never replace the lifecycle error selected for rethrow.
         }
     }
 

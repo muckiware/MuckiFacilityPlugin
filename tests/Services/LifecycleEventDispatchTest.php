@@ -16,6 +16,7 @@ use MuckiFacilityPlugin\Events\AfterSnapshotsDeletedEvent;
 use MuckiFacilityPlugin\Events\AfterSnapshotsForgottenEvent;
 use MuckiFacilityPlugin\Events\BeforeBackupCreatedEvent;
 use MuckiFacilityPlugin\Events\BeforeDatabaseDumpCreatedEvent;
+use MuckiFacilityPlugin\Events\BackupFinishedEvent;
 use MuckiFacilityPlugin\Services\Backup;
 use MuckiFacilityPlugin\Services\CliOutput;
 use MuckiFacilityPlugin\Services\Content\BackupFileSnapshotsRepository;
@@ -40,26 +41,42 @@ class LifecycleEventDispatchTest extends TestCase
         $repositoryId = Uuid::randomHex();
         $settings = new BackupRepositorySettings();
         $settings->setBackupRepositoryId($repositoryId);
-        $settings->setBackupType(BackupTypes::FILES->value);
+        $settings->setBackupType(BackupTypes::NONE_DATABASE->value);
         $path = new BackupPathEntity();
         $path->setBackupPath('/tmp/files');
         $path->setPosition(0);
         $path->setCompress(false);
         $settings->setBackupPaths([$path]);
 
-        $runner = $this->createMock(BackupInterface::class);
-        $runner->method('getBackupResults')->willReturn([]);
+        $result = new ResultEntity();
+        $result->setOutput('backup created');
+        $backupRunner = $this->createMock(BackupInterface::class);
+        $backupRunner->method('getBackupResults')->willReturn([$result]);
+        $checkRunner = $this->createMock(BackupInterface::class);
+        $checkRunner->method('getBackupResults')->willReturn([]);
         $runnerFactory = $this->createMock(BackupRunnerFactory::class);
-        $runnerFactory->method('createBackupRunner')->willReturn($runner);
+        $runnerFactory->method('createBackupRunner')->willReturnOnConsecutiveCalls($backupRunner, $checkRunner);
 
         $dispatcher = new EventDispatcher();
-        $events = [];
-        $dispatcher->addListener(BeforeBackupCreatedEvent::NAME, static function (BeforeBackupCreatedEvent $event) use (&$events): void {
-            $events[] = ['before', $event->getBackupSettings()->getBackupRepositoryId()];
+        $sequence = [];
+        $finishedEvent = null;
+        $dispatcher->addListener(BeforeBackupCreatedEvent::NAME, static function () use (&$sequence): void {
+            $sequence[] = 'before';
         });
-        $dispatcher->addListener(AfterBackupCreatedEvent::NAME, static function (AfterBackupCreatedEvent $event) use (&$events): void {
-            $events[] = ['after', $event->getBackupSettings()->getBackupRepositoryId()];
+        $dispatcher->addListener(AfterBackupCreatedEvent::NAME, static function () use (&$sequence): void {
+            $sequence[] = 'after';
         });
+        $dispatcher->addListener(BackupFinishedEvent::NAME, static function (BackupFinishedEvent $event) use (&$sequence, &$finishedEvent): void {
+            $sequence[] = 'finished';
+            $finishedEvent = $event;
+        });
+
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('saveBackupDuration')->willReturnCallback(
+            static function () use (&$sequence): void {
+                $sequence[] = 'duration';
+            }
+        );
 
         $service = new Backup(
             $this->createMock(LoggerInterface::class),
@@ -70,17 +87,19 @@ class LifecycleEventDispatchTest extends TestCase
             $this->createMock(Helper::class),
             $this->createMock(ManageRepository::class),
             $this->createMock(CliOutput::class),
-            $this->createMock(RepositoryStats::class),
+            $repositoryStats,
             $dispatcher,
             $this->createMock(MessageBusInterface::class)
         );
 
         $service->createBackup($settings, false);
 
-        static::assertSame([
-            ['before', $repositoryId],
-            ['after', $repositoryId],
-        ], $events);
+        static::assertSame(['before', 'after', 'finished', 'duration'], $sequence);
+        static::assertInstanceOf(BackupFinishedEvent::class, $finishedEvent);
+        static::assertSame($settings, $finishedEvent->getBackupSettings());
+        static::assertSame([$result], $finishedEvent->getResults());
+        static::assertNull($finishedEvent->getPrimaryError());
+        static::assertTrue($finishedEvent->isCoreSucceeded());
     }
 
     public function testDatabaseDumpEventsAreDispatchedAroundSuccessfulDump(): void
@@ -315,6 +334,247 @@ class LifecycleEventDispatchTest extends TestCase
 
         static::assertSame($output, $service->removeSnapshotById($repositoryId, $snapshotId));
         static::assertSame([[$repositoryId, $snapshotId, $output]], $events);
+    }
+
+    public function testFinishedLifecycleRunsAfterBeforeFailure(): void
+    {
+        $this->assertPrimaryFailureLifecycle('before');
+    }
+
+    public function testFinishedLifecycleRunsAfterCoreFailure(): void
+    {
+        $this->assertPrimaryFailureLifecycle('core');
+    }
+
+    public function testFinishedLifecycleRunsAfterAfterFailure(): void
+    {
+        $this->assertPrimaryFailureLifecycle('after');
+    }
+
+    public function testFinishedFailureWinsOverDurationFailureAfterSuccessfulCore(): void
+    {
+        $settings = $this->createMinimalBackupSettings();
+        $finishedError = new \RuntimeException('finished failure');
+        $durationError = new \RuntimeException('duration failure');
+        $durationCalls = 0;
+        $finishedEvent = null;
+        $loggedMessages = [];
+
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(
+            BackupFinishedEvent::NAME,
+            static function (BackupFinishedEvent $event) use (&$finishedEvent, $finishedError): void {
+                $finishedEvent = $event;
+                throw $finishedError;
+            }
+        );
+
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('saveBackupDuration')->willReturnCallback(
+            static function () use (&$durationCalls, $durationError): never {
+                ++$durationCalls;
+                throw $durationError;
+            }
+        );
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(
+            static function (string $message) use (&$loggedMessages): void {
+                $loggedMessages[] = $message;
+            }
+        );
+
+        $service = $this->createMinimalBackupService($dispatcher, $repositoryStats, null, $logger);
+
+        try {
+            $service->createBackup($settings, false);
+            static::fail('Expected the finished lifecycle failure');
+        } catch (\Throwable $exception) {
+            static::assertSame($finishedError, $exception);
+        }
+
+        static::assertInstanceOf(BackupFinishedEvent::class, $finishedEvent);
+        static::assertNull($finishedEvent->getPrimaryError());
+        static::assertTrue($finishedEvent->isCoreSucceeded());
+        static::assertSame(1, $durationCalls);
+        static::assertTrue($this->messagesContain($loggedMessages, 'duration failure'));
+    }
+
+    public function testPrimaryFailureWinsAndBothSuppressedLifecycleFailuresAreLogged(): void
+    {
+        $settings = $this->createMinimalBackupSettings();
+        $primaryError = new \RuntimeException('primary failure');
+        $finishedError = new \RuntimeException('finished failure');
+        $durationError = new \RuntimeException('duration failure');
+        $loggedMessages = [];
+        $durationCalls = 0;
+
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(BeforeBackupCreatedEvent::NAME, static function () use ($primaryError): never {
+            throw $primaryError;
+        });
+        $dispatcher->addListener(BackupFinishedEvent::NAME, static function () use ($finishedError): never {
+            throw $finishedError;
+        });
+
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('saveBackupDuration')->willReturnCallback(
+            static function () use (&$durationCalls, $durationError): never {
+                ++$durationCalls;
+                throw $durationError;
+            }
+        );
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(
+            static function (string $message) use (&$loggedMessages): void {
+                $loggedMessages[] = $message;
+            }
+        );
+
+        $service = $this->createMinimalBackupService($dispatcher, $repositoryStats, null, $logger);
+
+        try {
+            $service->createBackup($settings, false);
+            static::fail('Expected the primary backup failure');
+        } catch (\Throwable $exception) {
+            static::assertSame($primaryError, $exception);
+        }
+
+        static::assertSame(1, $durationCalls);
+        static::assertTrue($this->messagesContain($loggedMessages, 'finished failure'));
+        static::assertTrue($this->messagesContain($loggedMessages, 'duration failure'));
+    }
+
+    public function testDurationFailureIsThrownAfterSuccessfulLifecycle(): void
+    {
+        $settings = $this->createMinimalBackupSettings();
+        $durationError = new \RuntimeException('duration failure');
+        $dispatcher = new EventDispatcher();
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('saveBackupDuration')->willThrowException($durationError);
+        $service = $this->createMinimalBackupService($dispatcher, $repositoryStats);
+
+        try {
+            $service->createBackup($settings, false);
+            static::fail('Expected the duration persistence failure');
+        } catch (\Throwable $exception) {
+            static::assertSame($durationError, $exception);
+        }
+    }
+
+    private function assertPrimaryFailureLifecycle(string $failurePoint): void
+    {
+        $settings = $this->createMinimalBackupSettings();
+        $primaryError = new \RuntimeException($failurePoint.' failure');
+        $sequence = [];
+        $finishedEvents = [];
+        $durationCalls = 0;
+
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(BeforeBackupCreatedEvent::NAME, static function () use (&$sequence, $failurePoint, $primaryError): void {
+            $sequence[] = 'before';
+            if ($failurePoint === 'before') {
+                throw $primaryError;
+            }
+        });
+        $dispatcher->addListener(AfterBackupCreatedEvent::NAME, static function () use (&$sequence, $failurePoint, $primaryError): void {
+            $sequence[] = 'after';
+            if ($failurePoint === 'after') {
+                throw $primaryError;
+            }
+        });
+        $dispatcher->addListener(BackupFinishedEvent::NAME, static function (BackupFinishedEvent $event) use (&$sequence, &$finishedEvents): void {
+            $sequence[] = 'finished';
+            $finishedEvents[] = $event;
+        });
+
+        $manage = $this->createMock(ManageRepository::class);
+        $manage->method('saveSnapshots')->willReturnCallback(
+            static function () use (&$sequence, $failurePoint, $primaryError): void {
+                $sequence[] = 'core';
+                if ($failurePoint === 'core') {
+                    throw $primaryError;
+                }
+            }
+        );
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('saveBackupDuration')->willReturnCallback(
+            static function () use (&$sequence, &$durationCalls): void {
+                ++$durationCalls;
+                $sequence[] = 'duration';
+            }
+        );
+
+        $service = $this->createMinimalBackupService($dispatcher, $repositoryStats, $manage);
+
+        try {
+            $service->createBackup($settings, false);
+            static::fail('Expected the '.$failurePoint.' failure');
+        } catch (\Throwable $exception) {
+            static::assertSame($primaryError, $exception);
+        }
+
+        $expectedSequence = match ($failurePoint) {
+            'before' => ['before', 'finished', 'duration'],
+            'core' => ['before', 'core', 'finished', 'duration'],
+            'after' => ['before', 'core', 'after', 'finished', 'duration'],
+            default => static::fail('Unexpected failure point'),
+        };
+        static::assertSame($expectedSequence, $sequence);
+        static::assertSame(1, $durationCalls);
+        static::assertCount(1, $finishedEvents);
+        static::assertSame($settings, $finishedEvents[0]->getBackupSettings());
+        static::assertSame($primaryError, $finishedEvents[0]->getPrimaryError());
+        static::assertFalse($finishedEvents[0]->isCoreSucceeded());
+    }
+
+    private function createMinimalBackupSettings(): BackupRepositorySettings
+    {
+        $settings = new BackupRepositorySettings();
+        $settings->setBackupRepositoryId(Uuid::randomHex());
+        $settings->setBackupType(BackupTypes::NONE_DATABASE->value);
+        $settings->setBackupPaths([]);
+
+        return $settings;
+    }
+
+    private function createMinimalBackupService(
+        EventDispatcher $dispatcher,
+        RepositoryStats $repositoryStats,
+        ?ManageRepository $manage = null,
+        ?LoggerInterface $logger = null
+    ): Backup {
+        $runner = $this->createMock(BackupInterface::class);
+        $runner->method('getBackupResults')->willReturn([]);
+        $factory = $this->createMock(BackupRunnerFactory::class);
+        $factory->method('createBackupRunner')->willReturn($runner);
+
+        return new Backup(
+            $logger ?? $this->createMock(LoggerInterface::class),
+            $factory,
+            $this->createMock(BackupRepository::class),
+            $this->createMock(BackupRepositoryChecks::class),
+            $this->createMock(SettingsInterface::class),
+            $this->createMock(Helper::class),
+            $manage ?? $this->createMock(ManageRepository::class),
+            $this->createMock(CliOutput::class),
+            $repositoryStats,
+            $dispatcher,
+            $this->createMock(MessageBusInterface::class)
+        );
+    }
+
+    /**
+     * @param array<string> $messages
+     */
+    private function messagesContain(array $messages, string $needle): bool
+    {
+        foreach ($messages as $message) {
+            if (str_contains($message, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function createManageRepositoryService(
