@@ -128,7 +128,8 @@ Component.register('muwa-backup-repository-list', {
         },
 
         formatNextScheduledBackup(item) {
-            const nextRun = getNextScheduledRun(item.schedule);
+            // an inactive repository never runs scheduled
+            const nextRun = item.active ? getNextScheduledRun(item.schedule) : null;
             if (nextRun === null) {
                 return this.$t('muwa-backup-repository.schedule.noActiveSchedule');
             }

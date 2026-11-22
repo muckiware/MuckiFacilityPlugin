@@ -109,6 +109,7 @@ class RestoreSnapshot
         if($this->pluginSettings->hasOwnResticBinaryPath()) {
             $restoreClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
         }
+        $restoreClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
 
         $restoreClient->setRepositoryPassword($createBackup->getRepositoryPassword());
         $restoreClient->setRepositoryPath($createBackup->getRepositoryPath());

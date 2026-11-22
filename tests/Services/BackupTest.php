@@ -100,6 +100,7 @@ class BackupTest extends TestCase
             $backupRepositoryId
         );
         $backupRepositoryEntity->setName('Daily backup');
+        $backupRepositoryEntity->setActive(true);
         $backupRepositoryEntity->setPreBackupCommandType('batch');
         $backupRepositoryEntity->setPreBackupCommand('/hooks/pre.sh');
         $backupRepositoryEntity->setPreBackupFailOnError(false);
@@ -124,6 +125,7 @@ class BackupTest extends TestCase
         );
 
         $prepareCreateBackup = $backupService->prepareCreateBackup($backupRepositoryId);
+        static::assertTrue($prepareCreateBackup->isActive(), 'prepareCreateBackup must carry the active flag');
         static ::assertInstanceOf(
             BackupRepositorySettings::class,
             $prepareCreateBackup,

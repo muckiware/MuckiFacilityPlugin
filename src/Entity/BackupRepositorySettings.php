@@ -29,7 +29,7 @@ class BackupRepositorySettings
     /**
      * @var bool
      */
-    protected bool $active;
+    protected bool $active = false;
     /**
      * @var string
      */

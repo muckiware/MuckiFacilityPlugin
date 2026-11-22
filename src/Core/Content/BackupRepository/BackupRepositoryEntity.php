@@ -36,7 +36,7 @@ class BackupRepositoryEntity extends Entity
     /**
      * @var bool
      */
-    protected bool $active;
+    protected bool $active = false;
 
     /**
      * technical name

@@ -20,7 +20,7 @@ Bug fixt, der auch andere Nutzer des Plugins betrifft, bumpt Version und `CHANGE
 
 | | |
 |---|---|
-| Composer-Paket | `muckiware/facility-plugin`, Version `v0.9.0` |
+| Composer-Paket | `muckiware/facility-plugin`, Version `v0.11.1` |
 | Plugin-Klasse | `MuckiFacilityPlugin\MuckiFacilityPlugin` |
 | Shopware im Projekt | `shopware/core` **v6.7.14.0** (Arbeitsprojekt `sw67`; das Repo liegt ggf. in mehreren Shops) |
 | Von Plugin unterstuetzt | Shopware 6.6.x + 6.7.x, PHP 8.3–8.5, restic >= 0.15 |
@@ -396,7 +396,7 @@ Handler wirft nie (Fehler werden als Benachrichtigung gemeldet); auch er hat Han
 ## Konfiguration
 
 `src/Resources/config/config.xml` definiert:
-`active`, `activeDbBackup`, `compressDbBackup`, `failOnDumpError`, `dbDumpTimeout`, `mysqldump<Option>` (je ein Bool pro
+`active`, `activeDbBackup`, `compressDbBackup`, `failOnDumpError`, `dbDumpTimeout`, `resticTimeout`, `mysqldump<Option>` (je ein Bool pro
 `Core\MysqlDumpOption`, nur Standardverbindung), `useOwnResticPath`, `ownPathResticBinary`,
 `numberOfValidDaysInCart`, `numberOfValidDaysInLogEntry`, `showDashboardWidget`,
 `showS3MirrorDashboardWidget`.
@@ -621,7 +621,11 @@ muckiware/facility-plugin 6.8` laufen lassen — dort fallen die `sw-*`-Wrapper 
   `RENAME TABLE`-Umbau atomar, `removeOldTableItems()` loescht aber weiterhin direkt und ohne
   Rueckfrage aus der Live-Tabelle.
 - restic-Aufrufe laufen ausschliesslich ueber `muckiware/restic` (`Backup`, `Manage`, `Restore`)
-  — keine eigenen `Process`/`exec`-Aufrufe hinzufuegen.
+  — keine eigenen `Process`/`exec`-Aufrufe hinzufuegen. Jeder neu erzeugte Client bekommt
+  `setProcessTimeout($this->pluginSettings->getResticTimeout())`, sonst gilt der Library-Default von
+  3600 s (`resticTimeout`, Minuten, 0 = `null` = kein Limit; die Library lehnt 0 ab). Ein Idle-Timeout
+  ist bewusst nicht gesetzt: alle Backup-Wege laufen ueber `BackupExecution` mit `createBackup(..., false)`,
+  also ohne `--json`, und restic gibt dann waehrend des Backups nichts aus.
 - `bin/console plugin:uninstall MuckiFacilityPlugin` droppt ohne `--keep-user-data` alle
   `muwa_*`-Tabellen (`MuckiFacilityPlugin::dropPluginTables()`), inkl. `muwa_database_connection`
   (nach `muwa_backup_repository` wegen FK), Repository-Passwoerter eingeschlossen. Vor einem

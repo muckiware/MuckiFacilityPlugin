@@ -155,6 +155,7 @@
       "success-title": "Backup repository gespeichert",
       "process-success-title": "Backup-Prozess gestartet",
       "process-success-message": "Der Backup-Prozess wurde erfolgreich gestartet.",
+      "repositoryInactive": "Das Repository ist deaktiviert. Aktiviere es und speichere die Konfiguration, um ein Backup zu starten.",
       "backupPaths": "Backup Pfade"
     },
     "backupPaths": {
@@ -245,6 +246,7 @@
       "previewTitle": "Nächste Ausführungen (Vorschau)",
       "previewError": "Ungültiger Cron-Ausdruck oder ungültige Zeitzone.",
       "noActiveSchedule": "Kein aktiver Zeitplan",
+      "repositoryInactive": "Das Repository ist deaktiviert. Der Zeitplan startet keine Sicherungen, bis das Repository wieder aktiviert ist.",
       "lastError": "Letzter Fehler",
       "save": "Zeitplan speichern",
       "error": "Zeitplan konnte nicht gespeichert werden"

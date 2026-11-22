@@ -62,6 +62,7 @@ class BackupRepository
         if($ownResticPath) {
             $backupClient->setBinaryPath($ownResticPath);
         }
+        $backupClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
         $backupClient->setRepositoryPassword($backupRepositoryInput->getRepositoryPassword());
         $backupClient->setRepositoryPath($backupRepositoryInput->getRepositoryPath());
         return $backupClient->createRepository();
@@ -276,6 +277,22 @@ class BackupRepository
      * konfiguriert ist. Bestimmt (zusaetzlich zu :backup) das erforderliche Recht
      * fuer den Backup-Start in BackupController (Security-Finding S-02).
      */
+    /**
+     * True only for an existing repository that is switched off.
+     */
+    public function isBackupRepositoryInactive(string $backupRepositoryId): bool
+    {
+        if (!Uuid::isValid($backupRepositoryId)) {
+            return false;
+        }
+
+        $repository = $this->backupRepository
+            ->search(new Criteria([$backupRepositoryId]), Context::createDefaultContext())
+            ->first();
+
+        return $repository instanceof BackupRepositoryEntity && !$repository->isActive();
+    }
+
     public function hasBackupCommands(string $backupRepositoryId): bool
     {
         if (!Uuid::isValid($backupRepositoryId)) {

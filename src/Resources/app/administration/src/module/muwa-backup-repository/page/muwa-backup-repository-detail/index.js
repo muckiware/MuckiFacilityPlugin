@@ -961,11 +961,15 @@ Component.register('muwa-backup-repository-detail', {
 
             }).catch((exception) => {
 
+                const error = exception.response?.data?.errors?.[0];
                 this.createNotificationError({
                     title: this.$t('muwa-backup-repository.create.error-message'),
-                    message: exception.response.data.errors[0].detail
+                    message: error?.code === 'MUWA_REPOSITORY_INACTIVE'
+                        ? this.$t('muwa-backup-repository.create.repositoryInactive')
+                        : error?.detail
                 });
 
+                this.isBackupProcessInProgress = false;
             });
         },
 

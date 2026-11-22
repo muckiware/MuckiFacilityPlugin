@@ -24,6 +24,10 @@ interface SettingsInterface
      */
     public function getDbDumpTimeout(): int;
     /**
+     * Maximum runtime of one restic process in seconds, null = no limit.
+     */
+    public function getResticTimeout(): ?float;
+    /**
      * mysqldump options for the default connection (DATABASE_URL).
      *
      * @return array<int, \MuckiFacilityPlugin\Core\MysqlDumpOption>
