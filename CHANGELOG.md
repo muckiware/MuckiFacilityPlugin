@@ -11,6 +11,17 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - restic processes are no longer stopped after the fixed 3600 seconds of `muckiware/restic`, which
   aborted long backups of large paths with "exceeded the timeout of 3600 seconds".
+- A backup schedule no longer starts backups of an inactive repository or while the plugin setting
+  `active` is off. A due run is marked `skipped` ("Backup repository is inactive." /
+  "MuckiFacilityPlugin is inactive.") and moved to its next occurrence, so reactivating does not catch
+  it up immediately. A run that was already queued is skipped as well if the plugin or the repository
+  was deactivated in the meantime.
+- An inactive repository no longer runs any backup, manual ones included. `BackupExecution` (used by
+  the administration, `muckiware:backup:create` and the schedule) aborts with
+  `BackupRepositoryInactiveException`, `POST /api/_action/muwa/backup/process` answers 400
+  `MUWA_REPOSITORY_INACTIVE`, and the "Start backup" button is disabled. A switched off schedule does
+  not block manual backups of an active repository. The administration shows a warning in the schedule
+  tab and no next backup in the repository list for an inactive repository.
 
 ### [0.11.0]
 

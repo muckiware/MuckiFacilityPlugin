@@ -3,6 +3,7 @@ namespace MuckiFacilityPlugin\tests\Schedule;
 
 use MuckiFacilityPlugin\Schedule\BackupExecution;
 use MuckiFacilityPlugin\Schedule\Exception\BackupAlreadyRunningException;
+use MuckiFacilityPlugin\Schedule\Exception\BackupRepositoryInactiveException;
 use MuckiFacilityPlugin\Services\AdminNotification;
 use MuckiFacilityPlugin\Services\Backup;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +17,7 @@ final class BackupExecutionTest extends TestCase
     {
         $settings = new \MuckiFacilityPlugin\Entity\BackupRepositorySettings();
         $settings->setName('Daily backup');
+        $settings->setActive(true);
         $backup = $this->createMock(Backup::class);
         $backup->expects(self::once())->method('prepareCreateBackup')->with('repository-id')->willReturn($settings);
         $backup->expects(self::once())->method('createBackup')->with($settings, false);
@@ -60,6 +62,7 @@ final class BackupExecutionTest extends TestCase
     {
         $settings = new \MuckiFacilityPlugin\Entity\BackupRepositorySettings();
         $settings->setName('Daily backup');
+        $settings->setActive(true);
         $backup = $this->createMock(Backup::class);
         $backup->method('prepareCreateBackup')->willReturn($settings);
         $backup->method('getDumpFailure')->willReturn('database dump failed: Dump failed:boom');
@@ -109,6 +112,7 @@ final class BackupExecutionTest extends TestCase
     {
         $settings = new \MuckiFacilityPlugin\Entity\BackupRepositorySettings();
         $settings->setName('Daily backup');
+        $settings->setActive(true);
         $backup = $this->createMock(Backup::class);
         $backup->method('prepareCreateBackup')->willReturn($settings);
         $backup->method('createBackup')->willThrowException(new \RuntimeException('failed'));
@@ -147,5 +151,32 @@ final class BackupExecutionTest extends TestCase
             'snippet' => 'muwa-backup-repository.notification.backupFailed',
             'parameters' => ['name' => 'Daily backup', 'error' => 'failed'],
         ], json_decode($notifications[1]['message'], true, 512, JSON_THROW_ON_ERROR));
+    }
+
+    public function testInactiveRepositoryNeverStartsBackup(): void
+    {
+        $settings = new \MuckiFacilityPlugin\Entity\BackupRepositorySettings();
+        $settings->setName('Daily backup');
+        $settings->setActive(false);
+        $backup = $this->createMock(Backup::class);
+        $backup->method('prepareCreateBackup')->willReturn($settings);
+        $backup->expects(self::never())->method('createBackup');
+
+        $lock = $this->createMock(SharedLockInterface::class);
+        $lock->method('acquire')->willReturn(true);
+        $lock->expects(self::once())->method('release');
+        $lockFactory = $this->createMock(LockFactory::class);
+        $lockFactory->method('createLock')->willReturn($lock);
+
+        $notificationService = $this->createMock(AdminNotification::class);
+        $notificationService->expects(self::never())->method('createNotification');
+
+        $this->expectException(BackupRepositoryInactiveException::class);
+        (new BackupExecution($backup, $lockFactory, $notificationService))->execute('repository-id');
+    }
+
+    public function testRepositoryWithoutActiveFlagCountsAsInactive(): void
+    {
+        self::assertFalse((new \MuckiFacilityPlugin\Entity\BackupRepositorySettings())->isActive());
     }
 }

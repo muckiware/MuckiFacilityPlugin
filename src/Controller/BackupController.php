@@ -41,6 +41,16 @@ class BackupController extends AbstractController
     {
         $backupRepositoryId = (string) $data->get('id');
 
+        if ($this->backupRepositoryService->isBackupRepositoryInactive($backupRepositoryId)) {
+            return new JsonResponse(
+                ['errors' => [[
+                    'code' => 'MUWA_REPOSITORY_INACTIVE',
+                    'detail' => 'Backup repository is inactive.',
+                ]]],
+                JsonResponse::HTTP_BAD_REQUEST
+            );
+        }
+
         // Pre-/post-backup commands execute arbitrary shell code on the worker.
         // Starting a backup of a repository with a configured command therefore
         // requires the dedicated high-risk privilege, not just :backup

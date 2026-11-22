@@ -633,6 +633,7 @@ class Backup
         if($backupRepository) {
 
             $createBackup->setBackupRepositoryId($backupRepositoryId);
+            $createBackup->setActive($backupRepository->isActive());
             $createBackup->setName($backupRepository->getName());
             $createBackup->setBackupType($backupRepository->getType());
             $createBackup->setBackupPaths($this->prepareBackupPaths($backupRepository->getBackupPaths()));

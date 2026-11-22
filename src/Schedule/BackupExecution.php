@@ -16,6 +16,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\Lock\LockFactory;
 
 use MuckiFacilityPlugin\Schedule\Exception\BackupAlreadyRunningException;
+use MuckiFacilityPlugin\Schedule\Exception\BackupRepositoryInactiveException;
 use MuckiFacilityPlugin\Services\Backup;
 use MuckiFacilityPlugin\Services\AdminNotification;
 
@@ -38,6 +39,10 @@ class BackupExecution
 
         try {
             $settings = $this->backup->prepareCreateBackup($repositoryId);
+            // every backup path (administration, CLI, schedule) runs through here, an inactive repository never backs up
+            if (!$settings->isActive()) {
+                throw new BackupRepositoryInactiveException();
+            }
             $this->notify(
                 'success',
                 'muwa-backup-repository.notification.backupStarted',

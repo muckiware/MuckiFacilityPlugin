@@ -155,6 +155,7 @@
       "success-title": "Backup repository saved",
       "process-success-title": "Backup process started",
       "process-success-message": "The backup process has been started successfully.",
+      "repositoryInactive": "The repository is inactive. Activate it and save the configuration to start a backup.",
       "backupPaths": "Backup paths"
     },
     "backupPaths": {
@@ -245,6 +246,7 @@
       "previewTitle": "Upcoming runs (preview)",
       "previewError": "Invalid cron expression or timezone.",
       "noActiveSchedule": "No active schedule",
+      "repositoryInactive": "The repository is inactive. The schedule does not start any backups until the repository is activated again.",
       "lastError": "Last error",
       "save": "Save schedule",
       "error": "Could not save schedule"

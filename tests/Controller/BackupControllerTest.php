@@ -84,6 +84,26 @@ final class BackupControllerTest extends TestCase
         self::assertSame(204, $response->getStatusCode());
     }
 
+    public function testBackupOfInactiveRepositoryIsRejected(): void
+    {
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->expects(self::never())->method('dispatch');
+
+        $backupRepositoryService = $this->createMock(BackupRepositoryService::class);
+        $backupRepositoryService->method('isBackupRepositoryInactive')->willReturn(true);
+
+        $controller = new BackupController($messageBus, $backupRepositoryService);
+
+        $response = $controller->process(
+            new RequestDataBag(['id' => Uuid::randomHex()]),
+            $this->context(true)
+        );
+
+        self::assertSame(400, $response->getStatusCode());
+        $errors = json_decode((string) $response->getContent(), true)['errors'];
+        self::assertSame('MUWA_REPOSITORY_INACTIVE', $errors[0]['code']);
+    }
+
     private function context(bool $allowExecuteCommands): Context
     {
         $source = new AdminApiSource(Uuid::randomHex());
