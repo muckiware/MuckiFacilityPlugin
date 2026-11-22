@@ -21,11 +21,11 @@ use MuckiFacilityPlugin\Services\CliOutput as ServicesCliOutput;
 
 class FilesRunnerTest extends TestCase
 {
-    private function createFilesRunner(BackupRepositorySettings $createBackup): FilesRunner
+    private function createFilesRunner(BackupRepositorySettings $createBackup, ?PluginSettings $settings = null): FilesRunner
     {
         return new FilesRunner(
             $this->createMock(LoggerInterface::class),
-            $this->createMock(PluginSettings::class),
+            $settings ?? $this->createMock(PluginSettings::class),
             $createBackup,
             $this->createMock(ServicesCliOutput::class)
         );
@@ -81,5 +81,37 @@ class FilesRunnerTest extends TestCase
             $backupClient->isSkipPrepareBackup(),
             'FilesRunner must disable the implicit unlock+prune before every restic backup call'
         );
+    }
+
+    /**
+     * muckiware/restic stops every restic process after 3600 s by default, which aborts
+     * long-running backups of large paths.
+     */
+    public function testPrepareBackupClientUsesConfiguredResticTimeout(): void
+    {
+        $createBackup = new BackupRepositorySettings();
+        $createBackup->setRepositoryPath('/tmp/muwa-repository');
+        $createBackup->setRepositoryPassword('test');
+
+        $settings = $this->createMock(PluginSettings::class);
+        $settings->method('getResticTimeout')->willReturn(14400.0);
+
+        $backupClient = $this->createFilesRunner($createBackup, $settings)->prepareBackupClient();
+
+        static::assertSame(14400.0, $backupClient->getProcessTimeout());
+    }
+
+    public function testPrepareBackupClientRemovesResticTimeoutWhenUnlimited(): void
+    {
+        $createBackup = new BackupRepositorySettings();
+        $createBackup->setRepositoryPath('/tmp/muwa-repository');
+        $createBackup->setRepositoryPassword('test');
+
+        $settings = $this->createMock(PluginSettings::class);
+        $settings->method('getResticTimeout')->willReturn(null);
+
+        $backupClient = $this->createFilesRunner($createBackup, $settings)->prepareBackupClient();
+
+        static::assertNull($backupClient->getProcessTimeout());
     }
 }

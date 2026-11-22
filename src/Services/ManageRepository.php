@@ -51,6 +51,7 @@ class ManageRepository
             if($this->pluginSettings->hasOwnResticBinaryPath()) {
                 $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
             }
+            $manageClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
             $manageClient->setRepositoryPath($backupRepository->getRepositoryPath());
             $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $manageClient->setJsonOutput($isJsonOutput);
@@ -103,6 +104,7 @@ class ManageRepository
             if($this->pluginSettings->hasOwnResticBinaryPath()) {
                 $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
             }
+            $manageClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
             $manageClient->setRepositoryPath($backupRepository->getRepositoryPath());
             $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $manageClient->setJsonOutput($isJsonOutput);
@@ -145,6 +147,7 @@ class ManageRepository
         if($this->pluginSettings->hasOwnResticBinaryPath()) {
             $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
         }
+        $manageClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
         $manageClient->setNoLock(true);
         $manageClient->setJsonOutput(true);
         $manageClient->setRepositoryPath($repositoryPath);
@@ -174,6 +177,7 @@ class ManageRepository
         if($this->pluginSettings->hasOwnResticBinaryPath()) {
             $backupClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
         }
+        $backupClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
         $backupClient->setRepositoryPath($backupRepository->getRepositoryPath());
         $backupClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
         $backupClient->setCheckReadData(false);
@@ -208,6 +212,7 @@ class ManageRepository
             if($this->pluginSettings->hasOwnResticBinaryPath()) {
                 $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
             }
+            $manageClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
             $manageClient->setRepositoryPath($backupRepository->getRepositoryPath());
             $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $manageClient->setJsonOutput($isJsonOutput);
@@ -294,6 +299,7 @@ class ManageRepository
             if($this->pluginSettings->hasOwnResticBinaryPath()) {
                 $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
             }
+            $manageClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
             $manageClient->setRepositoryPath($backupRepository->getRepositoryPath());
             $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $manageClient->setJsonOutput($isJsonOutput);
@@ -322,6 +328,7 @@ class ManageRepository
             if($this->pluginSettings->hasOwnResticBinaryPath()) {
                 $manageClient->setBinaryPath($this->pluginSettings->getOwnResticBinaryPath());
             }
+            $manageClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
             $manageClient->setRepositoryPath($backupRepository->getRepositoryPath());
             $manageClient->setRepositoryPassword($backupRepository->getRepositoryPassword());
             $manageClient->setJsonOutput($isJsonOutput);

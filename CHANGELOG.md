@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.11.1]
+
+### Added
+- New plugin setting `resticTimeout` (minutes, default 240, 0 = no limit): maximum runtime of every
+  restic process (backup, check, forget/prune, snapshots, stats, restore, init).
+
+### Fixed
+- restic processes are no longer stopped after the fixed 3600 seconds of `muckiware/restic`, which
+  aborted long backups of large paths with "exceeded the timeout of 3600 seconds".
+
 ### [0.11.0]
 
 ### Added

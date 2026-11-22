@@ -17,6 +17,7 @@ enum ConfigPath: string
     case CONFIG_PATH_COMPRESS_DB_BACKUP = 'MuckiFacilityPlugin.config.compressDbBackup';
     case CONFIG_PATH_FAIL_ON_DUMP_ERROR = 'MuckiFacilityPlugin.config.failOnDumpError';
     case CONFIG_PATH_DB_DUMP_TIMEOUT = 'MuckiFacilityPlugin.config.dbDumpTimeout';
+    case CONFIG_PATH_RESTIC_TIMEOUT = 'MuckiFacilityPlugin.config.resticTimeout';
     // followed by the ucfirst() value of a MysqlDumpOption, e.g. mysqldumpNoTablespaces
     case CONFIG_PATH_MYSQLDUMP_OPTION_PREFIX = 'MuckiFacilityPlugin.config.mysqldump';
 

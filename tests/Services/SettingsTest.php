@@ -476,6 +476,27 @@ class SettingsTest extends TestCase
         }
     }
 
+    public function testResticTimeoutIsConfiguredInMinutes(): void
+    {
+        $values = [null, '', '0', 0, 90, '-5'];
+        $expected = [240.0 * 60, 240.0 * 60, null, null, 5400.0, null];
+
+        foreach ($values as $index => $value) {
+            $config = $this->createMock(SystemConfigService::class);
+            $config->method('get')->willReturnMap([
+                ['MuckiFacilityPlugin.config.resticTimeout', null, $value],
+            ]);
+            $settings = new PluginSettings(
+                $config,
+                $this->createMock(KernelInterface::class),
+                $this->createMock(PluginHelper::class),
+                $this->createMock(LoggerInterface::class)
+            );
+
+            static::assertSame($expected[$index], $settings->getResticTimeout(), var_export($value, true));
+        }
+    }
+
     private function createSettings(?LoggerInterface $logger = null): PluginSettings
     {
         $kernel = $this->createMock(KernelInterface::class);

@@ -62,6 +62,7 @@ class BackupRepository
         if($ownResticPath) {
             $backupClient->setBinaryPath($ownResticPath);
         }
+        $backupClient->setProcessTimeout($this->pluginSettings->getResticTimeout());
         $backupClient->setRepositoryPassword($backupRepositoryInput->getRepositoryPassword());
         $backupClient->setRepositoryPath($backupRepositoryInput->getRepositoryPath());
         return $backupClient->createRepository();

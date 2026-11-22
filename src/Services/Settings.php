@@ -80,12 +80,32 @@ class Settings implements SettingsInterface
      */
     public function getDbDumpTimeout(): int
     {
-        $minutes = $this->config->get(ConfigPath::CONFIG_PATH_DB_DUMP_TIMEOUT->value);
+        return $this->getMinutesSetting(ConfigPath::CONFIG_PATH_DB_DUMP_TIMEOUT, PluginDefaults::DB_DUMP_TIMEOUT_MINUTES) * 60;
+    }
+
+    /**
+     * Wall clock limit for every restic process (backup, check, forget/prune, restore, ...). Without it
+     * muckiware/restic stops each process after 3600 s. Setting in minutes, never saved =
+     * Defaults::RESTIC_TIMEOUT_MINUTES, 0 = no limit (null for muckiware/restic, which rejects 0).
+     */
+    public function getResticTimeout(): ?float
+    {
+        $minutes = $this->getMinutesSetting(ConfigPath::CONFIG_PATH_RESTIC_TIMEOUT, PluginDefaults::RESTIC_TIMEOUT_MINUTES);
+
+        return $minutes === 0 ? null : (float) ($minutes * 60);
+    }
+
+    /**
+     * Minutes of an int setting, never saved = $default, negative values count as 0.
+     */
+    private function getMinutesSetting(ConfigPath $configPath, int $default): int
+    {
+        $minutes = $this->config->get($configPath->value);
         if($minutes === null || $minutes === '') {
-            $minutes = PluginDefaults::DB_DUMP_TIMEOUT_MINUTES;
+            $minutes = $default;
         }
 
-        return max(0, (int) $minutes) * 60;
+        return max(0, (int) $minutes);
     }
 
     /**

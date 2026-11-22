@@ -34,6 +34,15 @@
             <defaultValue>240</defaultValue>
             <min>0</min>
         </input-field>
+        <input-field type="int">
+            <name>resticTimeout</name>
+            <label>Maximum runtime of a restic process (minutes)</label>
+            <label lang="de-DE">Maximale Laufzeit eines restic-Prozesses (Minuten)</label>
+            <helpText>Applies to every restic call (backup, check, forget/prune, restore). A process running longer is stopped and the run fails. The first backup into a new repository takes the longest. 0 = no limit, a hanging process then blocks all further backups.</helpText>
+            <helpText lang="de-DE">Gilt für jeden restic-Aufruf (Backup, Check, Forget/Prune, Restore). Ein länger laufender Prozess wird beendet und der Lauf schlägt fehl. Am längsten dauert das erste Backup in ein neues Repository. 0 = keine Begrenzung, ein hängender Prozess blockiert dann alle weiteren Backups.</helpText>
+            <defaultValue>240</defaultValue>
+            <min>0</min>
+        </input-field>
 
         <component name="muwa-restic-binary-info">
             <name>resticBinaryInfo</name>
