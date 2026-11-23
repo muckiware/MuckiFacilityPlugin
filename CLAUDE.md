@@ -53,8 +53,9 @@ ein Cronjob auch ohne laufenden Messenger-Worker funktioniert.
 also inkl. Pre-Command) bis nach `AfterBackupCreatedEvent` (Post-Command) und schreibt im `finally`
 ueber `RepositoryStats::saveBackupDuration()`: mit Stats-Id wird der Eintrag des Laufs aktualisiert,
 ohne (Lauf vorher abgebrochen) wird ein neuer Eintrag mit dem aktuellen Stand angelegt, notfalls mit
-leeren Werten. Wirft nie. Die Administration skaliert die Sekunden im gemeinsamen Helper
-`module/muwa-backup-repository/helper/format-duration.js` auf Sek./Min./Std. (Snippets
+leeren Werten. Wirft nie. Die Administration formatiert die Sekunden im gemeinsamen Helper
+`module/muwa-backup-repository/helper/format-duration.js`: unter 1 Min. als Sekunden, unter 1 Std. als
+`m:ss` (`18:30 Min.`), ab 1 Std. als `h:mm:ss` — nie als Dezimalzahl (Snippets
 `detail.durationSeconds|Minutes|Hours` mit `{value}`), genutzt von Detail-Seite und Dashboard-Widget.
 `helper/format-schedule-date.js` formatiert im Detail-Tab Zeitplan die Termine in der Zeitzone des
 Zeitplans. `getNextScheduledRun()` liefert `nextExecutionTime` nur bei aktivem Zeitplan, sonst `null` —

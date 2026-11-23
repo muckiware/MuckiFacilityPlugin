@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
   restic process (backup, check, forget/prune, snapshots, stats, restore, init).
 
 ### Fixed
+- The backup duration in the administration (repository detail page and dashboard widget) is shown as
+  minutes:seconds (e.g. `18:30 min`) or hours:minutes:seconds instead of a decimal number (`18.5 min`).
+- Sizes in the administration (repository status, history chart, dashboard widgets) are shown up to TB.
+  From about 0.9 TiB they used to show `undefined` as unit, because Shopware's `fileSize` stops at GB.
 - restic processes are no longer stopped after the fixed 3600 seconds of `muckiware/restic`, which
   aborted long backups of large paths with "exceeded the timeout of 3600 seconds".
 - A backup schedule no longer starts backups of an inactive repository or while the plugin setting
