@@ -1,5 +1,6 @@
 import template from './muwa-s3-mirror-status-dashboard-widget.html.twig';
 import './muwa-s3-mirror-status-dashboard-widget.scss';
+import formatBytes from '../../helper/format-bytes';
 
 const { Component, Context } = Shopware;
 const { Criteria } = Shopware.Data;
@@ -229,10 +230,7 @@ Component.register('muwa-s3-mirror-status-dashboard-widget', {
         },
 
         formatBytes(value) {
-            if (value === null || value === undefined) {
-                return this.$t('muwa-backup-repository.detail.statsNoValue');
-            }
-            return Shopware.Utils.format.fileSize(value);
+            return formatBytes(value, this.$t.bind(this));
         },
 
         formatCount(value) {

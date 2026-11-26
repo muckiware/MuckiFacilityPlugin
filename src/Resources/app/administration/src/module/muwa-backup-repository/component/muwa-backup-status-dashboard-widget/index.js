@@ -1,6 +1,7 @@
 import template from './muwa-backup-status-dashboard-widget.html.twig';
 import './muwa-backup-status-dashboard-widget.scss';
 import formatDuration from '../../helper/format-duration';
+import formatBytes from '../../helper/format-bytes';
 import { getNextScheduledRun } from '../../helper/format-schedule-date';
 
 const { Component, Context } = Shopware;
@@ -173,10 +174,7 @@ Component.register('muwa-backup-status-dashboard-widget', {
         },
 
         formatBytes(value) {
-            if (value === null || value === undefined) {
-                return this.$t('muwa-backup-repository.detail.statsNoValue');
-            }
-            return Shopware.Utils.format.fileSize(value);
+            return formatBytes(value, this.$t.bind(this));
         },
 
         formatCount(value) {

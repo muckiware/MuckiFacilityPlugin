@@ -1,6 +1,7 @@
 import template from './muwa-backup-repository-detail.html.twig';
 import './muwa-backup-repository-detail.scss';
 import formatDuration from '../../helper/format-duration';
+import formatBytes from '../../helper/format-bytes';
 import formatScheduleDate from '../../helper/format-schedule-date';
 
 const { Component, Context, Mixin } = Shopware;
@@ -1195,14 +1196,7 @@ Component.register('muwa-backup-repository-detail', {
         },
 
         formatBytes(value) {
-
-            // Shopware.Utils.format.fileSize(bytes, locale = 'de-DE') — das locale-Argument wird
-            // bewusst weggelassen: Shopware.State ist in 6.7 deprecated, Shopware.Store gibt es in
-            // 6.6 nicht. Der Default deckt beide Majors ohne Versionszweig ab.
-            if (value === null || value === undefined) {
-                return this.$tc('muwa-backup-repository.detail.statsNoValue');
-            }
-            return Shopware.Utils.format.fileSize(value);
+            return formatBytes(value, this.$t.bind(this));
         },
 
         formatCount(value) {
