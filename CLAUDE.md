@@ -70,9 +70,13 @@ immer drei Stellen zu aendern: Enum + Factory + Runner.
 `Services\RepositoryMirror::mirror($repositoryId, $triggerSource, $checkId, $force)` spiegelt das lokale
 restic-Repository in einen S3-Bucket (Hilfsklassen in `Services\Mirror\`: `MirrorPlanner`,
 `LocalRepositoryScanner`, `MirrorKeyRules`, `MirrorTargetValidator`, `S3ClientFactory`, `ErrorSanitizer`).
-Trigger: `Services\Backup::createBackup()` dispatcht nach dem Check-Item (`dispatchMirror()`) die
+Trigger: `Services\Backup::createBackup()` dispatcht nach Check-Item, `saveSnapshots()` und
+`collectAndSaveForBackup()` (im `finally`, also auch wenn `saveSnapshots()` wirft) per `dispatchMirror()` die
 `MirrorRepositoryMessage`, nur wenn `mirror_s3_connection_id` gesetzt ist; ein Fehler beim Dispatch
-bricht das Backup nie ab. Zweiter Weg: CLI `muckiware:repository:upload` (synchron). Das erste Spiegeln
+bricht das Backup nie ab. **Nicht wieder vor `saveSnapshots()`/Stats ziehen:** deren restic-Locks liessen
+einen schnellen Worker den Mirror mit "locked by a running restic operation" abbrechen. Zusaetzlich wartet
+`RepositoryMirror::waitForLockRelease()` vor dem Upload mit Backoff (`LOCK_WAIT_DELAYS` = 5/15/30/60 s,
+Test-Seam `pause()`); die Lock-Pruefung vor der Delete-Phase bleibt bewusst ohne Warten. Zweiter Weg: CLI `muckiware:repository:upload` (synchron). Das erste Spiegeln
 eines grossen Repositories braucht evtl. mehrere Laeufe/Stunden und einen laufenden Messenger-Worker.
 Ohne gesunden letzten Check wird uebersprungen (ausser `--force`). **Check-Gate:** Trigger `backup`
 (`RepositoryMirror::TRIGGER_BACKUP`) ohne Check-Id wird immer uebersprungen, nie Fallback auf einen
@@ -449,7 +453,10 @@ Repository uebernehmen" (Pfad + Passwort + Pflichtfeld Restore-Pfad, geprueft ue
 `Settings::getRestorePathRejection()`, Fehler `MUWA_TAKEOVER_INVALID_RESTORE_PATH`; Aufruf der `takeover`-Route, Fehlercodes werden ueber
 Snippets `takeover.errors.*` angezeigt, danach Sprung in den Tab Konfiguration). Der Tab Konfiguration
 zeigt ueber `Services\BackupPathSuggestions` die Pfade der vorhandenen Snapshots als Vorschlaege
-(Uebernehmen traegt sie in die Backup-Pfade ein). Snippets mit Platzhaltern immer per
+(Uebernehmen traegt sie in die Backup-Pfade ein, Verwerfen schreibt den Pfad in die JsonField-Spalte
+`dismissed_path_suggestions` (`Migration1795774296`), beides erst mit "Speichern"; der Link
+"Ausgeblendete Vorschlaege wieder anzeigen" setzt sie zurueck). Gefiltert wird nur in der
+Administration (`openPathSuggestions`), `BackupPathSuggestions` liefert weiterhin alle Pfade. Snippets mit Platzhaltern immer per
 `$t(key, {...})`. Spalte `muwa_backup_repository_snapshots.paths` ist `LONGTEXT`
 (`Migration1794614400`).
 

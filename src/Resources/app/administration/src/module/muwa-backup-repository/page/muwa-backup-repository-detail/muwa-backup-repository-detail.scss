@@ -160,9 +160,20 @@ div.muwa-backup-repository-detail-repository-path__description {
         color: var(--color-text-warning-default, #b45309);
     }
 
+    &__actions {
+        display: flex;
+        flex-shrink: 0;
+        gap: 8px;
+    }
+
     &__meta,
     &__hint {
         color: var(--color-text-secondary-default, #6b7280);
+        font-size: 12px;
+    }
+
+    &__restore {
+        margin: 8px 0 16px;
         font-size: 12px;
     }
 }

@@ -177,12 +177,15 @@ final class RepositoryTakeoverAdministrationTest extends TestCase
         self::assertStringContainsString('muwa-backup-repository-detail-path-suggestions', $template);
         self::assertStringContainsString('openPathSuggestions', $template);
         self::assertStringContainsString('onAdoptPathSuggestion', $template);
+        self::assertStringContainsString('onDismissPathSuggestion(suggestion)', $template);
+        self::assertStringContainsString('onRestoreDismissedPathSuggestions', $template);
+        self::assertStringContainsString("suggestions.restoreDismissed', { count: dismissedPathSuggestionsCount }", $template);
         self::assertSame(0, preg_match('/\$tc\([^)]*,[^)]*,/', $template), 'No $tc with three arguments allowed');
     }
 
     public function testSuggestionSnippetsExistInBothLanguages(): void
     {
-        $expected = ['title', 'adopt', 'stateDirectory', 'stateFile', 'stateMissing', 'lastSeen', 'host', 'error', 'truncated'];
+        $expected = ['title', 'adopt', 'dismiss', 'dismissHint', 'restoreDismissed', 'stateDirectory', 'stateFile', 'stateMissing', 'lastSeen', 'host', 'error', 'truncated'];
         foreach (['de-DE', 'en-GB'] as $language) {
             $suggestions = $this->takeoverSnippets($language)['suggestions'] ?? null;
             self::assertIsArray($suggestions, $language . ' has no takeover.suggestions');
@@ -201,5 +204,38 @@ final class RepositoryTakeoverAdministrationTest extends TestCase
 
         self::assertStringContainsString('Array.isArray(this.backupRepository.backupPaths)', $body);
         self::assertStringNotContainsString('backupPaths || []', $body);
+    }
+
+    public function testDismissStoresPathOnEntityWithoutSaving(): void
+    {
+        $detail = $this->read(self::DETAIL . 'index.js');
+        $dismiss = $this->methodBody($detail, 'onDismissPathSuggestion');
+
+        self::assertStringContainsString('this.backupRepository.dismissedPathSuggestions = [...dismissed, suggestion.path]', $dismiss);
+        self::assertStringNotContainsString('httpClient', $dismiss);
+        self::assertStringNotContainsString('.save(', $dismiss);
+
+        $restore = $this->methodBody($detail, 'onRestoreDismissedPathSuggestions');
+        self::assertStringContainsString('this.backupRepository.dismissedPathSuggestions = null', $restore);
+        self::assertStringNotContainsString('.save(', $restore);
+    }
+
+    public function testOpenPathSuggestionsHidesDismissedPaths(): void
+    {
+        $detail = $this->read(self::DETAIL . 'index.js');
+        $start = strpos($detail, "\n        openPathSuggestions()");
+        self::assertNotFalse($start);
+        $body = substr($detail, $start, 600);
+
+        self::assertStringContainsString('!dismissed.includes(suggestion.path)', $body);
+        self::assertStringContainsString('Array.isArray(dismissed)', $this->methodBody($detail, 'dismissedPathSuggestions'));
+    }
+
+    public function testDismissedPathSuggestionsFieldIsDefined(): void
+    {
+        $definition = file_get_contents(__DIR__ . '/../../src/Core/Content/BackupRepository/BackupRepositoryDefinition.php');
+        self::assertIsString($definition);
+
+        self::assertStringContainsString("new JsonField('dismissed_path_suggestions', 'dismissedPathSuggestions'", $definition);
     }
 }

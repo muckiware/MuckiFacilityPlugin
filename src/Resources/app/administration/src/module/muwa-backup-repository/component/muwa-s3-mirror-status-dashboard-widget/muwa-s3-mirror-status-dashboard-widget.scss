@@ -5,6 +5,25 @@
         max-width: 100%;
     }
 
+    // the compact grid fixes the cell height to 42px - let the status and target cells grow
+    // for the stacked content
+    .sw-data-grid .sw-data-grid__body .sw-data-grid__cell--status .sw-data-grid__cell-content,
+    .sw-data-grid .sw-data-grid__body .sw-data-grid__cell--target .sw-data-grid__cell-content {
+        height: auto;
+        min-height: 42px;
+    }
+
+    // the grid cell is a flex row - stack its content (label + "show more" button,
+    // target + connection name) vertically
+    &__status,
+    &__target-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        min-width: 0;
+    }
+
     &__target,
     &__connection {
         display: block;

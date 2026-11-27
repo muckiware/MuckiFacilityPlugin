@@ -203,6 +203,10 @@
       "emptyTitle": "No active backup repositories",
       "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories."
     },
+    "longText": {
+      "showMore": "show more",
+      "modalTitle": "Full message"
+    },
     "s3Dashboard": {
       "title": "S3 transfer status",
       "targetLabel": "Target",
@@ -382,7 +386,10 @@
         "lastSeen": "last backed up",
         "host": "Host",
         "error": "The suggestions could not be loaded.",
-        "truncated": "Only the first 200 paths are shown."
+        "truncated": "Only the first 200 paths are shown.",
+        "dismiss": "Dismiss",
+        "dismissHint": "Dismissed suggestions are hidden permanently once you save.",
+        "restoreDismissed": "Show hidden suggestions again ({count})"
       }
     },
     "s3Connection": {

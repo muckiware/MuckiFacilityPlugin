@@ -86,6 +86,7 @@ class BackupRepositoryDefinition extends EntityDefinition
             (new LongTextField('post_backup_command_arguments', 'postBackupCommandArguments'))->addFlags(new AllowEmptyString(), new WriteProtected(Context::SYSTEM_SCOPE)),
             (new BoolField('post_backup_fail_on_error', 'postBackupFailOnError'))->addFlags(new WriteProtected(Context::SYSTEM_SCOPE)),
             (new JsonField('backup_paths', 'backupPaths', [], [])),
+            (new JsonField('dismissed_path_suggestions', 'dismissedPathSuggestions', [], [])),
             (new IntField('forget_daily', 'forgetDaily')),
             (new IntField('forget_weekly', 'forgetWeekly')),
             (new IntField('forget_monthly', 'forgetMonthly')),

@@ -471,15 +471,31 @@
                                             {{ $t('muwa-backup-repository.takeover.suggestions.host') }}: {{ suggestion.hostname }}
                                         </span>
                                     </div>
-                                    <sw-button size="small" @click="onAdoptPathSuggestion(suggestion)">
-                                        {{ $t('muwa-backup-repository.takeover.suggestions.adopt') }}
-                                    </sw-button>
+                                    <div class="muwa-backup-repository-detail-path-suggestions__actions">
+                                        <sw-button size="small" @click="onAdoptPathSuggestion(suggestion)">
+                                            {{ $t('muwa-backup-repository.takeover.suggestions.adopt') }}
+                                        </sw-button>
+                                        <sw-button size="small" @click="onDismissPathSuggestion(suggestion)">
+                                            {{ $t('muwa-backup-repository.takeover.suggestions.dismiss') }}
+                                        </sw-button>
+                                    </div>
                                 </li>
                             </ul>
                             <p v-if="pathSuggestionsTruncated" class="muwa-backup-repository-detail-path-suggestions__hint">
                                 {{ $t('muwa-backup-repository.takeover.suggestions.truncated') }}
                             </p>
+                            <p v-if="openPathSuggestions.length > 0" class="muwa-backup-repository-detail-path-suggestions__hint">
+                                {{ $t('muwa-backup-repository.takeover.suggestions.dismissHint') }}
+                            </p>
                         </div>
+                        <p
+                            v-if="dismissedPathSuggestionsCount > 0 && !isLoadingPathSuggestions"
+                            class="muwa-backup-repository-detail-path-suggestions__restore"
+                        >
+                            <a href="#" @click.prevent="onRestoreDismissedPathSuggestions">
+                                {{ $t('muwa-backup-repository.takeover.suggestions.restoreDismissed', { count: dismissedPathSuggestionsCount }) }}
+                            </a>
+                        </p>
 
                         {% block muwa_search_structure_detail_backup_paths_description %}
                             <div
@@ -650,9 +666,10 @@
                         :full-page="false"
                     >
                         <template #column-checkStatus="{item}">
-                            <div v-if="item.checkStatus" :title="item.checkStatus">
-                                {{ item.checkStatus }}
-                            </div>
+                            <muwa-long-text
+                                :text="item.checkStatus"
+                                :title="$t('muwa-backup-repository.list.CheckStatusLabel')"
+                            />
                         </template>
                         <template #column-createdAt="{ item }">
                             {{ dateFilter(item.createdAt, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
@@ -676,7 +693,18 @@
                                 :dataSource="currentStatsItems"
                                 :columns="currentStatsColumns"
                                 :plain-appearance="true"
-                            />
+                            >
+                                <template #column-value="{ item }">
+                                    <muwa-long-text
+                                        v-if="item.id === 'checkStatus'"
+                                        :text="item.value"
+                                        :title="item.name"
+                                    />
+                                    <template v-else>
+                                        {{ item.value }}
+                                    </template>
+                                </template>
+                            </sw-data-grid>
                         </template>
                         <sw-empty-state
                             v-else-if="!isStatsLoading"
@@ -812,6 +840,12 @@
                                 </template>
                                 <template #column-bytesUploaded="{ item }">
                                     {{ formatBytes(item.bytesUploaded) }}
+                                </template>
+                                <template #column-message="{ item }">
+                                    <muwa-long-text
+                                        :text="item.message"
+                                        :title="$t('muwa-backup-repository.mirror.columns.message')"
+                                    />
                                 </template>
                             </sw-data-grid>
                         </template>

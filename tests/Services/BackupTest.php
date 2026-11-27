@@ -557,7 +557,12 @@ class BackupTest extends TestCase
     /**
      * @param array<int, string> $sequence
      */
-    private function createMirrorBackupService(?string $mirrorConnectionId, MessageBusInterface $bus, array &$sequence): BackupService
+    private function createMirrorBackupService(
+        ?string $mirrorConnectionId,
+        MessageBusInterface $bus,
+        array &$sequence,
+        ?\Throwable $snapshotsError = null
+    ): BackupService
     {
         $repositoryId = 'repo-id';
         $entity = new BackupRepositoryEntity();
@@ -572,8 +577,16 @@ class BackupTest extends TestCase
         $factory->method('createBackupRunner')->willReturn($runner);
 
         $manageService = $this->createMock(ManageService::class);
-        $manageService->method('saveSnapshots')->willReturnCallback(static function () use (&$sequence): void {
+        $manageService->method('saveSnapshots')->willReturnCallback(static function () use (&$sequence, $snapshotsError): void {
             $sequence[] = 'snapshots';
+            if ($snapshotsError !== null) {
+                throw $snapshotsError;
+            }
+        });
+        $repositoryStats = $this->createMock(RepositoryStats::class);
+        $repositoryStats->method('collectAndSaveForBackup')->willReturnCallback(static function () use (&$sequence): ?string {
+            $sequence[] = 'stats';
+            return null;
         });
 
         return new BackupService(
@@ -585,7 +598,7 @@ class BackupTest extends TestCase
             $this->createMock(PluginHelper::class),
             $manageService,
             $this->createMock(ServicesCliOutput::class),
-            $this->createMock(RepositoryStats::class),
+            $repositoryStats,
             $this->createMock(EventDispatcherInterface::class),
             $bus
         );
@@ -601,7 +614,7 @@ class BackupTest extends TestCase
         return $settings;
     }
 
-    public function testDispatchesMirrorMessageAfterCheckWhenConfigured(): void
+    public function testDispatchesMirrorMessageAfterSnapshotsAndStatsWhenConfigured(): void
     {
         $sequence = [];
         $bus = $this->createMock(MessageBusInterface::class);
@@ -615,7 +628,7 @@ class BackupTest extends TestCase
 
         $this->createMirrorBackupService('conn-id', $bus, $sequence)->createBackup($this->createMirrorSettings(), false);
 
-        static::assertSame(['mirror', 'snapshots'], $sequence);
+        static::assertSame(['snapshots', 'stats', 'mirror'], $sequence);
     }
 
     public function testNoMirrorMessageWithoutConnection(): void
@@ -635,7 +648,28 @@ class BackupTest extends TestCase
 
         $this->createMirrorBackupService('conn-id', $bus, $sequence)->createBackup($this->createMirrorSettings(), false);
 
-        static::assertSame(['snapshots'], $sequence);
+        static::assertSame(['snapshots', 'stats'], $sequence);
+    }
+
+    public function testMirrorIsStillQueuedWhenSavingSnapshotsFails(): void
+    {
+        $sequence = [];
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects(static::once())->method('dispatch')
+            ->willReturnCallback(static function (object $m) use (&$sequence): Envelope {
+                $sequence[] = 'mirror';
+                return new Envelope($m);
+            });
+        $service = $this->createMirrorBackupService('conn-id', $bus, $sequence, new \RuntimeException('snapshots failed'));
+
+        try {
+            $service->createBackup($this->createMirrorSettings(), false);
+            static::fail('Expected the snapshot error to be rethrown.');
+        } catch (\RuntimeException $exception) {
+            static::assertSame('snapshots failed', $exception->getMessage());
+        }
+
+        static::assertSame(['snapshots', 'mirror'], $sequence);
     }
 
     public function testFailingCheckSavesRedCheckAndMirrorMessageCarriesItsId(): void

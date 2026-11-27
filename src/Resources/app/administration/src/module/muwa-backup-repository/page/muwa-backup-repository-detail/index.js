@@ -566,9 +566,27 @@ Component.register('muwa-backup-repository-detail', {
             const paths = Array.isArray(this.backupRepository.backupPaths) ? this.backupRepository.backupPaths : [];
             const existing = paths.map((entry) => entry.backupPath);
 
+            const dismissed = this.dismissedPathSuggestions;
+
             return this.pathSuggestions.filter((suggestion) => {
-                return !suggestion.configured && !existing.includes(suggestion.path);
+                return !suggestion.configured
+                    && !existing.includes(suggestion.path)
+                    && !dismissed.includes(suggestion.path);
             });
+        },
+
+        dismissedPathSuggestions() {
+            const dismissed = this.backupRepository.dismissedPathSuggestions;
+
+            return Array.isArray(dismissed) ? dismissed : [];
+        },
+
+        dismissedPathSuggestionsCount() {
+            const dismissed = this.dismissedPathSuggestions;
+
+            return this.pathSuggestions.filter((suggestion) => {
+                return !suggestion.configured && dismissed.includes(suggestion.path);
+            }).length;
         },
     },
 
@@ -1044,6 +1062,19 @@ Component.register('muwa-backup-repository-detail', {
                 compress: false,
                 position: 0
             });
+        },
+
+        onDismissPathSuggestion(suggestion) {
+            const dismissed = this.dismissedPathSuggestions;
+            if (dismissed.includes(suggestion.path)) {
+                return;
+            }
+
+            this.backupRepository.dismissedPathSuggestions = [...dismissed, suggestion.path];
+        },
+
+        onRestoreDismissedPathSuggestions() {
+            this.backupRepository.dismissedPathSuggestions = null;
         },
 
         onDeleteBackupPath(id) {

@@ -62,6 +62,11 @@ class RepositoryMirror
     public const MAX_REMOTE_CONFIG_SIZE = 1048576;
 
     /**
+     * Seconds to wait between re-checks of a locked local repository before the upload (sum 110 s).
+     */
+    public const LOCK_WAIT_DELAYS = [5, 15, 30, 60];
+
+    /**
      * No overall request timeout: a single multipart part or large PutObject may take long.
      * Stalls are caught instead: read_timeout (stream handler) and the curl low-speed limit below.
      */
@@ -112,7 +117,10 @@ class RepositoryMirror
         try {
             return $this->mirrorOnce($backupRepositoryId, $triggerSource, $checkId, $ignoreCheck);
         } catch (\Throwable $exception) {
-            $this->log('error', 'S3 mirror: run aborted unexpectedly, nothing recorded: ' . ErrorSanitizer::sanitize($exception));
+            $this->logger->error(
+                'S3 mirror: run aborted unexpectedly, nothing recorded: ' . ErrorSanitizer::sanitize($exception),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
 
             return null;
         }
@@ -158,14 +166,20 @@ class RepositoryMirror
             }
             $connection = $this->s3ConnectionRepository->getById($connectionId);
             if ($connection === null) {
-                $this->log('warning', 'S3 mirror: configured S3 connection not found, mirror not started');
+                $this->logger->warning(
+                    'S3 mirror: configured S3 connection not found, mirror not started',
+                    PluginDefaults::DEFAULT_LOGGER_CONFIG
+                );
 
                 return null;
             }
 
             return [$repository, $connection];
         } catch (\Throwable $exception) {
-            $this->log('error', 'S3 mirror: loading the repository failed: ' . ErrorSanitizer::sanitize($exception));
+            $this->logger->error(
+                'S3 mirror: loading the repository failed: ' . ErrorSanitizer::sanitize($exception),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
 
             return null;
         }
@@ -178,7 +192,10 @@ class RepositoryMirror
 
             return $lock->acquire(false) ? $lock : null;
         } catch (\Throwable $exception) {
-            $this->log('error', 'S3 mirror: acquiring the mirror lock failed: ' . ErrorSanitizer::sanitize($exception));
+            $this->logger->error(
+                'S3 mirror: acquiring the mirror lock failed: ' . ErrorSanitizer::sanitize($exception),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
 
             return null;
         }
@@ -189,7 +206,10 @@ class RepositoryMirror
         try {
             $lock->release();
         } catch (\Throwable $exception) {
-            $this->log('error', 'S3 mirror: releasing the mirror lock failed: ' . ErrorSanitizer::sanitize($exception));
+            $this->logger->error(
+                'S3 mirror: releasing the mirror lock failed: ' . ErrorSanitizer::sanitize($exception),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
         }
     }
 
@@ -286,11 +306,40 @@ class RepositoryMirror
         if ($path === '' || !$this->scanner->isResticRepository($path)) {
             return 'Local repository path is missing or not a restic repository (config and keys required); nothing was changed remotely.';
         }
-        if ($this->scanner->hasActiveLocks($path)) {
-            return 'Local repository is locked by a running restic operation; nothing was changed remotely.';
+        if (!$this->waitForLockRelease($path)) {
+            return sprintf(
+                'Local repository is still locked by a running restic operation after waiting %d seconds; nothing was changed remotely.',
+                array_sum(self::LOCK_WAIT_DELAYS)
+            );
         }
 
         return null;
+    }
+
+    /**
+     * Short restic operations (snapshots, stats, check of a parallel run) hold their lock only for
+     * seconds, so a locked repository is re-checked with a backoff before the run gives up.
+     * Only used before the upload; the delete phase stays strict (deletePhaseBlocker()).
+     */
+    protected function waitForLockRelease(string $path): bool
+    {
+        foreach (self::LOCK_WAIT_DELAYS as $delay) {
+            if (!$this->scanner->hasActiveLocks($path)) {
+                return true;
+            }
+            $this->logger->info(
+                sprintf('S3 mirror: local repository is locked, re-checking in %d seconds.', $delay),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
+            $this->pause($delay);
+        }
+
+        return !$this->scanner->hasActiveLocks($path);
+    }
+
+    protected function pause(int $seconds): void
+    {
+        sleep($seconds);
     }
 
     protected function synchronize(MirrorRun $run, S3Client $client): MirrorResult
@@ -533,7 +582,10 @@ class RepositoryMirror
             return;
         }
 
-        $this->log('warning', sprintf('S3 mirror %s: %s', $result->getStatus(), (string) $result->getMessage()));
+        $this->logger->warning(
+            sprintf('S3 mirror %s: %s', $result->getStatus(), (string) $result->getMessage()),
+            PluginDefaults::DEFAULT_LOGGER_CONFIG
+        );
         $this->attempt('creating the admin notification', fn () => $this->notify($repository, $result, $context));
     }
 
@@ -571,19 +623,10 @@ class RepositoryMirror
         try {
             $action();
         } catch (\Throwable $exception) {
-            $this->log('error', sprintf('S3 mirror: %s failed: %s', $what, ErrorSanitizer::sanitize($exception)));
-        }
-    }
-
-    /**
-     * Never throws: a broken logger must not break the never-throw contract of mirror().
-     */
-    protected function log(string $level, string $message): void
-    {
-        try {
-            $this->logger->log($level, $message, PluginDefaults::DEFAULT_LOGGER_CONFIG);
-        } catch (\Throwable) {
-            // nothing left to report to
+            $this->logger->error(
+                sprintf('S3 mirror: %s failed: %s', $what, ErrorSanitizer::sanitize($exception)),
+                PluginDefaults::DEFAULT_LOGGER_CONFIG
+            );
         }
     }
 }
