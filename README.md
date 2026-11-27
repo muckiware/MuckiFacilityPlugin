@@ -456,7 +456,10 @@ The secret is never sent back to the administration.
 The mirror removes remote objects that restic deleted locally (forget, prune). It only touches keys
 of the restic layout (`data/`, `index/`, `keys/`, `snapshots/`), never deletes `config`, and aborts
 without remote changes when the local repository is locked by a running restic operation, when
-the remote `config` belongs to a different repository, or when local data is missing.
+the remote `config` belongs to a different repository, or when local data is missing. Before the
+upload, a locked repository is re-checked after 5, 15, 30 and 60 seconds (short operations like
+`restic snapshots` or `restic stats` release their lock quickly); a lock right before the delete
+phase skips the deletions at once.
 
 - **Use a dedicated bucket or prefix for this repository only.** The mirror treats every key of the
   restic layout below the prefix as its own and deletes what no longer exists locally.

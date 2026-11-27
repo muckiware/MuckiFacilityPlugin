@@ -198,9 +198,14 @@ class Backup
             }
 
             $checkId = $this->createCheckItem($createBackup);
-            $this->dispatchMirror($backupRepositoryId, $checkId);
-            $this->manageService->saveSnapshots($backupRepositoryId);
-            $statsId = $this->repositoryStats->collectAndSaveForBackup($backupRepositoryId);
+            try {
+                $this->manageService->saveSnapshots($backupRepositoryId);
+                $statsId = $this->repositoryStats->collectAndSaveForBackup($backupRepositoryId);
+            } finally {
+                // Queued only after `restic snapshots` and `restic stats`: their locks would otherwise
+                // make a fast messenger worker abort the mirror run ("locked by a running restic operation").
+                $this->dispatchMirror($backupRepositoryId, $checkId);
+            }
 
             $this->eventDispatcher->dispatch(
                 new AfterBackupCreatedEvent($createBackup, $this->getAllResults()),

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+### [0.11.3]
+
+### Fixed
+- The S3 mirror after a backup no longer fails with "Local repository is locked by a running restic
+  operation". The mirror message used to be queued before `restic snapshots` and `restic stats` of the
+  same backup run, so a fast messenger worker saw their locks. It is now queued after both (and still
+  queued when saving the snapshots fails).
+- A mirror run that finds the local repository locked re-checks it after 5, 15, 30 and 60 seconds
+  before it gives up, instead of failing at once. The check right before the delete phase stays strict.
+
 ### [0.11.1]
 
 ### Added

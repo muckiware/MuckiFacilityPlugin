@@ -71,6 +71,10 @@ class RepositoryMirrorTest extends TestCase
     private array $logs = [];
     /** @var (callable(CommandInterface): mixed)|null */
     private $interceptor = null;
+    /** @var list<int> */
+    private array $pauses = [];
+    /** @var (callable(int): void)|null */
+    private $whilePaused = null;
 
     private ?BackupRepositoryEntity $repository;
     private ?BackupRepositoryChecksEntity $check;
@@ -431,6 +435,34 @@ class RepositoryMirrorTest extends TestCase
         self::assertSame(MirrorResult::STATUS_FAILED, $result?->getStatus());
         self::assertStringContainsStringIgnoringCase('locked', (string) $result?->getMessage());
         self::assertSame([], $this->operations);
+        self::assertSame(RepositoryMirror::LOCK_WAIT_DELAYS, $this->pauses);
+    }
+
+    public function testLockReleasedWhileWaitingContinuesTheRun(): void
+    {
+        file_put_contents($this->path . '/locks/abc', 'lock');
+        $this->whilePaused = function (): void {
+            @unlink($this->path . '/locks/abc');
+        };
+        $this->queueListing([]);
+        $this->mock->append(new Result([]), new Result([]), new Result([]), new Result([]), new Result([]));
+
+        $result = $this->mirror()->mirror(self::REPOSITORY_ID, 'backup', self::CHECK_ID);
+
+        self::assertSame(MirrorResult::STATUS_SUCCEEDED, $result?->getStatus(), (string) $result?->getMessage());
+        self::assertSame([RepositoryMirror::LOCK_WAIT_DELAYS[0]], $this->pauses);
+        self::assertSame(5, $result?->getFilesUploaded());
+    }
+
+    public function testUnlockedRepositoryDoesNotWait(): void
+    {
+        $this->queueListing([]);
+        $this->mock->append(new Result([]), new Result([]), new Result([]), new Result([]), new Result([]));
+
+        $result = $this->mirror()->mirror(self::REPOSITORY_ID, 'backup', self::CHECK_ID);
+
+        self::assertSame(MirrorResult::STATUS_SUCCEEDED, $result?->getStatus(), (string) $result?->getMessage());
+        self::assertSame([], $this->pauses);
     }
 
     public function testLockAppearingBeforeDeletePhaseSkipsDeletes(): void
@@ -675,9 +707,28 @@ class RepositoryMirrorTest extends TestCase
         return $lock;
     }
 
+    /**
+     * Mirror that records lock-wait pauses instead of sleeping.
+     */
     private function mirror(): RepositoryMirror
     {
-        return new RepositoryMirror(...$this->dependencies());
+        $mirror = new class (...$this->dependencies()) extends RepositoryMirror {
+            /** @var \Closure(int): void */
+            public \Closure $onPause;
+
+            protected function pause(int $seconds): void
+            {
+                ($this->onPause)($seconds);
+            }
+        };
+        $mirror->onPause = function (int $seconds): void {
+            $this->pauses[] = $seconds;
+            if ($this->whilePaused !== null) {
+                ($this->whilePaused)($seconds);
+            }
+        };
+
+        return $mirror;
     }
 
     /**
