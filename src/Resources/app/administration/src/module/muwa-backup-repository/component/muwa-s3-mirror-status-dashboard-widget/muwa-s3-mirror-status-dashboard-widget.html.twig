@@ -22,21 +22,31 @@
                     </router-link>
                 </template>
                 <template #column-target="{ item }">
-                    <span class="muwa-s3-mirror-status-dashboard-widget__target" :title="item.connectionName || ''">
-                        {{ targetLabel(item) }}
-                    </span>
-                    <span v-if="item.connectionName" class="muwa-s3-mirror-status-dashboard-widget__connection">
-                        {{ item.connectionName }}
-                    </span>
+                    <div class="muwa-s3-mirror-status-dashboard-widget__target-cell">
+                        <span class="muwa-s3-mirror-status-dashboard-widget__target" :title="item.connectionName || ''">
+                            {{ targetLabel(item) }}
+                        </span>
+                        <span v-if="item.connectionName" class="muwa-s3-mirror-status-dashboard-widget__connection">
+                            {{ item.connectionName }}
+                        </span>
+                    </div>
                 </template>
                 <template #column-status="{ item }">
-                    <sw-label
-                        :variant="statusVariant(item)"
-                        appearance="pill"
-                        :title="statusTitle(item)"
-                    >
-                        {{ statusLabel(item) }}
-                    </sw-label>
+                    <div class="muwa-s3-mirror-status-dashboard-widget__status">
+                        <sw-label
+                            :variant="statusVariant(item)"
+                            appearance="pill"
+                            :title="statusTitle(item)"
+                        >
+                            {{ statusLabel(item) }}
+                        </sw-label>
+                        <muwa-long-text
+                            class="muwa-s3-mirror-status-dashboard-widget__status-message"
+                            :text="statusTitle(item)"
+                            :title="statusLabel(item)"
+                            :show-text="false"
+                        />
+                    </div>
                 </template>
                 <template #column-runAt="{ item }">
                     {{ formatDateTime(item.runAt) }}

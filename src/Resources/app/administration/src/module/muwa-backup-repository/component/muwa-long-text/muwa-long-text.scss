@@ -1,0 +1,35 @@
+.muwa-long-text {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    min-width: 0;
+
+    &__value {
+        min-width: 0;
+        // grid cells inherit "nowrap" - the shortened text may wrap instead of overflowing
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.4;
+    }
+
+    &__show-more {
+        flex-shrink: 0;
+    }
+}
+
+.muwa-long-text__full {
+    margin: 0;
+    max-height: 60vh;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: var(--font-family-monospace, monospace);
+    font-size: var(--font-size-xs, 12px);
+    line-height: 1.5;
+}
+
+// Data grid cells have a fixed height - let a cell with a long text (text + button) grow.
+.sw-data-grid .sw-data-grid__body .sw-data-grid__cell .sw-data-grid__cell-content:has(.muwa-long-text__show-more) {
+    height: auto;
+}

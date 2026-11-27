@@ -203,6 +203,10 @@
       "emptyTitle": "Keine aktiven Backup Repositories",
       "emptySubline": "Lege unter Einstellungen → Erweiterungen → Backup Repositories ein Repository an."
     },
+    "longText": {
+      "showMore": "mehr zeigen",
+      "modalTitle": "Vollständige Meldung"
+    },
     "s3Dashboard": {
       "title": "S3-Übertragungsstatus",
       "targetLabel": "Ziel",

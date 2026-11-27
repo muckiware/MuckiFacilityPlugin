@@ -203,6 +203,10 @@
       "emptyTitle": "No active backup repositories",
       "emptySubline": "Create a repository under Settings → Extensions → Backup Repositories."
     },
+    "longText": {
+      "showMore": "show more",
+      "modalTitle": "Full message"
+    },
     "s3Dashboard": {
       "title": "S3 transfer status",
       "targetLabel": "Target",

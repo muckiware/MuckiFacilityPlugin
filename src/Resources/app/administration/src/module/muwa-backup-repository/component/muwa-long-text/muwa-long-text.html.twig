@@ -1,0 +1,42 @@
+{% block muwa_long_text %}
+<div v-if="isLong || (showText && normalizedText)" class="muwa-long-text">
+    {% block muwa_long_text_value %}
+        <span
+            v-if="showText && normalizedText"
+            class="muwa-long-text__value"
+            :title="normalizedText"
+        >
+            {{ shortText }}
+        </span>
+    {% endblock %}
+
+    {% block muwa_long_text_show_more %}
+        <sw-button
+            v-if="isLong"
+            class="muwa-long-text__show-more"
+            size="x-small"
+            @click.stop="onOpenModal"
+        >
+            {{ $t('muwa-backup-repository.longText.showMore') }}
+        </sw-button>
+    {% endblock %}
+
+    {% block muwa_long_text_modal %}
+        <sw-modal
+            v-if="showModal"
+            class="muwa-long-text__modal"
+            :title="title || $t('muwa-backup-repository.longText.modalTitle')"
+            variant="large"
+            @modal-close="onCloseModal"
+        >
+            <pre class="muwa-long-text__full">{{ normalizedText }}</pre>
+
+            <template #modal-footer>
+                <sw-button size="small" @click="onCloseModal">
+                    {{ $t('global.default.close') }}
+                </sw-button>
+            </template>
+        </sw-modal>
+    {% endblock %}
+</div>
+{% endblock %}

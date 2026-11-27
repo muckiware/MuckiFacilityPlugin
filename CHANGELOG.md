@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ### [0.11.3]
 
+### Added
+- Long messages in the administration can be read in full: a "show more" button opens the complete
+  text in a modal. The button is only shown for long texts (more than 80 characters or with a line
+  break); the cell shows a shortened text. Used for the check status in the tabs Repository status and
+  Checks, the message column of the S3 mirror history and the status of the S3 transfer status
+  dashboard widget (there the button is placed below the status label). New component
+  `muwa-long-text`.
+
 ### Fixed
+- In the S3 transfer status dashboard widget the target column shows bucket/prefix and the connection
+  name on two lines again instead of running them together.
 - The S3 mirror after a backup no longer fails with "Local repository is locked by a running restic
   operation". The mirror message used to be queued before `restic snapshots` and `restic stats` of the
   same backup run, so a fast messenger worker saw their locks. It is now queued after both (and still
