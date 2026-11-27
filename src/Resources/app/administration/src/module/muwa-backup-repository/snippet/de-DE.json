@@ -386,7 +386,10 @@
         "lastSeen": "zuletzt gesichert",
         "host": "Host",
         "error": "Die Vorschläge konnten nicht geladen werden.",
-        "truncated": "Es werden nur die ersten 200 Pfade angezeigt."
+        "truncated": "Es werden nur die ersten 200 Pfade angezeigt.",
+        "dismiss": "Verwerfen",
+        "dismissHint": "Verworfene Vorschläge werden beim Speichern dauerhaft ausgeblendet.",
+        "restoreDismissed": "Ausgeblendete Vorschläge wieder anzeigen ({count})"
       }
     },
     "s3Connection": {

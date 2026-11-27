@@ -453,7 +453,10 @@ Repository uebernehmen" (Pfad + Passwort + Pflichtfeld Restore-Pfad, geprueft ue
 `Settings::getRestorePathRejection()`, Fehler `MUWA_TAKEOVER_INVALID_RESTORE_PATH`; Aufruf der `takeover`-Route, Fehlercodes werden ueber
 Snippets `takeover.errors.*` angezeigt, danach Sprung in den Tab Konfiguration). Der Tab Konfiguration
 zeigt ueber `Services\BackupPathSuggestions` die Pfade der vorhandenen Snapshots als Vorschlaege
-(Uebernehmen traegt sie in die Backup-Pfade ein). Snippets mit Platzhaltern immer per
+(Uebernehmen traegt sie in die Backup-Pfade ein, Verwerfen schreibt den Pfad in die JsonField-Spalte
+`dismissed_path_suggestions` (`Migration1795774296`), beides erst mit "Speichern"; der Link
+"Ausgeblendete Vorschlaege wieder anzeigen" setzt sie zurueck). Gefiltert wird nur in der
+Administration (`openPathSuggestions`), `BackupPathSuggestions` liefert weiterhin alle Pfade. Snippets mit Platzhaltern immer per
 `$t(key, {...})`. Spalte `muwa_backup_repository_snapshots.paths` ist `LONGTEXT`
 (`Migration1794614400`).
 

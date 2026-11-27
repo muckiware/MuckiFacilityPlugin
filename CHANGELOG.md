@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
   Checks, the message column of the S3 mirror history and the status of the S3 transfer status
   dashboard widget (there the button is placed below the status label). New component
   `muwa-long-text`.
+- Path suggestions of a taken-over repository can be dismissed: next to "Adopt" there is a "Dismiss"
+  button. Dismissed paths are stored per repository on save (new column
+  `muwa_backup_repository.dismissed_path_suggestions`) and stay hidden; a link below the suggestions
+  shows them again.
 
 ### Fixed
 - In the S3 transfer status dashboard widget the target column shows bucket/prefix and the connection

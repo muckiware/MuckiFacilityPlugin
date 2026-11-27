@@ -96,6 +96,13 @@ class BackupRepositoryEntity extends Entity
     protected array $backupPaths;
 
     /**
+     * Snapshot paths dismissed in the backup path suggestions, NULL or [] = nothing dismissed.
+     *
+     * @var array<int, string>|null
+     */
+    protected ?array $dismissedPathSuggestions = null;
+
+    /**
      * @var int
      */
     protected int $forgetDaily;
@@ -372,6 +379,22 @@ class BackupRepositoryEntity extends Entity
     public function setBackupPaths(array $backupPaths): void
     {
         $this->backupPaths = $backupPaths;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getDismissedPathSuggestions(): array
+    {
+        return $this->dismissedPathSuggestions ?? [];
+    }
+
+    /**
+     * @param array<int, string>|null $dismissedPathSuggestions
+     */
+    public function setDismissedPathSuggestions(?array $dismissedPathSuggestions): void
+    {
+        $this->dismissedPathSuggestions = $dismissedPathSuggestions;
     }
 
     /**

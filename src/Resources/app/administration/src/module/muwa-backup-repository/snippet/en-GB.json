@@ -386,7 +386,10 @@
         "lastSeen": "last backed up",
         "host": "Host",
         "error": "The suggestions could not be loaded.",
-        "truncated": "Only the first 200 paths are shown."
+        "truncated": "Only the first 200 paths are shown.",
+        "dismiss": "Dismiss",
+        "dismissHint": "Dismissed suggestions are hidden permanently once you save.",
+        "restoreDismissed": "Show hidden suggestions again ({count})"
       }
     },
     "s3Connection": {
